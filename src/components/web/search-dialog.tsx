@@ -51,7 +51,7 @@ export function SearchDialog({ className }: { className?: string }) {
         onClick={() => setOpen(true)}
       >
         <Search />
-        <span className="hidden min-w-36 text-left text-muted-foreground sm:inline">Search</span>
+        <span className="hidden min-w-36 text-left text-muted-foreground/90 sm:inline">Search</span>
         <kbd className="ml-auto hidden rounded border bg-muted px-1.5 py-0.5 text-[0.7rem] text-muted-foreground md:inline">
           ⌘K
         </kbd>

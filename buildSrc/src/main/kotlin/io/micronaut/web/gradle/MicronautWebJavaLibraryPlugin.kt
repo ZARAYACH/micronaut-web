@@ -5,11 +5,12 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.credentials.PasswordCredentials
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.credentials
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.register
-import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
 import org.gradle.api.tasks.testing.Test
 
@@ -44,6 +45,26 @@ class MicronautWebJavaLibraryPlugin : Plugin<Project> {
                     pom {
                         name.set(project.name)
                         description.set("Micronaut web static resources and template support.")
+                    }
+                }
+            }
+
+            val githubRepository = project.providers.gradleProperty("githubRepository")
+                .orElse(project.providers.environmentVariable("GITHUB_REPOSITORY"))
+
+            if (githubRepository.isPresent) {
+                repositories {
+                    maven {
+                        name = "GitHubPackages"
+                        url = project.uri("https://maven.pkg.github.com/${githubRepository.get()}")
+                        credentials(PasswordCredentials::class) {
+                            username = project.providers.gradleProperty("githubPackagesUsername")
+                                .orElse(project.providers.environmentVariable("GITHUB_ACTOR"))
+                                .orNull
+                            password = project.providers.gradleProperty("githubPackagesToken")
+                                .orElse(project.providers.environmentVariable("GITHUB_TOKEN"))
+                                .orNull
+                        }
                     }
                 }
             }

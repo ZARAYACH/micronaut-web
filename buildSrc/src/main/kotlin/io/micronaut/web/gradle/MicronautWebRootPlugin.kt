@@ -16,10 +16,17 @@ class MicronautWebRootPlugin : Plugin<Project> {
         project.version = DEFAULT_VERSION
         project.plugins.apply("base")
 
+        val projectVersion = project.providers.gradleProperty("micronautWebVersion")
+            .orElse(project.providers.environmentVariable("MICRONAUT_WEB_VERSION"))
+            .orElse(DEFAULT_VERSION)
+            .get()
+
         project.subprojects {
             group = DEFAULT_GROUP
-            version = DEFAULT_VERSION
+            version = projectVersion
         }
+
+        project.version = projectVersion
 
         project.tasks.register<Exec>("npmBuild") {
             group = "build"

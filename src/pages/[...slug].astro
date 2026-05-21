@@ -64,9 +64,9 @@ const content = mainSitePageContent[page.slug];
             <div class="grid size-12 place-items-center rounded-lg bg-primary/10 text-primary">
               <IconGlyph name={page.sections[0]?.icon ?? "book-open"} className="size-6" />
             </div>
-            <CardTitle>Source material</CardTitle>
+            <CardTitle>Canonical page</CardTitle>
             <CardDescription>
-              Migrated from the public Micronaut site into the shared Astro web shell.
+              Open the current Micronaut source page for full details, media, forms, and archive entries.
             </CardDescription>
           </CardHeader>
           <CardFooter>
@@ -76,38 +76,12 @@ const content = mainSitePageContent[page.slug];
       </div>
     </section>
 
-    <section class="mx-auto grid max-w-[1200px] gap-6 px-4 py-14 md:px-6 lg:py-20">
-      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <Badge variant="outline">Overview</Badge>
-          <h2 class="mt-4 text-3xl font-bold tracking-tight md:text-4xl">What this page covers</h2>
-        </div>
-        <p class="max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
-          These migrated pages keep the main website navigable while dynamic archives, legal text, and form-driven pages retain a canonical source link.
-        </p>
-      </div>
-
-      <div class="grid gap-4 md:grid-cols-3">
-        {page.sections.map((section) => (
-          <Card className="transition hover:-translate-y-0.5 hover:border-primary/50">
-            <CardHeader>
-              <div class="mb-2 grid size-10 place-items-center rounded-md bg-primary/10 text-primary">
-                <IconGlyph name={section.icon} className="size-5" />
-              </div>
-              <CardTitle className="text-lg">{section.title}</CardTitle>
-              <CardDescription>{section.body}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-    </section>
-
     {content && (
-      <section class="border-y bg-card">
+      <section class="border-b bg-card">
         <div class="mx-auto grid max-w-[1200px] gap-6 px-4 py-14 md:px-6 lg:py-20">
           <div class="max-w-3xl">
-            <Badge variant="secondary">Migrated content</Badge>
-            <h2 class="mt-4 text-3xl font-bold tracking-tight md:text-4xl">Source content, adapted for Astro</h2>
+            <Badge variant="secondary">Details</Badge>
+            <h2 class="mt-4 text-3xl font-bold tracking-tight md:text-4xl">{page.title}</h2>
             {content.intro && <p class="mt-4 text-base leading-7 text-muted-foreground">{content.intro}</p>}
           </div>
 

@@ -45,8 +45,11 @@ class LaunchPagePlaywrightTest {
             page.getByTestId("test-junit").click();
             page.getByTestId("feature-search").fill("management");
             page.getByTestId("feature-management").click();
+            page.getByTestId("decision-row-errors").click();
             page.getByTestId("decision-errors-problem-json").click();
+            page.getByTestId("decision-row-http-client").click();
             page.getByTestId("decision-http-client-http-client").click();
+            page.getByTestId("decision-row-http-client").click();
             page.getByTestId("decision-http-client-http-client-jdk").click();
 
             var createUrl = page.getByTestId("create-url").inputValue();

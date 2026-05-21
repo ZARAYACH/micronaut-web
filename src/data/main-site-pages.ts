@@ -370,7 +370,7 @@ export const mainSitePages: MainSitePage[] = [
     sections: [
       { title: "Policy source", body: "The canonical privacy policy remains the source document for privacy-related questions.", icon: "shield" },
       { title: "Contact", body: "Use the contact page for questions related to site policies or foundation communication.", icon: "mail" },
-      { title: "Site migration", body: "This migrated page keeps policy navigation visible while preserving a link to the canonical policy.", icon: "route" }
+      { title: "Policy navigation", body: "This page keeps policy navigation visible while preserving a link to the canonical policy.", icon: "route" }
     ]
   },
   {
@@ -536,7 +536,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original story", href: "https://micronaut.io/responding-to-unexpected-disruption-with-agility-and-speed/", external: true },
     secondaryCta: { label: "All success stories", href: "/micronaut-success-stories/" },
     sections: [
-      { title: "Application delivery", body: "The story is retained as migrated main-site content with a canonical link to the source page.", icon: "rocket" },
+      { title: "Application delivery", body: "The story connects production agility with application delivery and links to the source page.", icon: "rocket" },
       { title: "Operational agility", body: "It supports the homepage message around fast, modular JVM services.", icon: "gauge" },
       { title: "Next step", body: "Continue with docs and guides to evaluate the same capabilities hands-on.", icon: "route" }
     ]
@@ -550,7 +550,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original story", href: "https://micronaut.io/micronaut-success-stories/caribou-success-story/", external: true },
     secondaryCta: { label: "All success stories", href: "/micronaut-success-stories/" },
     sections: [
-      { title: "Production story", body: "This page keeps the story reachable from the migrated main website route structure.", icon: "check-circle" },
+      { title: "Production story", body: "This page keeps the story reachable from the main website route structure.", icon: "check-circle" },
       { title: "Architecture context", body: "Success stories help teams understand where Micronaut fits in real applications.", icon: "workflow" },
       { title: "Evaluation path", body: "Use stories as proof, then move into documentation, guides, and generated starters.", icon: "rocket" }
     ]
@@ -566,7 +566,7 @@ export const mainSitePages: MainSitePage[] = [
     sections: [
       { title: "Upgrade path", body: "The story supports evaluation of Micronaut for service modernization and framework upgrades.", icon: "route" },
       { title: "Microservices", body: "It belongs with the public production stories surfaced by the main website.", icon: "boxes" },
-      { title: "Canonical source", body: "Open the original page for the full migrated story content and media.", icon: "logs" }
+      { title: "Canonical source", body: "Open the original page for the full story content and media.", icon: "logs" }
     ]
   },
   {
@@ -606,7 +606,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original story", href: "https://micronaut.io/using-micronaut-framework-at-sonar/", external: true },
     secondaryCta: { label: "All success stories", href: "/micronaut-success-stories/" },
     sections: [
-      { title: "Production reference", body: "This story is kept reachable as part of the migrated main website content.", icon: "check-circle" },
+      { title: "Production reference", body: "This story is kept reachable as part of the main website content.", icon: "check-circle" },
       { title: "Developer tooling", body: "It provides another public example of Micronaut in a developer-focused organization.", icon: "code" },
       { title: "Canonical story", body: "Open the original story for full media, detail, and source copy.", icon: "logs" }
     ]
@@ -732,7 +732,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original minutes", href: "https://micronaut.io/meeting-minutes/2020-10-09/", external: true },
     secondaryCta: { label: "All meeting minutes", href: "/meeting-minutes/" },
     sections: [
-      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the migrated main site.", icon: "logs" },
+      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the main site.", icon: "logs" },
       { title: "Foundation context", body: "Meeting minutes sit alongside foundation pages and project-support material.", icon: "gem" },
       { title: "Canonical source", body: "Open the original page for the full minutes text.", icon: "book-open" }
     ]
@@ -746,7 +746,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original minutes", href: "https://micronaut.io/meeting-minutes/2021-03-12/", external: true },
     secondaryCta: { label: "All meeting minutes", href: "/meeting-minutes/" },
     sections: [
-      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the migrated main site.", icon: "logs" },
+      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the main site.", icon: "logs" },
       { title: "Foundation context", body: "Meeting minutes sit alongside foundation pages and project-support material.", icon: "gem" },
       { title: "Canonical source", body: "Open the original page for the full minutes text.", icon: "book-open" }
     ]
@@ -760,7 +760,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original minutes", href: "https://micronaut.io/meeting-minutes/2021-06-18/", external: true },
     secondaryCta: { label: "All meeting minutes", href: "/meeting-minutes/" },
     sections: [
-      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the migrated main site.", icon: "logs" },
+      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the main site.", icon: "logs" },
       { title: "Foundation context", body: "Meeting minutes sit alongside foundation pages and project-support material.", icon: "gem" },
       { title: "Canonical source", body: "Open the original page for the full minutes text.", icon: "book-open" }
     ]
@@ -788,7 +788,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original minutes", href: "https://micronaut.io/meeting-minutes/2022-03-25/", external: true },
     secondaryCta: { label: "All meeting minutes", href: "/meeting-minutes/" },
     sections: [
-      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the migrated main site.", icon: "logs" },
+      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the main site.", icon: "logs" },
       { title: "Foundation context", body: "Meeting minutes sit alongside foundation pages and project-support material.", icon: "gem" },
       { title: "Canonical source", body: "Open the original page for the full minutes text.", icon: "book-open" }
     ]
@@ -802,7 +802,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original minutes", href: "https://micronaut.io/meeting-minutes/2022_11_15/", external: true },
     secondaryCta: { label: "All meeting minutes", href: "/meeting-minutes/" },
     sections: [
-      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the migrated main site.", icon: "logs" },
+      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the main site.", icon: "logs" },
       { title: "Foundation context", body: "Meeting minutes sit alongside foundation pages and project-support material.", icon: "gem" },
       { title: "Canonical source", body: "Open the original page for the full minutes text.", icon: "book-open" }
     ]
@@ -830,7 +830,7 @@ export const mainSitePages: MainSitePage[] = [
     primaryCta: { label: "Open original minutes", href: "https://micronaut.io/meeting-minutes/4_24_2024/", external: true },
     secondaryCta: { label: "All meeting minutes", href: "/meeting-minutes/" },
     sections: [
-      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the migrated main site.", icon: "logs" },
+      { title: "Governance record", body: "This page preserves the public meeting-minutes route in the main site.", icon: "logs" },
       { title: "Foundation context", body: "Meeting minutes sit alongside foundation pages and project-support material.", icon: "gem" },
       { title: "Canonical source", body: "Open the original page for the full minutes text.", icon: "book-open" }
     ]
@@ -895,7 +895,7 @@ export const mainSiteFooterGroups = [
 
 export const mainSitePageContent: Record<string, MainSitePageContent> = {
   download: {
-    intro: "The original Download page centers on installing the Micronaut CLI and getting a project started quickly. This migrated version keeps those choices visible and routes project generation through the local Launch surface.",
+    intro: "For a quick and effortless start on macOS, Linux, or Windows, use SDKMAN! to download and configure any Micronaut version of your choice.",
     blocks: [
       {
         title: "Current release",
@@ -970,7 +970,7 @@ export const mainSitePageContent: Record<string, MainSitePageContent> = {
       },
       {
         title: "Course paths",
-        body: "The migrated site keeps the training overview plus dedicated pages for Micronaut Essentials, Micronaut Data, and event-driven microservices.",
+        body: "Professional training includes Micronaut Essentials, Micronaut Data, and event-driven microservices courses.",
         links: [
           { label: "Micronaut Essentials", href: "/professional-training/micronaut-essentials/" },
           { label: "Micronaut Data Training", href: "/professional-training/micronaut-data/" },
@@ -1222,7 +1222,7 @@ export const mainSitePageContent: Record<string, MainSitePageContent> = {
     blocks: [
       {
         title: "Sponsor recognition",
-        body: "The source page is the canonical location for the current sponsor list. This migrated route keeps the sponsor area discoverable in the shared Astro navigation.",
+        body: "The sponsors page recognizes organizations and supporters contributing to Micronaut project sustainability.",
         links: [
           { label: "Corporate Sponsorship", href: "/foundation/corporate-sponsorship/" },
           { label: "Open canonical sponsors page", href: "https://micronaut.io/foundation/sponsors/", external: true }
@@ -1265,12 +1265,12 @@ export const mainSitePageContent: Record<string, MainSitePageContent> = {
     intro: "The success stories index collects public examples of teams and products using Micronaut in production.",
     blocks: [
       {
-        title: "Available migrated stories",
+        title: "Available stories",
         items: [
           "Samsung SmartThings: from monolith to microservices with Micronaut.",
           "Kestra: Micronaut framework at a workflow orchestration platform.",
           "Agorapulse: a public Micronaut application journey.",
-          "Caribou, Sonar, and additional production references remain available as migrated routes."
+          "Caribou, Sonar, and additional production references remain available as main-site routes."
         ],
         links: [
           { label: "Samsung SmartThings story", href: "/micronaut-success-stories/from-monolith-to-microservices-with-the-micronaut-framework/" },
@@ -1282,7 +1282,7 @@ export const mainSitePageContent: Record<string, MainSitePageContent> = {
     ]
   },
   "brand-guidelines": {
-    intro: "Brand pages preserve Micronaut logo, trademark, and usage guidance in the migrated main-site structure.",
+    intro: "Brand pages preserve Micronaut logo, trademark, and usage guidance in the main-site structure.",
     blocks: [
       {
         title: "Brand usage",
@@ -1350,7 +1350,7 @@ export const mainSitePageContent: Record<string, MainSitePageContent> = {
     ]
   },
   "privacy-policy": {
-    intro: "Privacy policy content should remain canonical at the policy source. This migrated page keeps the legal route present in the Astro navigation.",
+    intro: "Privacy policy content remains available from the Micronaut site legal route.",
     blocks: [
       {
         title: "Policy source",
@@ -1391,7 +1391,7 @@ for (const page of mainSitePages) {
   }
   if (archiveLabels[page.slug]) {
     mainSitePageContent[page.slug] = {
-      intro: `${archiveLabels[page.slug]} content is migrated into the shared Astro navigation. The original page remains the canonical source when the list is dynamic or maintained outside this static build.`,
+      intro: page.description,
       blocks: [
         {
           title: archiveLabels[page.slug],
@@ -1407,7 +1407,7 @@ for (const page of mainSitePages) {
   }
   if (page.slug.startsWith("micronaut-success-stories/") || page.slug === "using-micronaut-framework-at-sonar" || page.slug === "responding-to-unexpected-disruption-with-agility-and-speed") {
     mainSitePageContent[page.slug] = {
-      intro: "This migrated success-story page keeps the production reference available inside the Astro main site and links to the canonical story for full source detail and media.",
+      intro: page.description,
       blocks: [
         {
           title: page.title,
@@ -1423,7 +1423,7 @@ for (const page of mainSitePages) {
   }
   if (page.slug.startsWith("meeting-minutes/")) {
     mainSitePageContent[page.slug] = {
-      intro: "This migrated meeting-minutes route keeps the public governance record reachable from the Astro main site.",
+      intro: page.description,
       blocks: [
         {
           title: "Meeting record",

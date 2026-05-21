@@ -39,7 +39,7 @@ const menuGroups = [
     label: "Learn",
     description: "Docs, guides, training, video, and starter paths.",
     links: [
-      { href: "/learn/", label: "Learning overview", description: "All learning paths from the migrated main site." },
+      { href: "/learn/", label: "Learning overview", description: "All learning paths from the main site." },
       { href: "/download/", label: "Download", description: "Launch, CLI, and build-tool starter options." },
       { href: "/quick-start/", label: "Quick Start", description: "Start quickly with Launch and guides." },
       { href: "/professional-training/", label: "Professional Training", description: "Structured training material for teams." },
@@ -51,7 +51,7 @@ const menuGroups = [
     label: "Resources",
     description: "News, events, support, roadmap, and public proof.",
     links: [
-      { href: "/resources/", label: "Resources overview", description: "Main index for migrated resource pages." },
+      { href: "/resources/", label: "Resources overview", description: "Main index for resource pages." },
       { href: "/blog/", label: "Blog", description: "Project news and technical articles." },
       { href: "/upcoming-events/", label: "Upcoming Events", description: "Events, talks, webinars, and community sessions." },
       { href: "/category/release-announcements/", label: "Release Announcements", description: "Framework and ecosystem release updates." },
@@ -113,7 +113,7 @@ export function SiteHeader({
 }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-4 px-4 md:px-6">
+      <div className="mx-auto flex h-[68px] max-w-[1240px] items-center gap-4 px-4 md:px-6">
         {!hideBrand ? (
           <a href="/" className="flex shrink-0 items-center gap-2 text-sm font-semibold text-foreground no-underline">
             <MicronautLogo />
@@ -126,7 +126,7 @@ export function SiteHeader({
                 href="/"
                 active={surface === "main"}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                  "rounded-md px-3 py-2 text-[0.92rem] transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                   surface === "main" && "bg-accent text-accent-foreground"
                 )}
               >
@@ -135,7 +135,7 @@ export function SiteHeader({
             </NavigationMenuItem>
             {menuGroups.map((group) => (
               <NavigationMenuItem key={group.label}>
-                <NavigationMenuTrigger className="bg-transparent px-3">
+                <NavigationMenuTrigger className="bg-transparent px-3 text-[0.92rem]">
                   {group.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -168,7 +168,7 @@ export function SiteHeader({
                   href={link.href}
                   active={surface === link.surface}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                    "rounded-md px-3 py-2 text-[0.92rem] transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                     surface === link.surface && "bg-accent text-accent-foreground"
                   )}
                 >
@@ -179,7 +179,7 @@ export function SiteHeader({
           </NavigationMenuList>
         </NavigationMenu>
         <div className="ml-auto flex min-w-0 items-center gap-2">
-          <SearchDialog className="h-9 w-10 justify-start px-2 sm:w-64 sm:px-3 lg:w-80" />
+          <SearchDialog className="h-10 w-10 justify-start px-2 sm:w-64 sm:px-3 lg:w-80" />
           <Button variant="outline" className="hidden md:inline-flex" asChild>
             <a href="/launch/">Launch</a>
           </Button>
@@ -193,7 +193,7 @@ export function SiteHeader({
             <SheetContent className="w-[320px]">
               <SheetHeader>
                 <SheetTitle>Micronaut</SheetTitle>
-                <SheetDescription>Navigate migrated main-site pages, documentation, guides, and Launch.</SheetDescription>
+                <SheetDescription>Navigate main-site pages, documentation, guides, and Launch.</SheetDescription>
               </SheetHeader>
               <nav className="grid gap-5 overflow-y-auto px-4 pb-6">
                 {mobileGroups.map((group) => (
@@ -206,7 +206,7 @@ export function SiteHeader({
                         <a
                           href={link.href}
                           className={cn(
-                            "rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                            "rounded-md px-3 py-2 text-[0.92rem] font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                             primaryLinks.some((primaryLink) => primaryLink.href === link.href && primaryLink.surface === surface) && "bg-accent"
                           )}
                         >

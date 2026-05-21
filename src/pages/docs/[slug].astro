@@ -50,12 +50,12 @@ if (!project) {
               <Card className="mt-4">
                 <CardHeader>
                   <CardTitle className="text-base">{section.title}</CardTitle>
-                  <CardDescription>{project.displayName} protocol-backed content placeholder.</CardDescription>
+                  <CardDescription>{project.displayName} reference entry.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    This page is rendered from the shared JSON protocol. The same contract can later point to generated
-                    static guide fragments, API references, configuration pages, and search entries.
+                    This lightweight docs page is ready for generated module documentation, API references,
+                    configuration pages, and search entries while preserving the shared Micronaut web styling.
                   </p>
                   <div class="mt-4 overflow-hidden rounded-lg border bg-muted/50">
                     <pre class="overflow-x-auto p-4 text-sm leading-7"><code>{`micronaut.project=${project.slug}

@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownToLine,
   Braces,
+  ChevronDown,
   Check,
   Copy,
   ExternalLink,
   FileCode2,
   FolderGit2,
   Link2,
+  ListFilter,
   Search,
   ShieldAlert,
   Sparkles,
@@ -31,7 +33,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger
@@ -55,6 +56,7 @@ import {
   SheetTitle,
   SheetTrigger
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   applyDecisionChoice,
@@ -121,7 +123,54 @@ type FormState = {
   features: string[];
 };
 
-const categoryOrder = ["API", "Database", "Messaging", "Cloud", "Security", "Server", "Development Tools"];
+type FeatureCategoryId =
+  | "popular"
+  | "web"
+  | "data"
+  | "cloud"
+  | "messaging"
+  | "security"
+  | "serialization"
+  | "testing"
+  | "observability"
+  | "all";
+
+type FeatureScope = "compatible" | "selected" | "recommended";
+
+const categoryOrder = ["API", "Server", "Database", "Messaging", "Cloud", "Security", "Serialization", "Testing", "Management", "Development Tools"];
+
+const featureCategories: { id: FeatureCategoryId; label: string }[] = [
+  { id: "popular", label: "Popular" },
+  { id: "web", label: "Web" },
+  { id: "data", label: "Data" },
+  { id: "cloud", label: "Cloud" },
+  { id: "messaging", label: "Messaging" },
+  { id: "security", label: "Security" },
+  { id: "serialization", label: "Serialization" },
+  { id: "testing", label: "Testing" },
+  { id: "observability", label: "Observability" },
+  { id: "all", label: "All" }
+];
+
+const popularFeatureNames = new Set([
+  "serialization-jackson",
+  "validation",
+  "management",
+  "openapi",
+  "data-jdbc",
+  "data-hibernate-jpa",
+  "jdbc-hikari",
+  "security-jwt",
+  "micrometer",
+  "kafka"
+]);
+
+const recommendedFeatureNames = new Set([
+  "serialization-jackson",
+  "validation",
+  "management",
+  "openapi"
+]);
 
 function slugFromType(typeValue: string, applicationTypes: LaunchOption[]) {
   return applicationTypes.find((type) => type.value === typeValue)?.name ?? "default";
@@ -176,6 +225,77 @@ function shellRunCommand(state: FormState) {
   return "./gradlew run";
 }
 
+function optionLabel(options: LaunchOption[], value: string) {
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
+function jdkLabel(value: string, options: LaunchOption[]) {
+  const label = optionLabel(options, value);
+  return label.startsWith("JDK_") ? label.replace("JDK_", "JDK ") : label.startsWith("JDK") ? label : `JDK ${label.replace("JDK_", "")}`;
+}
+
+function runtimeSummary(state: FormState, data: LaunchInitialData) {
+  return [
+    optionLabel(data.selectOptions.lang.options, state.lang),
+    optionLabel(data.selectOptions.build.options, state.build),
+    jdkLabel(state.javaVersion, data.selectOptions.jdkVersion.options),
+    optionLabel(data.selectOptions.test.options, state.test)
+  ].join(" / ");
+}
+
+function searchableFeatureText(feature: LaunchFeature) {
+  return [
+    feature.name,
+    feature.title,
+    feature.description,
+    feature.category ?? ""
+  ].join(" ").toLowerCase();
+}
+
+function featureMatchesCategory(feature: LaunchFeature, category: FeatureCategoryId) {
+  if (category === "all") {
+    return true;
+  }
+  const text = searchableFeatureText(feature);
+  if (category === "popular") {
+    return popularFeatureNames.has(feature.name);
+  }
+  if (category === "web") {
+    return /api|server|http|openapi|graphql|websocket|views/.test(text);
+  }
+  if (category === "data") {
+    return /data|database|jdbc|jpa|hibernate|jooq|mongo|redis|sql|r2dbc|cache/.test(text);
+  }
+  if (category === "cloud") {
+    return /cloud|aws|azure|gcp|kubernetes|discovery|config|function/.test(text);
+  }
+  if (category === "messaging") {
+    return /messaging|kafka|rabbit|jms|mqtt|nats|pulsar/.test(text);
+  }
+  if (category === "security") {
+    return /security|auth|jwt|oauth|ldap|session/.test(text);
+  }
+  if (category === "serialization") {
+    return /serialization|jackson|json|serde|xml|yaml/.test(text);
+  }
+  if (category === "testing") {
+    return /test|junit|spock|kotest|mock|testcontainers/.test(text);
+  }
+  return /observability|management|metrics|micrometer|tracing|log|health/.test(text);
+}
+
+function featureIsRecommended(feature: LaunchFeature) {
+  return recommendedFeatureNames.has(feature.name);
+}
+
+function isEditableShortcutTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select" || target.isContentEditable;
+}
+
 function initialState(data: LaunchInitialData): FormState {
   const lang = data.selectOptions.lang.defaultOption.value;
   const langDefaults = data.selectOptions.lang.defaultOption.defaults;
@@ -225,6 +345,14 @@ function OptionSelect({
 }
 
 function CodeBlock({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyValue() {
+    await navigator.clipboard?.writeText(value);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -233,48 +361,97 @@ function CodeBlock({ value, label }: { value: string; label: string }) {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => void navigator.clipboard?.writeText(value)}
+          onClick={() => void copyValue()}
+          aria-label={`Copy ${label}`}
         >
-          <Copy className="size-4" />
-          Copy
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+          {copied ? "Copied" : "Copy"}
         </Button>
       </div>
       <pre className="overflow-x-auto rounded-md border bg-muted p-4 text-xs leading-6 text-foreground">
         <code>{value}</code>
       </pre>
+      <span className="sr-only" aria-live="polite">
+        {copied ? `${label} copied` : ""}
+      </span>
     </div>
+  );
+}
+
+function FeatureImpactSheet({ feature }: { feature: LaunchFeature }) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button type="button" variant="ghost" size="sm" aria-label={`View impact for ${feature.title}`}>
+          View impact
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{feature.title}</SheetTitle>
+          <SheetDescription>{feature.description}</SheetDescription>
+        </SheetHeader>
+        <div className="grid gap-5 px-4 text-sm leading-6">
+          <div className="grid gap-2">
+            <p className="font-semibold">Feature id</p>
+            <code className="w-fit rounded-md border bg-muted px-2 py-1 text-xs">{feature.name}</code>
+          </div>
+          <Separator />
+          <div className="grid gap-2">
+            <p className="font-semibold">Generated impact</p>
+            <p className="text-muted-foreground">
+              Adds the {feature.name} starter feature to the Micronaut Launch request. The backend resolves the exact dependencies, generated files, and configuration for the selected language and build tool.
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <p className="font-semibold">Category</p>
+            <p className="text-muted-foreground">{feature.category ?? "Uncategorized"}</p>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
 function FeatureCard({
   feature,
   checked,
+  recommended,
   onToggle
 }: {
   feature: LaunchFeature;
   checked: boolean;
+  recommended: boolean;
   onToggle: () => void;
 }) {
   return (
-    <label
+    <div
       className={cn(
-        "grid cursor-pointer gap-3 rounded-lg border bg-card p-4 transition hover:border-primary/60",
+        "grid gap-2 rounded-lg border bg-card p-3 transition hover:border-primary/60",
         checked && "border-primary bg-primary/5"
       )}
-      data-testid={`feature-${feature.name}`}
     >
-      <div className="flex items-start gap-3">
-        <Checkbox checked={checked} onCheckedChange={onToggle} aria-label={feature.title} />
+      <label className="flex min-h-16 cursor-pointer items-start gap-3" data-testid={`feature-${feature.name}`}>
+        <Checkbox checked={checked} onCheckedChange={onToggle} aria-label={`Select ${feature.title}`} />
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold leading-5">{feature.title}</span>
-            {feature.preview && <Badge variant="outline">Preview</Badge>}
-            {feature.community && <Badge variant="secondary">Community</Badge>}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm font-semibold leading-5">{feature.title}</span>
+            {feature.category && <Badge variant="outline" className="text-[0.68rem]">{feature.category}</Badge>}
+            {recommended && <Badge variant="secondary" className="text-[0.68rem]">Recommended</Badge>}
           </div>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">{feature.description}</p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{feature.description}</p>
+        </div>
+      </label>
+      <div className="flex items-center justify-between gap-2 pl-7">
+        <code className="truncate text-[0.72rem] text-muted-foreground">{feature.name}</code>
+        <div className="flex items-center gap-1">
+          {checked && <Badge variant="secondary">Selected</Badge>}
+          {feature.preview && <Badge variant="outline">Preview</Badge>}
+          {feature.community && <Badge variant="outline">Community</Badge>}
+          <FeatureImpactSheet feature={feature} />
         </div>
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -292,7 +469,7 @@ function DecisionChoiceDetails({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button type="button" variant="ghost" size="sm">
+        <Button type="button" variant="ghost" size="sm" aria-label={`View details for ${choice.title}`}>
           Details
         </Button>
       </SheetTrigger>
@@ -305,6 +482,10 @@ function DecisionChoiceDetails({
           <div className="grid gap-2">
             <p className="text-sm font-semibold">Summary</p>
             <p className="text-sm leading-6 text-muted-foreground">{choice.summary}</p>
+          </div>
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold">Generated impact</p>
+            <p className="text-sm leading-6 text-muted-foreground">{choice.impact}</p>
           </div>
           <Separator />
           <div className="grid gap-2">
@@ -344,141 +525,410 @@ function DecisionChoiceDetails({
   );
 }
 
-function DecisionGroupCard({
+function DecisionGroupPanel({
   group,
+  expanded,
+  onToggle,
   onSelect
 }: {
   group: ResolvedDecisionGroup;
+  expanded: boolean;
+  onToggle: () => void;
   onSelect: (group: ResolvedDecisionGroup, choice: ResolvedDecisionChoice) => void;
 }) {
-  const selectedChoice = group.selectedChoices[0];
-  const selectedChoiceIds = new Set(group.selectedChoices.map((choice) => choice.id));
+  const activeChoice = group.activeChoice;
+  const customized = group.selectedChoices.length > 0;
+  const stateLabel = group.conflicted ? "Conflict" : customized ? "Selected" : "Default";
 
   return (
-    <Card className={cn("gap-4", group.conflicted && "border-destructive/70")}>
-      <CardHeader className="gap-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="text-lg">{group.title}</CardTitle>
-              {group.conflicted && <Badge variant="outline">Resolve conflict</Badge>}
-              {!group.conflicted && selectedChoice && <Badge variant="secondary">{selectedChoice.title}</Badge>}
-            </div>
-            <CardDescription className="mt-2">{group.description}</CardDescription>
+    <div className={cn("overflow-hidden rounded-lg border bg-background", group.conflicted && "border-destructive/70")}>
+      <button
+        type="button"
+        className="grid w-full gap-3 p-4 text-left transition hover:bg-muted/50 md:grid-cols-[minmax(9rem,0.8fr)_minmax(0,1fr)_auto] md:items-center"
+        aria-expanded={expanded}
+        onClick={onToggle}
+        data-testid={`decision-row-${group.id}`}
+      >
+        <span className="flex items-center gap-2 font-semibold">
+          <ChevronDown className={cn("size-4 transition-transform", expanded && "rotate-180")} />
+          {group.title}
+        </span>
+        <span className="min-w-0 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{activeChoice?.title ?? "Review required"}</span>
+          <span className="hidden md:inline"> - {activeChoice?.summary ?? group.description}</span>
+        </span>
+        <Badge variant={group.conflicted ? "outline" : customized ? "default" : "secondary"}>
+          {stateLabel}
+        </Badge>
+      </button>
+
+      {expanded && (
+        <div className="border-t p-4">
+          <div className="mb-4 grid gap-1">
+            <p className="text-sm font-medium">{group.question}</p>
+            <p className="text-sm leading-6 text-muted-foreground">{group.description}</p>
           </div>
+          {group.conflicted && (
+            <Alert variant="destructive" className="mb-4">
+              <ShieldAlert className="size-4" />
+              <AlertTitle>Multiple choices selected</AlertTitle>
+              <AlertDescription>
+                Pick one {group.title.toLowerCase()} option. Selecting a choice removes the other features in this group.
+              </AlertDescription>
+            </Alert>
+          )}
+          <fieldset className="grid gap-3">
+            <legend className="sr-only">{group.question}</legend>
+            {group.choices.map((choice) => {
+              const selected = activeChoice?.id === choice.id;
+              const defaultChoice = group.defaultChoice?.id === choice.id;
+              return (
+                <div
+                  key={choice.id}
+                  className={cn(
+                    "grid gap-3 rounded-lg border bg-card p-4 transition md:grid-cols-[minmax(0,1fr)_auto] md:items-center",
+                    selected && "border-primary bg-primary/5"
+                  )}
+                >
+                  <label className="flex cursor-pointer items-start gap-3" data-testid={`decision-${group.id}-${choice.id}`}>
+                    <input
+                      type="radio"
+                      className="mt-1 size-4 accent-primary"
+                      name={`decision-${group.id}`}
+                      checked={selected}
+                      onChange={() => onSelect(group, choice)}
+                    />
+                    <span className="grid gap-1">
+                      <span className="flex flex-wrap items-center gap-2 font-semibold">
+                        {choice.title}
+                        {choice.featureName && <Badge variant="outline">{choice.featureName}</Badge>}
+                        {defaultChoice && <Badge variant="secondary">Default</Badge>}
+                        {!defaultChoice && selected && <Badge variant="secondary">Selected</Badge>}
+                      </span>
+                      <span className="text-sm leading-6 text-muted-foreground">{choice.summary}</span>
+                      <span className="text-xs leading-5 text-muted-foreground">
+                        Impact: {choice.impact}
+                      </span>
+                    </span>
+                  </label>
+                  <DecisionChoiceDetails
+                    group={group}
+                    choice={choice}
+                    selected={selected}
+                    onSelect={() => onSelect(group, choice)}
+                  />
+                </div>
+              );
+            })}
+          </fieldset>
         </div>
-        {group.conflicted && (
-          <Alert variant="destructive">
-            <ShieldAlert className="size-4" />
-            <AlertTitle>Multiple choices selected</AlertTitle>
-            <AlertDescription>
-              Pick one {group.title.toLowerCase()} option. Selecting a choice removes the other features in this group.
-            </AlertDescription>
-          </Alert>
-        )}
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        {group.choices.map((choice) => {
-          const selected = selectedChoiceIds.has(choice.id) || (!choice.featureName && group.selectedChoices.length === 0);
-          return (
-            <div
-              key={choice.id}
-              className={cn(
-                "grid gap-3 rounded-lg border bg-background p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center",
-                selected && "border-primary bg-primary/5"
-              )}
-            >
-              <button
-                type="button"
-                className="grid gap-1 text-left"
-                onClick={() => onSelect(group, choice)}
-                data-testid={`decision-${group.id}-${choice.id}`}
-              >
-                <span className="flex flex-wrap items-center gap-2 font-semibold">
-                  {selected && <Check className="size-4 text-primary" />}
-                  {choice.title}
-                  {choice.featureName && <Badge variant="outline">{choice.featureName}</Badge>}
-                </span>
-                <span className="text-sm leading-6 text-muted-foreground">{choice.summary}</span>
-              </button>
-              <DecisionChoiceDetails
-                group={group}
-                choice={choice}
-                selected={selected}
-                onSelect={() => onSelect(group, choice)}
-              />
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
-function ProjectSummaryCard({
-  state,
+function PreviewProjectDialog({
+  previewUrl,
+  diffUrl,
   createUrl,
-  featureCount,
+  command,
+  curl
+}: {
+  previewUrl: string;
+  diffUrl: string;
+  createUrl: string;
+  command: string;
+  curl: string;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline">
+          <FileCode2 className="size-4" />
+          Preview project
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Preview project</DialogTitle>
+          <DialogDescription>
+            Inspect generated output endpoints and commands for the current Launch settings.
+          </DialogDescription>
+        </DialogHeader>
+        <Tabs defaultValue="files" className="gap-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 md:grid-cols-4">
+            <TabsTrigger value="files">Files</TabsTrigger>
+            <TabsTrigger value="diff">Diff</TabsTrigger>
+            <TabsTrigger value="json">Request JSON</TabsTrigger>
+            <TabsTrigger value="commands">Commands</TabsTrigger>
+          </TabsList>
+          <TabsContent value="files" className="grid gap-4">
+            <Alert>
+              <FileCode2 className="size-4" />
+              <AlertTitle>Live preview opens from Micronaut Launch</AlertTitle>
+              <AlertDescription>
+                The backend preview response lists generated files. This static page opens it directly because cross-origin reads are not available here.
+              </AlertDescription>
+            </Alert>
+            <div className="grid gap-2 rounded-lg border bg-muted/40 p-4 text-sm">
+              <div className="font-medium">Expected project shape</div>
+              <code>build.gradle.kts or build.gradle</code>
+              <code>src/main/&lt;language&gt;/...</code>
+              <code>src/main/resources/application.properties</code>
+              <code>micronaut-cli.yml</code>
+            </div>
+            <Button asChild>
+              <a href={previewUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="size-4" />
+                Open live preview
+              </a>
+            </Button>
+          </TabsContent>
+          <TabsContent value="diff" className="grid gap-4">
+            <CodeBlock value={diffUrl} label="Diff endpoint" />
+            <Button asChild variant="outline">
+              <a href={diffUrl} target="_blank" rel="noreferrer">
+                <Braces className="size-4" />
+                Open live diff
+              </a>
+            </Button>
+          </TabsContent>
+          <TabsContent value="json" className="grid gap-4">
+            <CodeBlock value={previewUrl} label="Preview endpoint" />
+            <CodeBlock value={createUrl} label="Create endpoint" />
+          </TabsContent>
+          <TabsContent value="commands" className="grid gap-4">
+            <CodeBlock value={command} label="Micronaut CLI" />
+            <CodeBlock value={curl} label="cURL" />
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LaunchPanel({
+  state,
+  runtime,
+  testLabel,
+  createUrl,
+  previewUrl,
+  diffUrl,
+  command,
+  curl,
+  shareUrl,
+  selectedFeatures,
+  decisionGroups,
   catalogCount,
   conflictedDecisionGroups,
   source,
-  generatedAt
+  generatedAt,
+  onRemoveFeature
 }: {
   state: FormState;
+  runtime: string;
+  testLabel: string;
   createUrl: string;
-  featureCount: number;
+  previewUrl: string;
+  diffUrl: string;
+  command: string;
+  curl: string;
+  shareUrl: string;
+  selectedFeatures: LaunchFeature[];
+  decisionGroups: ResolvedDecisionGroup[];
   catalogCount: number;
   conflictedDecisionGroups: ResolvedDecisionGroup[];
   source: LaunchInitialData["source"];
   generatedAt: string;
+  onRemoveFeature: (featureName: string) => void;
 }) {
+  const optionalFeatureCount = selectedFeatures.length;
+  const defaultDecisionCount = decisionGroups.filter((group) => !group.conflicted && group.selectedChoices.length === 0).length;
+  const customizedDecisionCount = decisionGroups.filter((group) => !group.conflicted && group.selectedChoices.length > 0).length;
+  const readiness = conflictedDecisionGroups.length > 0 ? "Needs review" : "Ready";
+
   return (
-    <Card className="border-primary/20">
-      <CardHeader>
+    <Card className="border-primary/20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+      <CardHeader className="gap-4">
         <div className="grid gap-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle>Project summary</CardTitle>
+            <CardTitle>Launch Panel</CardTitle>
             <Badge variant={conflictedDecisionGroups.length > 0 ? "outline" : "secondary"}>
-              {conflictedDecisionGroups.length > 0 ? "Needs review" : "Ready"}
+              {readiness}
             </Badge>
           </div>
           <CardDescription data-testid="project-coordinate">
             {projectName(state.appName, state.basePackage)}
           </CardDescription>
         </div>
+        <div className="grid gap-2 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Runtime</span>
+            <span className="text-right font-medium">{runtime}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Tests</span>
+            <span className="font-medium">{testLabel}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Features</span>
+            <span className="font-medium">{optionalFeatureCount} optional</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">Conflicts</span>
+            <span className="font-medium">{conflictedDecisionGroups.length === 0 ? "None" : conflictedDecisionGroups.length}</span>
+          </div>
+        </div>
+        <div className="grid gap-2">
+          <Button asChild size="lg" className="w-full">
+            <a href={createUrl} data-testid="download-project">
+              <ArrowDownToLine className="size-4" />
+              Download ZIP
+            </a>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <a href={previewUrl} target="_blank" rel="noreferrer" data-testid="preview-url">
+              <FileCode2 className="size-4" />
+              Preview project
+            </a>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <div className="grid gap-2 text-sm">
-          <div className="flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2">
-            <span className="text-muted-foreground">Runtime</span>
-            <span className="text-right font-medium">
-              {state.lang} / {state.build} / {state.javaVersion.replace("JDK_", "JDK ")}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2">
-            <span className="text-muted-foreground">Tests</span>
-            <span className="font-medium">{state.test}</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2">
-            <span className="text-muted-foreground">Features</span>
-            <span className="font-medium">{featureCount}</span>
-          </div>
-        </div>
+        <Textarea readOnly value={createUrl} data-testid="create-url" className="sr-only" tabIndex={-1} aria-hidden="true" />
+        <Tabs defaultValue="summary" className="gap-4">
+          <TabsList className="grid h-auto w-full grid-cols-4">
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="features">Features</TabsTrigger>
+            <TabsTrigger value="commands">Commands</TabsTrigger>
+            <TabsTrigger value="share">Share</TabsTrigger>
+          </TabsList>
 
-        <div className="flex flex-wrap gap-2">
-          <Badge variant={source === "live" ? "default" : "outline"}>
-            {source === "live" ? "Live backend" : "Fallback catalog"}
-          </Badge>
-          <Badge variant="outline">{catalogCount} feature options</Badge>
-          <Badge variant="outline">{new Date(generatedAt).toLocaleDateString()}</Badge>
-        </div>
+          <TabsContent value="summary" className="grid gap-4">
+            {conflictedDecisionGroups.length > 0 && (
+              <Alert variant="destructive">
+                <ShieldAlert className="size-4" />
+                <AlertTitle>One-choice conflict</AlertTitle>
+                <AlertDescription>
+                  {conflictedDecisionGroups.map((group) => group.title).join(", ")} has multiple selected choices.
+                </AlertDescription>
+              </Alert>
+            )}
+            <div className="grid gap-2 text-sm">
+              <div className="flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2">
+                <span className="text-muted-foreground">Runtime</span>
+                <span className="text-right font-medium">{runtime}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2">
+                <span className="text-muted-foreground">Decisions</span>
+                <span className="font-medium">
+                  {customizedDecisionCount > 0 ? `${customizedDecisionCount} customized` : `${defaultDecisionCount} defaults`}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2">
+                <span className="text-muted-foreground">Features</span>
+                <span className="font-medium">{optionalFeatureCount} optional</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-md bg-muted/60 px-3 py-2">
+                <span className="text-muted-foreground">Conflicts</span>
+                <span className="font-medium">{conflictedDecisionGroups.length === 0 ? "None" : conflictedDecisionGroups.length}</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={source === "live" ? "default" : "outline"}>
+                {source === "live" ? "Live backend" : "Fallback catalog"}
+              </Badge>
+              <Badge variant="outline">{catalogCount} feature options</Badge>
+              <Badge variant="outline">{new Date(generatedAt).toLocaleDateString()}</Badge>
+            </div>
+          </TabsContent>
 
-        <Button asChild size="lg" className="w-full">
-          <a href={createUrl} data-testid="download-project">
-            <ArrowDownToLine className="size-4" />
-            Download ZIP
-          </a>
-        </Button>
+          <TabsContent value="features" className="grid gap-4">
+            <div className="grid gap-2">
+              <p className="text-sm font-semibold">Framework decisions</p>
+              <div className="grid gap-2">
+                {decisionGroups.map((group) => {
+                  const selected = group.selectedChoices[0];
+                  return (
+                    <div key={group.id} className="flex items-center justify-between gap-3 rounded-md border bg-muted/40 p-3 text-sm">
+                      <span className="text-muted-foreground">{group.title}</span>
+                      <Badge variant={group.conflicted ? "outline" : "secondary"}>
+                        {group.conflicted ? "Conflict" : selected?.title ?? group.defaultChoice?.title ?? "Default"}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <Separator />
+            <div className="grid gap-2">
+              <p className="text-sm font-semibold">Optional features</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedFeatures.length === 0 && <p className="text-sm text-muted-foreground">No optional features selected.</p>}
+                {selectedFeatures.map((feature) => (
+                  <Badge key={feature.name} variant="secondary" className="gap-1 py-1">
+                    {feature.name}
+                    <button type="button" aria-label={`Remove ${feature.title}`} onClick={() => onRemoveFeature(feature.name)}>
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="commands" className="grid gap-4">
+            <CodeBlock value={command} label="Micronaut CLI" />
+            <CodeBlock value={curl} label="cURL" />
+            <Separator />
+            <CodeBlock value={`unzip ${cleanSegment(state.appName, "demo")}.zip\ncd ${cleanSegment(state.appName, "demo")}\n${shellRunCommand(state)}`} label="Next steps" />
+          </TabsContent>
+
+          <TabsContent value="share" className="grid gap-4">
+            <div className="grid gap-3">
+              <p className="text-sm text-muted-foreground">
+                Share this configuration or copy the backend create endpoint for issue reports.
+              </p>
+              <Textarea readOnly value={shareUrl} className="min-h-20 text-xs" aria-label="Share URL" />
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                <Button type="button" variant="outline" onClick={() => void navigator.clipboard?.writeText(shareUrl)}>
+                  <Link2 className="size-4" />
+                  Copy share link
+                </Button>
+                <Button type="button" variant="outline" onClick={() => void navigator.clipboard?.writeText(createUrl)}>
+                  <Copy className="size-4" />
+                  Copy create URL
+                </Button>
+              </div>
+            </div>
+            <Separator />
+            <div className="grid gap-2">
+              <p className="text-sm font-semibold">Backend endpoints</p>
+              <Textarea readOnly value={createUrl} className="min-h-24 text-xs" aria-label="Create endpoint URL" />
+              <div className="grid gap-2">
+                <Button asChild variant="outline">
+                  <a href={diffUrl} target="_blank" rel="noreferrer">
+                    <Braces className="size-4" />
+                    Open live diff
+                  </a>
+                </Button>
+                <Button asChild variant="secondary">
+                  <a href="https://github.com/micronaut-projects/micronaut-starter" target="_blank" rel="noreferrer">
+                    <FolderGit2 className="size-4" />
+                    Starter source
+                  </a>
+                </Button>
+              </div>
+            </div>
+            <Alert>
+              <Sparkles className="size-4" />
+              <AlertTitle>Backend integration</AlertTitle>
+              <AlertDescription>
+                The page links directly to `launch.micronaut.io` for project generation. Preview and diff are opened as backend responses because cross-origin reads are not available from this static origin.
+              </AlertDescription>
+            </Alert>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
@@ -487,6 +937,9 @@ function ProjectSummaryCard({
 export function LaunchApp({ initialData }: LaunchAppProps) {
   const [state, setState] = useState<FormState>(() => initialState(initialData));
   const [featureQuery, setFeatureQuery] = useState("");
+  const [featureCategory, setFeatureCategory] = useState<FeatureCategoryId>("popular");
+  const [featureScope, setFeatureScope] = useState<FeatureScope>("compatible");
+  const [openDecisionGroupId, setOpenDecisionGroupId] = useState("configuration");
 
   const typeSlug = slugFromType(state.type, initialData.applicationTypes);
   const availableFeatures = initialData.featuresByType[typeSlug] ?? initialData.featuresByType.default ?? [];
@@ -495,35 +948,79 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
     [availableFeatures, state.features]
   );
   const conflictedDecisionGroups = decisionGroups.filter((group) => group.conflicted);
+  const decisionFeatureNames = useMemo(
+    () => new Set(decisionGroups.flatMap((group) => group.choices.flatMap((choice) => choice.featureName ? [choice.featureName] : []))),
+    [decisionGroups]
+  );
   const selectedFeatures = availableFeatures.filter((feature) => state.features.includes(feature.name));
+  const selectedDecisionFeatures = selectedFeatures.filter((feature) => decisionFeatureNames.has(feature.name));
+  const optionalSelectedFeatures = selectedFeatures.filter((feature) => !decisionFeatureNames.has(feature.name));
+  const explorableFeatures = availableFeatures.filter((feature) => !decisionFeatureNames.has(feature.name));
   const filteredFeatures = useMemo(() => {
     const query = featureQuery.trim().toLowerCase();
+    const byScope = featureScope === "selected"
+      ? explorableFeatures.filter((feature) => state.features.includes(feature.name))
+      : featureScope === "recommended"
+        ? explorableFeatures.filter(featureIsRecommended)
+        : explorableFeatures;
+    const byCategory = featureCategory === "all" || featureScope === "selected"
+      ? byScope
+      : byScope.filter((feature) => featureMatchesCategory(feature, featureCategory));
     const byQuery = query
-      ? availableFeatures.filter((feature) =>
-          [feature.name, feature.title, feature.description, feature.category ?? ""].some((value) =>
-            value.toLowerCase().includes(query)
-          )
-        )
-      : availableFeatures;
+      ? byCategory.filter((feature) => searchableFeatureText(feature).includes(query))
+      : byCategory;
 
     return [...byQuery].sort((left, right) => {
+      const leftSelected = state.features.includes(left.name) ? 0 : 1;
+      const rightSelected = state.features.includes(right.name) ? 0 : 1;
       const leftCategory = categoryOrder.indexOf(left.category ?? "");
       const rightCategory = categoryOrder.indexOf(right.category ?? "");
       const leftRank = leftCategory === -1 ? categoryOrder.length : leftCategory;
       const rightRank = rightCategory === -1 ? categoryOrder.length : rightCategory;
-      return leftRank - rightRank || left.title.localeCompare(right.title);
+      return leftSelected - rightSelected || leftRank - rightRank || left.title.localeCompare(right.title);
     });
-  }, [availableFeatures, featureQuery]);
+  }, [explorableFeatures, featureCategory, featureQuery, featureScope, state.features]);
 
   const createUrl = apiUrl(initialData.apiBaseUrl, "create", typeSlug, state);
   const previewUrl = apiUrl(initialData.apiBaseUrl, "preview", typeSlug, state);
   const diffUrl = apiUrl(initialData.apiBaseUrl, "diff", typeSlug, state);
   const command = cliCommand(typeSlug, state);
   const curl = `curl --location --request GET '${createUrl}' --output ${cleanSegment(state.appName, "demo")}.zip`;
+  const runtime = runtimeSummary(state, initialData);
+  const testLabel = optionLabel(initialData.selectOptions.test.options, state.test);
   const shareUrl =
     typeof window === "undefined"
       ? "/launch/"
-      : `${window.location.origin}/launch/?type=${typeSlug}&name=${encodeURIComponent(state.appName)}&features=${encodeURIComponent(state.features.join(","))}`;
+      : `${window.location.origin}/launch/?type=${typeSlug}&name=${encodeURIComponent(state.appName)}&package=${encodeURIComponent(state.basePackage)}&lang=${state.lang}&build=${state.build}&test=${state.test}&javaVersion=${state.javaVersion}&features=${encodeURIComponent(state.features.join(","))}`;
+  const defaultDecisionCount = decisionGroups.filter((group) => !group.conflicted && group.selectedChoices.length === 0).length;
+  const customizedDecisionCount = decisionGroups.filter((group) => !group.conflicted && group.selectedChoices.length > 0).length;
+  const sanitizedAppName = cleanSegment(state.appName, "demo");
+  const sanitizedPackage = packageName(state.basePackage);
+  const appNameAdjusted = sanitizedAppName !== state.appName.trim();
+  const packageAdjusted = sanitizedPackage !== state.basePackage.trim();
+
+  useEffect(() => {
+    if (openDecisionGroupId && decisionGroups.length > 0 && !decisionGroups.some((group) => group.id === openDecisionGroupId)) {
+      setOpenDecisionGroupId(decisionGroups[0].id);
+    }
+  }, [decisionGroups, openDecisionGroupId]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "/" && !isEditableShortcutTarget(event.target)) {
+        event.preventDefault();
+        document.getElementById("feature-search-input")?.focus();
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setFeatureCategory("all");
+        document.getElementById("feature-search-input")?.focus();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   function update(next: Partial<FormState>) {
     setState((current) => ({ ...current, ...next }));
@@ -543,6 +1040,7 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
       ...current,
       features: applyDecisionChoice(current.features, group, choice)
     }));
+    setOpenDecisionGroupId("");
   }
 
   function updateLanguage(value: string) {
@@ -567,40 +1065,13 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                 Configure project settings, choose stack decisions, add starter features, and generate a ZIP.
               </p>
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button type="button" variant="outline">
-                  <FileCode2 className="size-4" />
-                  Preview project JSON
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>Preview and diff use the real backend</DialogTitle>
-                  <DialogDescription>
-                    The static page can link to these API responses directly. Reading them in-browser from this origin is blocked by the backend CORS policy.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4">
-                  <CodeBlock value={previewUrl} label="Preview JSON endpoint" />
-                  <CodeBlock value={diffUrl} label="Diff endpoint" />
-                </div>
-                <DialogFooter>
-                  <Button asChild variant="outline">
-                    <a href={previewUrl} target="_blank" rel="noreferrer">
-                      <ExternalLink className="size-4" />
-                      Open preview
-                    </a>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <a href={diffUrl} target="_blank" rel="noreferrer">
-                      <Braces className="size-4" />
-                      Open diff
-                    </a>
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <PreviewProjectDialog
+              previewUrl={previewUrl}
+              diffUrl={diffUrl}
+              createUrl={createUrl}
+              command={command}
+              curl={curl}
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant={initialData.source === "live" ? "default" : "outline"}>
@@ -620,7 +1091,7 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
           <Card>
             <CardHeader>
               <CardTitle>Project settings</CardTitle>
-              <CardDescription>These fields map directly to the Micronaut Starter create, preview, and diff URL contract.</CardDescription>
+              <CardDescription>Start with the project identity and runtime defaults. The Launch Panel updates immediately.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-5">
               <div className="grid gap-4 md:grid-cols-2">
@@ -631,7 +1102,11 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                     value={state.appName}
                     onChange={(event) => update({ appName: event.target.value })}
                     data-testid="app-name"
+                    aria-invalid={appNameAdjusted}
                   />
+                  <p className={cn("text-xs text-muted-foreground", appNameAdjusted && "text-destructive")}>
+                    Generated artifact: {sanitizedAppName}
+                  </p>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="launch-package">Base package</Label>
@@ -640,7 +1115,11 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                     value={state.basePackage}
                     onChange={(event) => update({ basePackage: event.target.value })}
                     data-testid="base-package"
+                    aria-invalid={packageAdjusted}
                   />
+                  <p className={cn("text-xs text-muted-foreground", packageAdjusted && "text-destructive")}>
+                    Generated package: {sanitizedPackage}
+                  </p>
                 </div>
               </div>
 
@@ -682,16 +1161,25 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                 />
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant={state.build === "GRADLE" ? "default" : "outline"} size="sm" onClick={() => update({ build: "GRADLE" })} data-testid="build-gradle">
-                  Gradle
-                </Button>
-                <Button type="button" variant={state.lang === "JAVA" ? "default" : "outline"} size="sm" onClick={() => update({ lang: "JAVA", test: "JUNIT" })} data-testid="lang-java">
-                  Java
-                </Button>
-                <Button type="button" variant={state.test === "JUNIT" ? "default" : "outline"} size="sm" onClick={() => update({ test: "JUNIT" })} data-testid="test-junit">
-                  JUnit
-                </Button>
+              <div className="grid gap-3 rounded-lg border bg-muted/40 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm font-semibold">Runtime</span>
+                  <span className="text-sm text-muted-foreground">{runtime}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant={state.build === "GRADLE" ? "default" : "outline"} size="sm" onClick={() => update({ build: "GRADLE" })} data-testid="build-gradle">
+                    Gradle
+                  </Button>
+                  <Button type="button" variant={state.build === "GRADLE_KOTLIN" ? "default" : "outline"} size="sm" onClick={() => update({ build: "GRADLE_KOTLIN" })}>
+                    Gradle Kotlin
+                  </Button>
+                  <Button type="button" variant={state.lang === "JAVA" ? "default" : "outline"} size="sm" onClick={() => update({ lang: "JAVA", test: "JUNIT" })} data-testid="lang-java">
+                    Java
+                  </Button>
+                  <Button type="button" variant={state.test === "JUNIT" ? "default" : "outline"} size="sm" onClick={() => update({ test: "JUNIT" })} data-testid="test-junit">
+                    JUnit
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -702,7 +1190,7 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                 <div>
                   <CardTitle>Decision Center</CardTitle>
                   <CardDescription>
-                    Framework-wide choices are grouped so mutually exclusive features are easier to compare and replace.
+                    Review framework-wide choices without opening every default.
                   </CardDescription>
                 </div>
                 <Badge variant={conflictedDecisionGroups.length > 0 ? "outline" : "secondary"}>
@@ -711,6 +1199,13 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
               </div>
             </CardHeader>
             <CardContent className="grid gap-4" data-testid="decision-center">
+              <div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                <span>{decisionGroups.length} decisions checked</span>
+                <span aria-hidden="true">-</span>
+                <span>{conflictedDecisionGroups.length} conflicts</span>
+                <span aria-hidden="true">-</span>
+                <span>{customizedDecisionCount > 0 ? `${customizedDecisionCount} customized` : `${defaultDecisionCount} defaults`}</span>
+              </div>
               {conflictedDecisionGroups.length > 0 && (
                 <Alert variant="destructive">
                   <ShieldAlert className="size-4" />
@@ -720,9 +1215,15 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                   </AlertDescription>
                 </Alert>
               )}
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 {decisionGroups.map((group) => (
-                  <DecisionGroupCard key={group.id} group={group} onSelect={selectDecisionChoice} />
+                  <DecisionGroupPanel
+                    key={group.id}
+                    group={group}
+                    expanded={openDecisionGroupId === group.id}
+                    onToggle={() => setOpenDecisionGroupId(openDecisionGroupId === group.id ? "" : group.id)}
+                    onSelect={selectDecisionChoice}
+                  />
                 ))}
               </div>
             </CardContent>
@@ -733,18 +1234,19 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <CardTitle>Starter features</CardTitle>
-              <CardDescription>Feature names and categories come from the application-type feature endpoint.</CardDescription>
+                  <CardDescription>Search features, browse by category, or review selected additions.</CardDescription>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => update({ features: [] })}>
+                <Button type="button" variant="outline" size="sm" onClick={() => update({ features: state.features.filter((name) => decisionFeatureNames.has(name)) })}>
                   <X className="size-4" />
-                  Clear
+                  Clear optional
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-5">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
+                  id="feature-search-input"
                   className="pl-9"
                   placeholder="Search features, categories, or descriptions"
                   value={featureQuery}
@@ -752,141 +1254,108 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                   data-testid="feature-search"
                 />
               </div>
+              <Tabs value={featureCategory} onValueChange={(value) => setFeatureCategory(value as FeatureCategoryId)} className="gap-3">
+                <TabsList className="flex h-auto w-full flex-wrap justify-start">
+                  {featureCategories.map((category) => (
+                    <TabsTrigger key={category.id} value={category.id} className="flex-none">
+                      {category.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" variant={featureScope === "compatible" ? "default" : "outline"} size="sm" onClick={() => setFeatureScope("compatible")}>
+                  <ListFilter className="size-4" />
+                  Compatible
+                </Button>
+                <Button type="button" variant={featureScope === "selected" ? "default" : "outline"} size="sm" onClick={() => setFeatureScope("selected")}>
+                  Selected ({optionalSelectedFeatures.length})
+                </Button>
+                <Button type="button" variant={featureScope === "recommended" ? "default" : "outline"} size="sm" onClick={() => setFeatureScope("recommended")}>
+                  Recommended
+                </Button>
+                {(featureQuery || featureCategory !== "popular" || featureScope !== "compatible") && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFeatureQuery("");
+                      setFeatureCategory("popular");
+                      setFeatureScope("compatible");
+                    }}
+                  >
+                    <X className="size-4" />
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+              {featureScope === "selected" && selectedDecisionFeatures.length > 0 && (
+                <div className="grid gap-2 rounded-lg border bg-muted/40 p-4">
+                  <p className="text-sm font-semibold">Framework decision features</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDecisionFeatures.map((feature) => (
+                      <Badge key={feature.name} variant="outline">{feature.name}</Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    Change these from the Decision Center so one-choice groups stay consistent.
+                  </p>
+                </div>
+              )}
               <div className="grid max-h-[640px] gap-3 overflow-y-auto pr-1 md:grid-cols-2">
                 {filteredFeatures.slice(0, 80).map((feature) => (
                   <FeatureCard
                     key={feature.name}
                     feature={feature}
                     checked={state.features.includes(feature.name)}
+                    recommended={featureIsRecommended(feature)}
                     onToggle={() => toggleFeature(feature.name)}
                   />
                 ))}
+                {filteredFeatures.length === 0 && (
+                  <div className="rounded-lg border border-dashed p-8 text-center">
+                    <p className="font-semibold">No compatible features found for this filter.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Clear filters or switch to All.</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => {
+                        setFeatureQuery("");
+                        setFeatureCategory("all");
+                        setFeatureScope("compatible");
+                      }}
+                    >
+                      Show all features
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <aside className="grid gap-6 self-start lg:sticky lg:top-20">
-          <ProjectSummaryCard
+        <aside className="self-start lg:sticky lg:top-20">
+          <LaunchPanel
             state={state}
+            runtime={runtime}
+            testLabel={testLabel}
             createUrl={createUrl}
-            featureCount={state.features.length}
+            previewUrl={previewUrl}
+            diffUrl={diffUrl}
+            command={command}
+            curl={curl}
+            shareUrl={shareUrl}
+            selectedFeatures={optionalSelectedFeatures}
+            decisionGroups={decisionGroups}
             catalogCount={availableFeatures.length}
             conflictedDecisionGroups={conflictedDecisionGroups}
             source={initialData.source}
             generatedAt={initialData.generatedAt}
+            onRemoveFeature={toggleFeature}
           />
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Selected features</CardTitle>
-              <CardDescription>{selectedFeatures.length === 0 ? "No optional features selected" : `${selectedFeatures.length} optional feature${selectedFeatures.length === 1 ? "" : "s"}`}</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              {conflictedDecisionGroups.length > 0 && (
-                <Alert variant="destructive">
-                  <ShieldAlert className="size-4" />
-                  <AlertTitle>One-choice conflict</AlertTitle>
-                  <AlertDescription>
-                    {conflictedDecisionGroups.map((group) => group.title).join(", ")} has multiple selected choices.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="grid gap-2">
-                <p className="text-sm font-semibold">Decisions</p>
-                <div className="grid gap-2">
-                  {decisionGroups.map((group) => {
-                    const selected = group.selectedChoices[0];
-                    return (
-                      <div key={group.id} className="flex items-center justify-between gap-3 rounded-md border bg-muted/40 p-3 text-sm">
-                        <span className="text-muted-foreground">{group.title}</span>
-                        <Badge variant={group.conflicted ? "outline" : "secondary"}>
-                          {group.conflicted ? "Conflict" : selected?.title ?? "Default"}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="flex flex-wrap gap-2">
-                {selectedFeatures.length === 0 && <p className="text-sm text-muted-foreground">Generated projects still include Micronaut's required baseline files and dependencies.</p>}
-                {selectedFeatures.map((feature) => (
-                  <Badge key={feature.name} variant="secondary" className="gap-1 py-1">
-                    {feature.name}
-                    <button type="button" aria-label={`Remove ${feature.title}`} onClick={() => toggleFeature(feature.name)}>
-                      <X className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Generate</CardTitle>
-              <CardDescription>Secondary actions are built from the same backend URL.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              <Button asChild variant="outline">
-                <a href={previewUrl} target="_blank" rel="noreferrer" data-testid="preview-url">
-                  <ExternalLink className="size-4" />
-                  Open live preview JSON
-                </a>
-              </Button>
-              <Button asChild variant="outline">
-                <a href={diffUrl} target="_blank" rel="noreferrer">
-                  <FileCode2 className="size-4" />
-                  Open live diff
-                </a>
-              </Button>
-              <Button asChild variant="secondary">
-                <a href="https://github.com/micronaut-projects/micronaut-starter" target="_blank" rel="noreferrer">
-                  <FolderGit2 className="size-4" />
-                  Starter source
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Commands</CardTitle>
-              <CardDescription>Use the CLI or call the create endpoint directly.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <CodeBlock value={command} label="Micronaut CLI" />
-              <CodeBlock value={curl} label="cURL" />
-              <Separator />
-              <CodeBlock value={`unzip ${cleanSegment(state.appName, "demo")}.zip\ncd ${cleanSegment(state.appName, "demo")}\n${shellRunCommand(state)}`} label="Next steps" />
-            </CardContent>
-          </Card>
-
-          <Alert>
-            <Sparkles className="size-4" />
-            <AlertTitle>Backend integration</AlertTitle>
-            <AlertDescription>
-              The page links directly to `launch.micronaut.io` for project generation. Preview and diff are opened as backend responses because cross-origin reads are not available from this static origin.
-            </AlertDescription>
-          </Alert>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Share payload</CardTitle>
-              <CardDescription>Useful for testing and issue reports.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              <Textarea readOnly value={createUrl} data-testid="create-url" className="min-h-24 text-xs" />
-              <Button type="button" variant="outline" onClick={() => void navigator.clipboard?.writeText(shareUrl)}>
-                <Link2 className="size-4" />
-                Copy share link
-              </Button>
-            </CardContent>
-          </Card>
         </aside>
       </section>
     </main>

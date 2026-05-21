@@ -5,23 +5,23 @@ import { MicronautLogo } from "@/components/web/micronaut-logo";
 ---
 
 <footer class="border-t bg-card">
-  <div class="mx-auto grid max-w-[1200px] gap-8 px-4 py-10 md:px-6 lg:grid-cols-[minmax(0,1fr)_2fr]">
+  <div class="mx-auto grid max-w-[1240px] gap-10 px-4 py-12 md:px-6 lg:grid-cols-[minmax(0,1fr)_2.2fr]">
     <div>
       <a href="/" class="inline-flex items-center">
         <MicronautLogo />
       </a>
-      <p class="mt-4 max-w-sm text-sm leading-6 text-muted-foreground">
-        A modern, JVM-based framework for fast cloud applications.
+      <p class="mt-4 max-w-sm text-[0.95rem] leading-7 text-muted-foreground">
+        Micronaut is a modern JVM framework for building modular, testable cloud applications.
       </p>
     </div>
-    <nav class="grid gap-6 sm:grid-cols-2 lg:grid-cols-5" aria-label="Main site footer">
+    <nav class="grid gap-7 sm:grid-cols-2 lg:grid-cols-5" aria-label="Main site footer">
       {mainSiteFooterGroups.map((group) => (
         <div>
-          <h2 class="text-sm font-semibold text-foreground">{group.title}</h2>
-          <ul class="mt-3 grid gap-2">
+          <h2 class="text-[0.92rem] font-semibold text-foreground">{group.title}</h2>
+          <ul class="mt-4 grid gap-2.5">
             {group.links.map((link) => (
               <li>
-                <a class="text-sm text-muted-foreground transition-colors hover:text-foreground" href={link.href}>
+                <a class="text-[0.88rem] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" href={link.href}>
                   {link.label}
                 </a>
               </li>
@@ -31,7 +31,7 @@ import { MicronautLogo } from "@/components/web/micronaut-logo";
       ))}
     </nav>
     <Separator className="lg:col-span-2" />
-    <p class="text-xs text-muted-foreground lg:col-span-2">
+    <p class="text-[0.82rem] leading-6 text-muted-foreground lg:col-span-2">
       Micronaut is a registered trademark of Object Computing, Inc. This Astro site keeps the public website, docs, guides, and Launch experience on one shared visual system.
     </p>
   </div>

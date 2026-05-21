@@ -11,7 +11,7 @@ const examples = [
     id: "server",
     label: "HTTP server",
     title: "Non-Blocking HTTP Server Based on Netty",
-    description: "Create an endpoint with familiar annotations and a compact controller.",
+    description: "Create an endpoint with familiar annotations.",
     language: "Java",
     code: `import io.micronaut.http.annotation.*;
 
@@ -32,7 +32,7 @@ class HelloController {
     id: "client",
     label: "Declarative client",
     title: "Declarative, Reactive, Compile-Time HTTP Client",
-    description: "Declare a type-safe HTTP client and let Micronaut generate the implementation.",
+    description: "Generate a declarative HTTP client from the same contract.",
     language: "Java",
     code: `import io.micronaut.http.annotation.Get;
 import io.micronaut.http.client.annotation.Client;
@@ -48,7 +48,7 @@ public interface HelloClient {
     id: "testing",
     label: "Test",
     title: "Fast and Easy Testing",
-    description: "Test the controller and client in the same application model.",
+    description: "Run framework-integrated tests with dependency injection support.",
     language: "Java",
     code: `import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -70,7 +70,7 @@ class HelloControllerTest {
     id: "launch",
     label: "Launch command",
     title: "Create a Micronaut Application",
-    description: "Generate a project with the build, language, and features that match your stack.",
+    description: "Start a project with the features you need.",
     language: "Shell",
     code: `mn create-app example.micronaut.demo \\
   --build=gradle \\
@@ -133,12 +133,12 @@ export function MainCodeShowcase() {
 
   return (
     <Tabs defaultValue="server" className="gap-4">
-      <TabsList className="grid h-auto w-full grid-cols-2 bg-muted p-1 sm:grid-cols-4">
+      <TabsList className="grid h-auto w-full grid-cols-2 bg-muted p-1.5 sm:grid-cols-4">
         {examples.map((example) => (
           <TabsTrigger
             key={example.id}
             value={example.id}
-            className="min-h-10 text-wrap px-2 text-xs data-[state=active]:border-primary/30 data-[state=active]:bg-card data-[state=active]:text-foreground sm:text-sm"
+            className="min-h-11 text-wrap px-2 text-[0.82rem] data-[state=active]:border data-[state=active]:border-primary/40 data-[state=active]:bg-card data-[state=active]:text-foreground sm:text-sm"
           >
             {example.label}
           </TabsTrigger>
@@ -146,27 +146,29 @@ export function MainCodeShowcase() {
       </TabsList>
       {examples.map((example) => (
         <TabsContent key={example.id} value={example.id} className="mt-0">
-          <div className="overflow-hidden rounded-lg border border-[#26313a] bg-[#151a20] text-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <div className="overflow-hidden rounded-lg border border-[#32404a] bg-[#151a20] text-white shadow-sm">
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
               <div className="min-w-0">
-                <p className="text-sm font-semibold">{example.title}</p>
-                <p className="mt-1 text-xs leading-5 text-white/60">{example.description}</p>
+                <p className="text-[0.95rem] font-semibold">{example.title}</p>
+                <p className="mt-1 text-sm leading-6 text-white/70">{example.description}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="rounded bg-white/10 px-2 py-1 text-[11px] text-white/70">{example.language}</span>
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-sm"
-                  className="text-white hover:bg-white/10 hover:text-white"
+                  size="sm"
+                  className="min-w-24 text-white hover:bg-white/10 hover:text-white"
                   aria-label={`Copy ${example.label} example`}
+                  aria-live="polite"
                   onClick={() => copyExample(example.id, example.code)}
                 >
                   {copied === example.id ? <Check className="size-4" /> : <Copy className="size-4" />}
+                  <span>{copied === example.id ? "Copied" : "Copy"}</span>
                 </Button>
               </div>
             </div>
-            <pre className="max-h-[420px] overflow-auto p-4 text-[12px] leading-[1.7] text-[#d8dee9] sm:text-[13.5px]">
+            <pre className="max-h-[440px] overflow-auto p-5 text-[13px] leading-[1.75] text-[#d8dee9] sm:text-[14px]">
               <code><HighlightedCode code={example.code} /></code>
             </pre>
           </div>
