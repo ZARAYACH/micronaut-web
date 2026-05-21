@@ -33,6 +33,7 @@ class MicronautWebRootPlugin : Plugin<Project> {
             description = "Builds the Astro static site and plain HTML template artifacts."
             workingDir = project.rootDir
             commandLine(npmExecutable(), "run", "build")
+            doNotTrackState("The Astro build rewrites the generated dist tree while Gradle would otherwise snapshot it.")
 
             inputs.file(project.layout.projectDirectory.file("package.json"))
             inputs.file(project.layout.projectDirectory.file("package-lock.json"))
