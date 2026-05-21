@@ -1461,7 +1461,7 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col overflow-hidden">
+    <main className="flex min-h-[calc(100dvh-57px)] flex-col overflow-hidden">
       <section className="shrink-0 border-b bg-card">
         <div className="mx-auto grid max-w-[1440px] gap-2 px-4 py-3 md:px-6">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
@@ -1500,15 +1500,15 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
 
       <section className="mx-auto grid min-h-0 w-full max-w-[1440px] flex-1 px-4 py-3 md:px-6">
         <Tabs defaultValue="settings" className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3" data-testid="builder-tabs">
-            <TabsList className="grid h-auto w-full shrink-0 grid-cols-2 gap-1 p-1 lg:grid-cols-4">
-              <TabsTrigger value="settings" className="h-auto justify-start gap-2 px-2 py-2 text-left">
+            <TabsList className="flex h-auto w-full shrink-0 justify-start gap-1 overflow-x-auto p-1">
+              <TabsTrigger value="settings" className="h-auto min-w-[11.5rem] flex-none justify-start gap-2 px-2 py-2 text-left lg:min-w-0 lg:flex-1">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-semibold">1</span>
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold leading-4">Project settings</span>
                   <span className="block truncate text-[0.68rem] font-normal text-muted-foreground">{projectName(state.appName, state.basePackage)}</span>
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="decisions" className="h-auto justify-start gap-2 px-2 py-2 text-left">
+              <TabsTrigger value="decisions" className="h-auto min-w-[11.5rem] flex-none justify-start gap-2 px-2 py-2 text-left lg:min-w-0 lg:flex-1">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-semibold">2</span>
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold leading-4">Decision Center</span>
@@ -1517,14 +1517,14 @@ export function LaunchApp({ initialData }: LaunchAppProps) {
                   </span>
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="features" className="h-auto justify-start gap-2 px-2 py-2 text-left">
+              <TabsTrigger value="features" className="h-auto min-w-[11.5rem] flex-none justify-start gap-2 px-2 py-2 text-left lg:min-w-0 lg:flex-1">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-semibold">3</span>
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold leading-4">Starter features</span>
                   <span className="block truncate text-[0.68rem] font-normal text-muted-foreground">{optionalSelectedFeatures.length} optional</span>
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="launch" className="h-auto justify-start gap-2 px-2 py-2 text-left">
+              <TabsTrigger value="launch" className="h-auto min-w-[11.5rem] flex-none justify-start gap-2 px-2 py-2 text-left lg:min-w-0 lg:flex-1">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-semibold">4</span>
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold leading-4">Launch Panel</span>

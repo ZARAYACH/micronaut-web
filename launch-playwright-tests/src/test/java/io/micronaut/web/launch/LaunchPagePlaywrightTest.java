@@ -54,6 +54,7 @@ class LaunchPagePlaywrightTest {
             page.getByTestId("decision-http-client-http-client").click();
             page.getByTestId("decision-row-http-client").click();
             page.getByTestId("decision-http-client-http-client-jdk").click();
+            page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Launch Panel")).click();
 
             var createUrl = page.getByTestId("create-url").inputValue();
             var decodedCreateUrl = URLDecoder.decode(createUrl, StandardCharsets.UTF_8);
@@ -66,7 +67,6 @@ class LaunchPagePlaywrightTest {
             assertTrue(!decodedCreateUrl.contains("features=http-client,"), decodedCreateUrl);
             assertTrue(!decodedCreateUrl.contains(",http-client,"), decodedCreateUrl);
 
-            page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Launch Panel")).click();
             Download download = page.waitForDownload(() -> page.getByTestId("download-project").click());
             assertEquals("demo.zip", download.suggestedFilename());
             var zipPath = tempDir.resolve(download.suggestedFilename());
@@ -89,6 +89,7 @@ class LaunchPagePlaywrightTest {
 
             page.navigate(baseUrl + "?type=default&name=orders&package=com.acme&lang=JAVA&build=GRADLE&test=JUNIT&javaVersion=JDK_21&features=management,problem-json,http-client-jdk");
             page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Build a Micronaut project")).waitFor();
+            page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Launch Panel")).click();
             page.waitForFunction("() => document.querySelector('[data-testid=\"create-url\"]')?.value.includes('com.acme.orders')");
 
             var createUrl = page.getByTestId("create-url").inputValue();

@@ -24,7 +24,11 @@ const fallbackData: LaunchInitialData = {
       defaultOption: { title: "Micronaut Application", description: "A Micronaut Application", name: "default", value: "DEFAULT", label: "Micronaut Application" }
     },
     jdkVersion: {
-      options: [{ description: "JDK_25", name: "JDK_25", value: "JDK_25", label: "25" }],
+      options: [
+        { description: "JDK_17", name: "JDK_17", value: "JDK_17", label: "17" },
+        { description: "JDK_21", name: "JDK_21", value: "JDK_21", label: "21" },
+        { description: "JDK_25", name: "JDK_25", value: "JDK_25", label: "25" }
+      ],
       defaultOption: { description: "JDK_25", name: "JDK_25", value: "JDK_25", label: "25" }
     },
     lang: {
@@ -61,8 +65,18 @@ const fallbackData: LaunchInitialData = {
   ],
   featuresByType: {
     default: [
+      { name: "properties", title: "Java Properties", description: "Uses Java properties for application configuration", category: "Configuration", preview: false, community: false },
+      { name: "yaml", title: "YAML Configuration", description: "Uses YAML for application configuration", category: "Configuration", preview: false, community: false },
+      { name: "toml", title: "TOML Configuration", description: "Uses TOML for application configuration", category: "Configuration", preview: false, community: false },
       { name: "serialization-jackson", title: "Micronaut Serialization Jackson Core", description: "Adds support using Micronaut Serialization with Jackson Core", category: "API", preview: false, community: false },
       { name: "management", title: "Micronaut Management", description: "Adds management and monitoring endpoints", category: "Management", preview: false, community: false },
+      { name: "problem-json", title: "Problem JSON", description: "Adds application/problem+json style responses", category: "API", preview: false, community: false },
+      { name: "http-client", title: "Micronaut HTTP Client", description: "Adds the standard Micronaut HTTP client", category: "Client", preview: false, community: false },
+      { name: "http-client-jdk", title: "JDK HTTP Client", description: "Adds the JDK HTTP client integration", category: "Client", preview: false, community: false },
+      { name: "reactor", title: "Reactor", description: "Adds Project Reactor support", category: "Reactive", preview: false, community: false },
+      { name: "rxjava3", title: "RxJava 3", description: "Adds RxJava 3 support", category: "Reactive", preview: false, community: false },
+      { name: "reactor-http-client", title: "Reactor HTTP Client", description: "Adds the Reactor variation of the Micronaut HTTP client", category: "Client", preview: false, community: false },
+      { name: "rxjava3-http-client", title: "RxJava 3 HTTP Client", description: "Adds the RxJava 3 variation of the Micronaut HTTP client", category: "Client", preview: false, community: false },
       { name: "openapi", title: "OpenAPI Support", description: "Adds support for OpenAPI (Swagger)", category: "API", preview: false, community: false },
       { name: "data-jdbc", title: "Micronaut Data JDBC", description: "Adds support for Micronaut Data JDBC", category: "Database", preview: false, community: false },
       { name: "validation", title: "Micronaut Validation", description: "Adds support for Micronaut Validation", category: "Validation", preview: false, community: false }
