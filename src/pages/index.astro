@@ -345,7 +345,7 @@ const codeProofs = ["Same annotations across server and client", "Compile-time m
             <div class="grid grid-cols-2 gap-3">
               {cloudLogos.map((item) => (
                 <div class="grid min-h-14 place-items-center gap-1.5 rounded-md bg-muted p-2.5 text-center transition hover:bg-accent" title={item.label}>
-                  <IconGlyph name={item.icon} className="size-5" />
+                  <IconGlyph name={item.icon} className="size-5 dark:brightness-0 dark:invert" />
                   <span class="text-[0.72rem] font-medium leading-4 text-muted-foreground">{item.label}</span>
                 </div>
               ))}
