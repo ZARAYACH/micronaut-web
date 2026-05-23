@@ -28,6 +28,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/platform-docs/repos"
           git clone --depth 1 https://github.com/micronaut-projects/micronaut-platform.git "$RUNNER_TEMP/platform-docs/repos/micronaut-platform"
 
+      - name: Check out guides project
+        run: git clone --depth 1 https://github.com/micronaut-projects/micronaut-guides.git "$RUNNER_TEMP/micronaut-guides"
+
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
@@ -52,6 +55,9 @@ jobs:
           PLATFORM_DOCS_RENDER_ALL: "true"
           PLATFORM_DOCS_RENDER_STRICT: "true"
           PLATFORM_DOCS_SYNC_SOURCES: "true"
+          MICRONAUT_GUIDES_DIR: ${{ runner.temp }}/micronaut-guides
+          GUIDES_RENDER_ALL: "true"
+          GUIDES_RENDER_STRICT: "true"
         run: npm run build
 
       - name: Configure GitHub Pages

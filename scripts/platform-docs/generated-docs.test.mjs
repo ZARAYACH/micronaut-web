@@ -17,8 +17,9 @@ test("generated docs are prepared before Astro dev and build", async () => {
   const packageJson = JSON.parse(await fs.readFile(path.join(projectDirectory, "package.json"), "utf8"));
 
   assert.equal(packageJson.scripts["prepare:generated-docs"], "npm run render:platform-docs");
-  assertScriptOrder(packageJson.scripts.dev, "npm run prepare:generated-docs", "astro dev");
-  assertScriptOrder(packageJson.scripts.build, "npm run prepare:generated-docs", "astro build");
+  assert.equal(packageJson.scripts["prepare:generated-content"], "node scripts/prepare-generated-content.mjs");
+  assertScriptOrder(packageJson.scripts.dev, "npm run prepare:generated-content", "astro dev");
+  assertScriptOrder(packageJson.scripts.build, "npm run prepare:generated-content", "astro build");
 });
 
 test("generated docs fragments and assets are ignored and not tracked source", async () => {
@@ -303,6 +304,8 @@ test("platform docs project manifest can be derived from Micronaut Platform libr
 
 test("platform docs commandline source blocks use shell highlighting", () => {
   assert.equal(shikiLanguage("commandline"), "shellscript");
+  assert.equal(shikiLanguage("graphqls"), "graphql");
+  assert.equal(shikiLanguage("mysql"), "sql");
 });
 
 test("docs routes render generated fragments and serve generated assets", async () => {

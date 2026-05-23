@@ -64,6 +64,15 @@ export type ProtocolGuideVariant = {
   href: string;
 };
 
+export type ProtocolGuideApp = {
+  name: string;
+  applicationType?: string;
+  features: string[];
+  javaFeatures?: string[];
+  kotlinFeatures?: string[];
+  groovyFeatures?: string[];
+};
+
 export type ProtocolGuide = {
   slug: string;
   title: string;
@@ -75,6 +84,7 @@ export type ProtocolGuide = {
   href: string;
   sourcePath: string;
   estimatedMinutes: number;
+  apps?: ProtocolGuideApp[];
   variants: ProtocolGuideVariant[];
   searchTerms: string[];
 };

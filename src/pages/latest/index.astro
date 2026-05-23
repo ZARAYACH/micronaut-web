@@ -1,0 +1,11 @@
+---
+import WebLayout from "@/layouts/WebLayout.astro";
+import LatestGuidesCatalog from "@/components/web/latest-guides-catalog.astro";
+import { readGeneratedGuidesManifest } from "@/lib/generated-guides";
+
+const manifest = await readGeneratedGuidesManifest();
+---
+
+<WebLayout title="Micronaut Guides" surface="guides">
+  <LatestGuidesCatalog guides={manifest.guides} />
+</WebLayout>

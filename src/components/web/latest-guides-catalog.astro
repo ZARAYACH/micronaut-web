@@ -1,0 +1,105 @@
+---
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LatestGuideCard } from "@/components/web/latest-guide-card";
+import { guideTagPath, latestGuides, type GeneratedGuide } from "@/lib/generated-guides";
+import { withBasePath } from "@/lib/base-path";
+
+type Props = {
+  guides: GeneratedGuide[];
+  activeTag?: string;
+};
+
+const { guides, activeTag } = Astro.props;
+const visibleGuides = activeTag ? guides.filter((guide) => guide.tags.includes(activeTag)) : guides;
+const categoryGroups = new Map<string, GeneratedGuide[]>();
+for (const guide of visibleGuides) {
+  const category = guide.categories[0] || "Guides";
+  categoryGroups.set(category, [...(categoryGroups.get(category) || []), guide]);
+}
+const tags = Array.from(new Set(guides.flatMap((guide) => guide.tags))).sort();
+const recentGuides = latestGuides(visibleGuides, 6);
+---
+
+<main class="mx-auto grid w-full max-w-[1320px] gap-8 px-4 py-8 md:px-6 lg:py-10">
+  <header class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
+    <div class="max-w-3xl">
+      <Badge variant="secondary">{activeTag ? "Tag" : "Guides"}</Badge>
+      <h1 class="mt-5 text-4xl font-bold tracking-tight md:text-5xl">
+        {activeTag ? `Micronaut Guides: ${activeTag}` : "Micronaut Guides"}
+      </h1>
+      <p class="mt-4 text-lg leading-8 text-muted-foreground">
+        Learn how to build Micronaut applications with focused tutorials, runnable examples, and language/build variants.
+      </p>
+    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Catalog</CardTitle>
+        <CardDescription>Published guide replacement for the legacy latest guide index.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid grid-cols-3 gap-3">
+        <div class="rounded-lg bg-muted p-3">
+          <div class="text-xl font-semibold">{visibleGuides.length}</div>
+          <div class="text-xs text-muted-foreground">Guides</div>
+        </div>
+        <div class="rounded-lg bg-muted p-3">
+          <div class="text-xl font-semibold">{categoryGroups.size}</div>
+          <div class="text-xs text-muted-foreground">Topics</div>
+        </div>
+        <div class="rounded-lg bg-muted p-3">
+          <div class="text-xl font-semibold">{tags.length}</div>
+          <div class="text-xs text-muted-foreground">Tags</div>
+        </div>
+      </CardContent>
+    </Card>
+  </header>
+
+  {!activeTag && recentGuides.length > 0 && (
+    <section class="grid gap-4">
+      <div class="flex items-center justify-between gap-4">
+        <h2 class="text-2xl font-semibold tracking-tight">Latest Guides</h2>
+      </div>
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {recentGuides.map((guide) => <LatestGuideCard guide={guide} />)}
+      </div>
+    </section>
+  )}
+
+  {tags.length > 0 && (
+    <section class="flex flex-wrap gap-2">
+      {tags.slice(0, 80).map((tag) => (
+        <a href={withBasePath(guideTagPath(tag))} class="no-underline">
+          <Badge variant={tag === activeTag ? "default" : "outline"}>{tag}</Badge>
+        </a>
+      ))}
+    </section>
+  )}
+
+  <section class="grid gap-7">
+    {Array.from(categoryGroups.entries()).map(([category, categoryGuides]) => (
+      <div class="grid gap-4">
+        <h2 class="text-2xl font-semibold tracking-tight">{category}</h2>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {categoryGuides.map((guide) => <LatestGuideCard guide={guide} />)}
+        </div>
+      </div>
+    ))}
+  </section>
+</main>
+
+{visibleGuides.length === 0 && (
+  <main class="mx-auto max-w-[960px] px-4 py-12 md:px-6">
+    <Card>
+      <CardHeader>
+        <CardTitle>No guides found</CardTitle>
+        <CardDescription>The generated guide catalog does not contain entries for this filter.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button asChild>
+          <a href={withBasePath("/latest/index.html")}>Open all guides</a>
+        </Button>
+      </CardContent>
+    </Card>
+  </main>
+)}

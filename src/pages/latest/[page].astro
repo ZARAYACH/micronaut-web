@@ -1,0 +1,357 @@
+---
+import WebLayout from "@/layouts/WebLayout.astro";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import GeneratedDocsEnhancer from "@/components/web/generated-docs-enhancer.astro";
+import LatestGuidesCatalog from "@/components/web/latest-guides-catalog.astro";
+import {
+  allGeneratedGuideTags,
+  guideOptionPath,
+  guideOverviewPath,
+  guideTagPath,
+  readGeneratedGuideFragment,
+  readGeneratedGuidesManifest,
+  tagSlug,
+  type GeneratedGuide,
+  type GeneratedGuideOption
+} from "@/lib/generated-guides";
+import { withBasePath } from "@/lib/base-path";
+
+type TagProps = {
+  kind: "tag";
+  tag: string;
+  guides: GeneratedGuide[];
+};
+
+type OverviewProps = {
+  kind: "overview";
+  guide: GeneratedGuide;
+};
+
+type VariantProps = {
+  kind: "variant";
+  guide: GeneratedGuide;
+  option: GeneratedGuideOption;
+};
+
+export async function getStaticPaths() {
+  const manifest = await readGeneratedGuidesManifest();
+  const paths: Array<{ params: { page: string }; props: TagProps | OverviewProps | VariantProps }> = [];
+  for (const tag of allGeneratedGuideTags(manifest.guides)) {
+    paths.push({
+      params: { page: `tag-${tagSlug(tag)}` },
+      props: { kind: "tag", tag, guides: manifest.guides }
+    });
+  }
+  for (const guide of manifest.guides) {
+    paths.push({
+      params: { page: guide.slug },
+      props: { kind: "overview", guide }
+    });
+    for (const option of guide.options) {
+      paths.push({
+        params: { page: option.file.replace(/\.html$/, "") },
+        props: { kind: "variant", guide, option }
+      });
+    }
+  }
+  return paths;
+}
+
+const props = Astro.props as TagProps | OverviewProps | VariantProps;
+let fragmentHtml: string | undefined;
+let sections: Array<{ id: string; label: string; depth: number }> = [];
+if (props.kind === "variant") {
+  fragmentHtml = await readGeneratedGuideFragment(props.option);
+  sections = fragmentHtml ? extractSections(fragmentHtml) : [];
+}
+
+function extractSections(html: string) {
+  const found: Array<{ id: string; label: string; depth: number }> = [];
+  const pattern = /<h([2-6]) id="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
+  for (const match of html.matchAll(pattern)) {
+    const label = match[3]
+      .replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, "\"")
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (label) {
+      found.push({ id: match[2], label, depth: Number(match[1]) });
+    }
+    if (found.length >= 200) {
+      break;
+    }
+  }
+  return found;
+}
+---
+
+{props.kind === "tag" && (
+  <WebLayout title={`Micronaut Guides: ${props.tag}`} surface="guides">
+    <LatestGuidesCatalog guides={props.guides} activeTag={props.tag} />
+  </WebLayout>
+)}
+
+{props.kind === "overview" && (
+  <WebLayout title={`${props.guide.title} | Micronaut Guides`} surface="guides">
+    <main class="mx-auto grid max-w-[1180px] gap-8 px-4 py-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+      <article class="min-w-0">
+        <header class="mb-8">
+          <Badge variant="secondary">{props.guide.categories[0] || "Guide"}</Badge>
+          <h1 class="mt-5 text-4xl font-bold tracking-tight md:text-5xl">{props.guide.title}</h1>
+          <p class="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">{props.guide.intro}</p>
+          <div class="mt-5 flex flex-wrap gap-2">
+            {props.guide.tags.slice(0, 10).map((tag) => (
+              <a href={withBasePath(guideTagPath(tag))} class="no-underline">
+                <Badge variant="outline">{tag}</Badge>
+              </a>
+            ))}
+          </div>
+        </header>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Read This Guide</CardTitle>
+            <CardDescription>Choose the language and build tool variant for the tutorial.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="overflow-hidden rounded-lg border">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-muted text-xs text-muted-foreground">
+                  <tr>
+                    <th class="px-4 py-3 font-medium">Language</th>
+                    <th class="px-4 py-3 font-medium">Build</th>
+                    <th class="px-4 py-3 font-medium">Read</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {props.guide.options.map((option) => (
+                    <tr class="border-t">
+                      <td class="px-4 py-3">{option.languageLabel}</td>
+                      <td class="px-4 py-3">{option.buildToolLabel}</td>
+                      <td class="px-4 py-3">
+                        <Button asChild variant="ghost" size="sm">
+                          <a href={withBasePath(guideOptionPath(option))}>Read</a>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </article>
+      <aside class="hidden xl:block">
+        <div class="sticky top-24 grid gap-3 text-sm">
+          <h2 class="font-medium">Guide</h2>
+          <Separator />
+          <span class="rounded-md px-2 py-1.5 text-muted-foreground">{props.guide.estimatedMinutes} min</span>
+          <span class="rounded-md px-2 py-1.5 text-muted-foreground">{props.guide.publicationDate}</span>
+          <Separator />
+          <a href={withBasePath("/latest/index.html")} class="rounded-md px-2 py-1.5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground">All guides</a>
+        </div>
+      </aside>
+    </main>
+  </WebLayout>
+)}
+
+{props.kind === "variant" && (
+  <WebLayout title={`${props.guide.title} | ${props.option.label}`} surface="guides">
+    <main class="mx-auto grid max-w-[1280px] gap-8 px-4 py-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+      <article class="min-w-0">
+        <header class="mb-8">
+          <Badge variant="secondary">{props.option.label}</Badge>
+          <h1 class="mt-5 text-4xl font-bold tracking-tight md:text-5xl">{props.guide.title}</h1>
+          <p class="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">{props.guide.intro}</p>
+          <div class="mt-5 flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <span>{props.guide.authors.join(", ")}</span>
+            <span aria-hidden="true">/</span>
+            <span>{props.guide.estimatedMinutes} min</span>
+            <span aria-hidden="true">/</span>
+            <a href={withBasePath(guideOverviewPath(props.guide))} class="text-brand no-underline hover:underline">All variants</a>
+          </div>
+        </header>
+
+        {fragmentHtml ? (
+          <>
+            <div class="generated-docs-content generated-guides-content" data-generated-docs set:html={fragmentHtml} />
+            <GeneratedDocsEnhancer />
+          </>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Guide content unavailable</CardTitle>
+              <CardDescription>This variant was listed but no generated fragment exists for the current build.</CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+      </article>
+      <aside class="hidden xl:block">
+        <div class="sticky top-24 grid gap-1.5 text-[0.82rem]">
+          <h2 class="font-medium">On this guide</h2>
+          <Separator className="opacity-70" />
+          <a href={withBasePath(guideOverviewPath(props.guide))} class="rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground">Variants</a>
+          {sections.slice(0, 30).map((section) => (
+            <a href={`#${section.id}`} class:list={[
+              "rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground",
+              section.depth > 2 && "pl-5 text-xs"
+            ]}>
+              {section.label}
+            </a>
+          ))}
+        </div>
+      </aside>
+    </main>
+    <style is:global>
+      .generated-guides-content {
+        min-width: 0;
+        color: var(--foreground);
+        font-size: 1rem;
+        line-height: 1.6;
+        overflow-wrap: break-word;
+      }
+
+      .generated-guides-content > style {
+        display: none;
+      }
+
+      .generated-guides-content :where(.sect1, .sect2, .sect3, .sect4, .sect5) {
+        min-width: 0;
+        margin-top: 1.55rem;
+      }
+
+      .generated-guides-content :where(h2, h3, h4, h5, h6) {
+        margin: 0 0 0.9rem;
+        scroll-margin-top: 5rem;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .generated-guides-content h2 {
+        font-size: clamp(1.65rem, 2.2vw, 2rem);
+        line-height: 1.2;
+      }
+
+      .generated-guides-content h3 {
+        font-size: 1.35rem;
+        line-height: 1.3;
+      }
+
+      .generated-guides-content h4 {
+        font-size: 1.15rem;
+        line-height: 1.35;
+      }
+
+      .generated-guides-content .paragraph p {
+        margin: 0 0 1.25rem;
+      }
+
+      .generated-guides-content :where(.ulist, .olist) {
+        margin: 0 0 1.25rem;
+      }
+
+      .generated-guides-content .ulist ul {
+        margin: 0;
+        padding-left: 1.45rem;
+        list-style: disc;
+      }
+
+      .generated-guides-content .olist ol {
+        margin: 0;
+        padding-left: 1.45rem;
+        list-style: decimal;
+      }
+
+      .generated-guides-content li + li {
+        margin-top: 0.75rem;
+      }
+
+      .generated-guides-content a {
+        color: var(--brand);
+        text-decoration: none;
+      }
+
+      .generated-guides-content a:hover {
+        text-decoration: underline;
+      }
+
+      .generated-guides-content :not(pre) > code {
+        border-radius: 0.25rem;
+        background: var(--muted);
+        padding: 0.05rem 0.25rem;
+        color: var(--foreground);
+        font-size: 0.9em;
+      }
+
+      .generated-guides-content :where(.listingblock, .literalblock, .exampleblock, .sidebarblock, .openblock, .admonitionblock, .quoteblock) {
+        min-width: 0;
+        margin: 1.25rem 0;
+      }
+
+      .generated-guides-content .admonitionblock {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: var(--muted);
+      }
+
+      .generated-guides-content .admonitionblock table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .generated-guides-content .admonitionblock td.icon {
+        width: 4.25rem;
+        padding: 1rem 0.75rem;
+        color: var(--muted-foreground);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-align: center;
+        text-transform: uppercase;
+        vertical-align: top;
+      }
+
+      .generated-guides-content .admonitionblock td.content {
+        padding: 1rem 1rem 1rem 0;
+        vertical-align: top;
+      }
+
+      .generated-guides-content table.tableblock {
+        width: 100%;
+        margin: 1.25rem 0;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+        line-height: 1.45;
+      }
+
+      .generated-guides-content table.tableblock :where(th, td) {
+        border: 1px solid var(--border);
+        padding: 0.65rem 0.75rem;
+        vertical-align: top;
+      }
+
+      .generated-guides-content table.tableblock th {
+        background: var(--muted);
+        font-weight: 700;
+      }
+
+      .generated-guides-content img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .generated-guides-content .colist {
+        margin: -0.4rem 0 1.25rem;
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+      }
+    </style>
+  </WebLayout>
+)}
