@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "generate:snippet-css": "node scripts/generate-docs-snippet-css.mjs",
-    "protocol": "npm run generate:snippet-css && npm run test:platform-docs && node scripts/validate-protocol.mjs && node scripts/validate-docs-snippet-style-sharing.mjs",
+    "protocol": "npm run generate:snippet-css && npm run test:platform-docs && npm run test:main-site && node scripts/validate-protocol.mjs && node scripts/validate-docs-snippet-style-sharing.mjs",
     "snippet-styles": "npm run generate:snippet-css && node scripts/validate-docs-snippet-style-sharing.mjs",
     "sync:platform-projects": "node scripts/sync-platform-docs-fixture.mjs",
     "sync:main-site-content": "node scripts/sync-main-site-content.mjs && npm run normalize:main-site-markdown",
@@ -13,6 +13,7 @@
     "extract:main-site-resources": "node scripts/extract-main-site-resources.mjs",
     "render:platform-docs": "node scripts/render-platform-docs.mjs",
     "prepare:generated-docs": "npm run render:platform-docs",
+    "test:main-site": "node --test scripts/main-site-blog-redirects.test.mjs",
     "test:platform-docs": "node --test scripts/platform-docs/*.test.mjs",
     "dev": "npm run protocol && npm run prepare:generated-docs && astro dev --host 127.0.0.1",
     "build": "npm run protocol && npm run prepare:generated-docs && astro build && node scripts/prepare-template-artifacts.mjs",
@@ -20,9 +21,6 @@
   },
   "dependencies": {
     "@astrojs/react": "latest",
-    "@radix-ui/react-dialog": "latest",
-    "@radix-ui/react-slot": "latest",
-    "@radix-ui/react-tabs": "latest",
     "asciidoctor": "^3.0.4",
     "astro": "latest",
     "class-variance-authority": "^0.7.1",

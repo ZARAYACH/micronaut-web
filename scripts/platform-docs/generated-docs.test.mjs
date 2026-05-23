@@ -7,6 +7,9 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
+import { shikiLanguage } from "./highlight.mjs";
+import { readPlatformCatalogProjects } from "./project-manifest.mjs";
+
 const execFile = promisify(execFileCallback);
 const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -37,6 +40,32 @@ test("generated docs fragments and assets are ignored and not tracked source", a
   assert.deepEqual(trackedGeneratedOutput, []);
 });
 
+test("generated docs tooling uses Micronaut Platform catalog instead of the old platform docs project", async () => {
+  const checkedFiles = [
+    ".github/workflows/deploy-web.yml",
+    "README.md",
+    "src/content/generated-docs/README.md",
+    "src/data/platform-docs-projects.fixture.json",
+    "scripts/render-platform-docs.mjs",
+    "scripts/sync-platform-docs-fixture.mjs"
+  ];
+  const fileContents = await Promise.all(
+    checkedFiles.map(async (file) => [file, await fs.readFile(path.join(projectDirectory, file), "utf8")])
+  );
+  const workflow = fileContents.find(([file]) => file === ".github/workflows/deploy-web.yml")[1];
+  const syncScript = fileContents.find(([file]) => file === "scripts/sync-platform-docs-fixture.mjs")[1];
+
+  assert.match(workflow, /github\.com\/micronaut-projects\/micronaut-platform\.git/);
+  assert.match(workflow, /PLATFORM_DOCS_RENDER_ALL:\s*"true"/);
+  assert.match(workflow, /PLATFORM_DOCS_SYNC_SOURCES:\s*"true"/);
+  assert.match(syncScript, /readPlatformCatalogProjects/);
+
+  for (const [file, content] of fileContents) {
+    assert.doesNotMatch(content, /micronaut-platform-docs/, `${file} should not reference the old platform docs project`);
+    assert.doesNotMatch(content, /dstepanov\.github\.io\/micronaut-platform-docs/, `${file} should not reference the old published docs aggregate`);
+  }
+});
+
 test("platform docs renderer uses checked-in project metadata when external metadata is absent", async (t) => {
   const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
   t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
@@ -56,10 +85,42 @@ test("platform docs renderer uses checked-in project metadata when external meta
       "core"
     ],
     {
-      cwd: projectDirectory
+      cwd: projectDirectory,
+      env: nonStrictEnv()
     }
   );
 
+  assert.deepEqual(await fs.readdir(outputDirectory), []);
+});
+
+test("platform docs renderer defaults to a small project subset", async (t) => {
+  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
+  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+  const platformDocsDirectory = path.join(temporaryDirectory, "missing-platform-docs-sources");
+  const outputDirectory = path.join(temporaryDirectory, "generated-docs");
+
+  await fs.mkdir(platformDocsDirectory, { recursive: true });
+  const { stderr } = await execFile(
+    process.execPath,
+    [
+      "scripts/render-platform-docs.mjs",
+      "--platform-docs-dir",
+      platformDocsDirectory,
+      "--output",
+      outputDirectory
+    ],
+    {
+      cwd: projectDirectory,
+      env: nonStrictEnv()
+    }
+  );
+
+  assert.deepEqual(
+    lines(stderr)
+      .filter((line) => line.startsWith("Skipping "))
+      .map((line) => line.replace(/^Skipping ([^:]+):.*$/, "$1")),
+    ["core", "data", "serde"]
+  );
   assert.deepEqual(await fs.readdir(outputDirectory), []);
 });
 
@@ -73,7 +134,6 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
   const imageDirectory = path.join(submoduleDirectory, "src", "main", "docs", "resources", "img");
 
   await fs.mkdir(path.join(platformDocsDirectory, "gradle"), { recursive: true });
-  await fs.mkdir(path.join(platformDocsDirectory, "repos", "micronaut-platform", "gradle"), { recursive: true });
   await fs.mkdir(guideDirectory, { recursive: true });
   await fs.mkdir(imageDirectory, { recursive: true });
   await fs.writeFile(
@@ -87,11 +147,6 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
       "project.0.branch=master",
       "project.0.platformVersionKey=micronaut"
     ].join("\n"),
-    "utf8"
-  );
-  await fs.writeFile(
-    path.join(platformDocsDirectory, "repos", "micronaut-platform", "gradle", "libs.versions.toml"),
-    "[versions]\nmicronaut = \"1.2.3\"\n",
     "utf8"
   );
   await fs.writeFile(
@@ -146,6 +201,110 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
   );
 });
 
+test("platform docs renderer can render every project in a manifest", async (t) => {
+  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
+  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+  const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
+  const outputDirectory = path.join(temporaryDirectory, "generated-docs");
+
+  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), { recursive: true });
+  await fs.writeFile(
+    path.join(platformDocsDirectory, "gradle", "platform-doc-projects.properties"),
+    [
+      "project.count=2",
+      "project.0.slug=alpha",
+      "project.0.displayName=Micronaut Alpha",
+      "project.0.submodulePath=repos/micronaut-alpha",
+      "project.0.repositoryUrl=https://github.com/micronaut-projects/micronaut-alpha.git",
+      "project.0.branch=master",
+      "project.0.platformVersionKey=micronaut",
+      "project.1.slug=beta",
+      "project.1.displayName=Micronaut Beta",
+      "project.1.submodulePath=repos/micronaut-beta",
+      "project.1.repositoryUrl=https://github.com/micronaut-projects/micronaut-beta.git",
+      "project.1.branch=master",
+      "project.1.platformVersionKey=micronaut"
+    ].join("\n"),
+    "utf8"
+  );
+  await writeGuide(platformDocsDirectory, "micronaut-alpha", "Alpha Docs", "Alpha introduction.");
+  await writeGuide(platformDocsDirectory, "micronaut-beta", "Beta Docs", "Beta introduction.");
+
+  await execFile(
+    process.execPath,
+    [
+      "scripts/render-platform-docs.mjs",
+      "--platform-docs-dir",
+      platformDocsDirectory,
+      "--output",
+      outputDirectory,
+      "--all",
+      "--strict"
+    ],
+    {
+      cwd: projectDirectory
+    }
+  );
+
+  assert.deepEqual((await fs.readdir(outputDirectory)).filter((file) => file.endsWith(".html")).sort(), [
+    "alpha.html",
+    "beta.html"
+  ]);
+});
+
+test("platform docs project manifest can be derived from Micronaut Platform libraries", async (t) => {
+  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-platform-catalog-"));
+  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+  const catalogFile = path.join(temporaryDirectory, "libs.versions.toml");
+  await fs.writeFile(
+    catalogFile,
+    [
+      "[versions]",
+      "managed-micronaut-core = \"5.0.0-RC2\"",
+      "managed-micronaut-data = \"5.0.0-RC1\"",
+      "managed-micronaut-guides = \"0.3.0\"",
+      "",
+      "[libraries]",
+      "boms-micronaut-core = { module = \"io.micronaut:micronaut-core-bom\", version.ref = \"managed-micronaut-core\" }",
+      "boms-micronaut-data = { module = \"io.micronaut.data:micronaut-data-bom\", version.ref = \"managed-micronaut-data\" }",
+      "boms-micronaut-guides = { module = \"io.micronaut.guides:micronaut-guides-bom\", version.ref = \"managed-micronaut-guides\" }"
+    ].join("\n"),
+    "utf8"
+  );
+
+  const projects = await readPlatformCatalogProjects(catalogFile, {
+    "project.count": "1",
+    "project.0.slug": "data",
+    "project.0.displayName": "Micronaut Data",
+    "project.0.projectKey": "data",
+    "project.0.module": "io.micronaut.data:micronaut-data-bom",
+    "project.0.repositoryName": "micronaut-data",
+    "project.0.publishedGuideUrl": "https://micronaut-projects.github.io/micronaut-data/latest/guide/",
+    "project.0.repositoryUrl": "https://github.com/micronaut-projects/micronaut-data.git",
+    "project.0.branch": "5.0.x",
+    "project.0.submodulePath": "repos/micronaut-data",
+    "project.0.platformVersionKey": "managed-micronaut-data"
+  });
+
+  assert.deepEqual(projects.map((project) => project.slug), ["core", "data"]);
+  assert.deepEqual(projects[0], {
+    slug: "core",
+    displayName: "Micronaut Core",
+    projectKey: "core",
+    module: "io.micronaut:micronaut-core-bom",
+    repositoryName: "micronaut-core",
+    publishedGuideUrl: "https://docs.micronaut.io/latest/guide/",
+    repositoryUrl: "https://github.com/micronaut-projects/micronaut-core.git",
+    branch: "5.0.x",
+    submodulePath: "repos/micronaut-core",
+    platformVersionKey: "managed-micronaut-core"
+  });
+});
+
+test("platform docs commandline source blocks use shell highlighting", () => {
+  assert.equal(shikiLanguage("commandline"), "shellscript");
+});
+
 test("docs routes render generated fragments and serve generated assets", async () => {
   const docsPageSource = await fs.readFile(path.join(projectDirectory, "src", "pages", "docs", "[slug].astro"), "utf8");
   const assetsRouteSource = await fs.readFile(path.join(projectDirectory, "src", "pages", "docs", "assets", "[...path].ts"), "utf8");
@@ -164,6 +323,21 @@ function assertScriptOrder(script, producer, consumer) {
   assert.notEqual(producerIndex, -1, `${script} should include '${producer}'`);
   assert.notEqual(consumerIndex, -1, `${script} should include '${consumer}'`);
   assert.ok(producerIndex < consumerIndex, `${script} should run '${producer}' before '${consumer}'`);
+}
+
+function nonStrictEnv() {
+  return {
+    ...process.env,
+    CI: "false",
+    PLATFORM_DOCS_RENDER_STRICT: "false"
+  };
+}
+
+async function writeGuide(platformDocsDirectory, repositoryName, title, body) {
+  const guideDirectory = path.join(platformDocsDirectory, "repos", repositoryName, "src", "main", "docs", "guide");
+  await fs.mkdir(guideDirectory, { recursive: true });
+  await fs.writeFile(path.join(guideDirectory, "toc.yml"), `title: ${title}\nintroduction: Introduction\n`, "utf8");
+  await fs.writeFile(path.join(guideDirectory, "introduction.adoc"), body, "utf8");
 }
 
 function lines(value) {

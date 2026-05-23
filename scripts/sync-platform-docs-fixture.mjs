@@ -2,68 +2,71 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  readPlatformCatalogProjects,
+  readProperties,
+  readTomlStringVersions
+} from "./platform-docs/project-manifest.mjs";
+
 const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const platformDocsDirectory = path.resolve(process.argv[2] || path.join(projectDirectory, "..", "..", "micronaut-platform-docs"));
-
-const platformGradleDirectory = path.join(platformDocsDirectory, "gradle");
+const platformProjectPath =
+  process.argv[2] || process.env.PLATFORM_PROJECT_DIR || path.join(projectDirectory, "..", "micronaut-platform");
+const platformVersionCatalogFile = path.resolve(
+  process.env.PLATFORM_VERSION_CATALOG ||
+    (platformProjectPath.endsWith("libs.versions.toml")
+      ? platformProjectPath
+      : path.join(platformProjectPath, "gradle", "libs.versions.toml"))
+);
+const platformCatalogSourceUrl =
+  "https://github.com/micronaut-projects/micronaut-platform/blob/master/gradle/libs.versions.toml";
+const checkedInPlatformDocsDataDirectory = path.join(projectDirectory, "src", "data", "platform-docs");
 const outputFile = path.join(projectDirectory, "src", "data", "platform-docs-projects.fixture.json");
+const protocolFile = path.join(projectDirectory, "src", "data", "protocol.json");
 
-const [projectProperties, categoryProperties, descriptionProperties, iconProperties] = await Promise.all([
-  readProperties(path.join(platformGradleDirectory, "platform-doc-projects.properties")),
-  readProperties(path.join(platformGradleDirectory, "platform-doc-categories.properties")),
-  readProperties(path.join(platformGradleDirectory, "platform-doc-descriptions.properties")),
-  readProperties(path.join(platformGradleDirectory, "platform-doc-icons.properties"))
+const [projectProperties, platformVersions, existingFixture, protocol] = await Promise.all([
+  readProperties(path.join(checkedInPlatformDocsDataDirectory, "platform-doc-projects.properties")),
+  readTomlStringVersions(platformVersionCatalogFile),
+  readJson(outputFile),
+  readJson(protocolFile)
 ]);
-const platformVersions = await readTomlStringVersions(
-  path.join(platformDocsDirectory, "repos", "micronaut-platform", "gradle", "libs.versions.toml")
-);
+const existingProjectsBySlug = new Map((existingFixture.projects || []).map((project) => [project.slug, project]));
+const protocolProjectOrder = new Map((protocol.docs?.projects || []).map((project, index) => [project.slug, index]));
+const categories = existingFixture.categories || [];
 
-const categories = readIndexed(categoryProperties, "category", Number(categoryProperties["category.count"] || 0)).map(
-  (category) => ({
-    slug: category.slug,
-    name: category.name,
-    icon: category.icon,
-    description: category.description,
-    projectSlugs: splitList(category.projects)
-  })
-);
-
-const projects = readIndexed(projectProperties, "project", Number(projectProperties["project.count"] || 0)).map(
-  (project) => {
-    const categorySlugs = categories
-      .filter((category) => category.projectSlugs.includes(project.slug))
+const projects = (await readPlatformCatalogProjects(platformVersionCatalogFile, projectProperties))
+  .map((project) => {
+    const existingProject = existingProjectsBySlug.get(project.slug) || {};
+    const categorySlugs = existingProject.categorySlugs || categories
+      .filter((category) => (category.projectSlugs || []).includes(project.slug))
       .map((category) => category.slug);
-    const primaryCategory = categorySlugs[0] || "other";
+    const primaryCategory = existingProject.primaryCategory || categorySlugs[0] || "other";
 
     return {
       slug: project.slug,
       displayName: project.displayName,
-      shortName: project.displayName.replace(/^Micronaut\s+/i, ""),
+      shortName: existingProject.shortName || project.displayName.replace(/^Micronaut\s+/i, ""),
       projectKey: project.projectKey,
       module: project.module,
       repositoryName: project.repositoryName,
       repositoryUrl: project.repositoryUrl,
       publishedGuideUrl: project.publishedGuideUrl,
-      publishedPlatformHref: `https://dstepanov.github.io/micronaut-platform-docs/#${project.slug}-introduction`,
+      publishedPlatformHref: platformCatalogSourceUrl,
       branch: project.branch,
       submodulePath: project.submodulePath,
       platformVersionKey: project.platformVersionKey,
-      version: platformVersions[project.platformVersionKey] || "",
-      icon: iconProperties[`project.${project.slug}.icon`] || "lucide:book-open",
+      version: platformVersions[project.platformVersionKey] || existingProject.version || "",
+      icon: existingProject.icon || "lucide:book-open",
       primaryCategory,
       categorySlugs,
-      shortDescription:
-        descriptionProperties[`project.${project.slug}.shortDescription`] || project.displayName.replace(/^Micronaut\s+/i, ""),
-      longDescription:
-        descriptionProperties[`project.${project.slug}.longDescription`] ||
-        `${project.displayName} documentation and reference material.`
+      shortDescription: existingProject.shortDescription || project.displayName.replace(/^Micronaut\s+/i, ""),
+      longDescription: existingProject.longDescription || `${project.displayName} documentation and reference material.`
     };
-  }
-);
+  })
+  .sort((left, right) => projectOrder(left) - projectOrder(right));
 
 const fixture = {
-  source: "micronaut-platform-docs/gradle platform metadata",
-  publishedSource: "https://dstepanov.github.io/micronaut-platform-docs/",
+  source: "micronaut-projects/micronaut-platform gradle/libs.versions.toml plus checked-in platform docs metadata",
+  publishedSource: platformCatalogSourceUrl,
   projectCount: projects.length,
   categories,
   projects
@@ -72,67 +75,17 @@ const fixture = {
 await fs.writeFile(outputFile, `${JSON.stringify(fixture, null, 2)}\n`);
 console.log(`Wrote ${projects.length} platform docs projects to ${path.relative(projectDirectory, outputFile)}.`);
 
-async function readProperties(file) {
-  const content = await fs.readFile(file, "utf8");
-  const properties = {};
-
-  for (const rawLine of content.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-
-    const separator = line.indexOf("=");
-    if (separator < 0) continue;
-
-    const key = line.slice(0, separator).trim();
-    const value = line.slice(separator + 1).trim();
-    properties[key] = value;
-  }
-
-  return properties;
+function projectOrder(project) {
+  return protocolProjectOrder.has(project.slug) ? protocolProjectOrder.get(project.slug) : Number.MAX_SAFE_INTEGER;
 }
 
-function readIndexed(properties, prefix, count) {
-  const values = [];
-
-  for (let index = 0; index < count; index += 1) {
-    const entry = {};
-    const entryPrefix = `${prefix}.${index}.`;
-
-    for (const [key, value] of Object.entries(properties)) {
-      if (key.startsWith(entryPrefix)) {
-        entry[key.slice(entryPrefix.length)] = value;
-      }
+async function readJson(file) {
+  try {
+    return JSON.parse(await fs.readFile(file, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return {};
     }
-
-    values.push(entry);
+    throw error;
   }
-
-  return values;
-}
-
-function splitList(value) {
-  return value ? value.split(",").map((item) => item.trim()).filter(Boolean) : [];
-}
-
-async function readTomlStringVersions(file) {
-  const versions = {};
-  const content = await fs.readFile(file, "utf8");
-  let inVersions = false;
-
-  for (const rawLine of content.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    if (line.startsWith("[")) {
-      inVersions = line === "[versions]";
-      continue;
-    }
-    if (!inVersions) continue;
-
-    const match = line.match(/^([A-Za-z0-9_.-]+)\s*=\s*"([^"]+)"\s*$/);
-    if (match) {
-      versions[match[1]] = match[2];
-    }
-  }
-
-  return versions;
 }

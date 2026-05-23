@@ -1,15 +1,17 @@
 # Generated Docs Fragments
 
-The HTML files in this directory are rendered directly from the checked-out
-Micronaut Platform Docs adoc sources with Asciidoctor.js:
+The HTML files in this directory are rendered directly from checked-out
+Micronaut project adoc sources with Asciidoctor.js:
 
 ```bash
 npm run render:platform-docs -- --slugs core,serde
 ```
 
-By default the renderer reads `/Users/denisstepanov/micronaut-platform-docs`,
-uses `gradle/platform-doc-projects.properties` and each project's
-`src/main/docs/guide/toc.yml`, and writes fragments back into this directory.
+By default the renderer reads `.platform-docs`, uses
+`.platform-docs/repos/micronaut-platform/gradle/libs.versions.toml` together
+with checked-in metadata from `src/data/platform-docs/platform-doc-projects.properties`,
+then reads each project's `src/main/docs/guide/toc.yml` and writes fragments
+back into this directory.
 Generated HTML files and copied docs assets are ignored by Git and are created
 by `npm run dev` and `npm run build` before Astro starts. Do not hand-edit the
 generated HTML files or the generated `assets/` tree.

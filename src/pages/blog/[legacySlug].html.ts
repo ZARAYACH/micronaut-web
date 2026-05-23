@@ -1,19 +1,20 @@
 import type { APIRoute, GetStaticPaths } from "astro";
 
+import { withBasePath } from "@/lib/base-path";
+import { getLegacyBlogRedirects } from "@/lib/blog-redirects";
 import { getBlogPosts } from "@/lib/main-site-content";
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const posts = await getBlogPosts();
-  return posts.flatMap((post) => post.routeSlugs
-    .filter((routeSlug) => routeSlug.startsWith("blog/") && routeSlug.endsWith(".html"))
-    .map((routeSlug) => ({
+  return getLegacyBlogRedirects(posts, withBasePath)
+    .map(({ legacySlug, destination }) => ({
       params: {
-        legacySlug: routeSlug.slice("blog/".length, -".html".length)
+        legacySlug
       },
       props: {
-        destination: post.href
+        destination
       }
-    })));
+    }));
 };
 
 export const GET: APIRoute<{ destination: string }> = ({ props, redirect }) => {

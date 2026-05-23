@@ -23,6 +23,11 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@v6
 
+      - name: Check out platform project
+        run: |
+          mkdir -p "$RUNNER_TEMP/platform-docs/repos"
+          git clone --depth 1 https://github.com/micronaut-projects/micronaut-platform.git "$RUNNER_TEMP/platform-docs/repos/micronaut-platform"
+
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
@@ -42,6 +47,11 @@ jobs:
           fi
 
       - name: Build web
+        env:
+          PLATFORM_DOCS_DIR: ${{ runner.temp }}/platform-docs
+          PLATFORM_DOCS_RENDER_ALL: "true"
+          PLATFORM_DOCS_RENDER_STRICT: "true"
+          PLATFORM_DOCS_SYNC_SOURCES: "true"
         run: npm run build
 
       - name: Configure GitHub Pages

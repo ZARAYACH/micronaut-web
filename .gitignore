@@ -4,6 +4,7 @@
 .idea/
 .vscode/
 .playwright-mcp/
+.platform-docs/
 
 # Node and Astro output
 node_modules/
