@@ -224,8 +224,16 @@ export function searchItems(): SearchItem[] {
       kind: "Tag",
       title: tag,
       description: "Guides tagged with this topic",
-      href: `/guides/?tag=${encodeURIComponent(tag)}`,
+      href: `/guides/tag-${guideTagSlug(tag)}.html`,
       terms: tag
     }));
   return [...projectItems, ...sectionItems, ...guideItems, ...tagItems];
+}
+
+function guideTagSlug(tag: string) {
+  return tag
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
