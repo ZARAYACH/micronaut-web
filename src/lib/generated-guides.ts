@@ -57,7 +57,7 @@ export async function readGeneratedGuideFragment(option: GeneratedGuideOption): 
   }
 }
 
-export function allGeneratedGuideTags(guides: GeneratedGuide[]) {
+export function allGeneratedGuideTags(guides: Array<{ tags: string[] }>) {
   return Array.from(new Set(guides.flatMap((guide) => guide.tags))).sort();
 }
 

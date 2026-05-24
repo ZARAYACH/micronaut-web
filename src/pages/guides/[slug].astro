@@ -21,7 +21,6 @@ import { withBasePath } from "@/lib/base-path";
 import { micronautProtocol } from "@/lib/protocol";
 
 const guidesRoot = "/guides";
-const legacyGuidesBase = "https://guides.micronaut.io/latest/";
 
 type TagProps = {
   kind: "tag";
@@ -46,6 +45,7 @@ type ExternalProps = {
 };
 
 export async function getStaticPaths() {
+  const legacyGuidesBase = "https://guides.micronaut.io/latest/";
   const manifest = await readGeneratedGuidesManifest();
   const paths: Array<{ params: { slug: string }; props: TagProps | OverviewProps | VariantProps | ExternalProps }> = [];
   const pages = new Set<string>();
@@ -59,6 +59,9 @@ export async function getStaticPaths() {
 
   for (const tag of allGeneratedGuideTags(manifest.guides)) {
     addPath(`tag-${tagSlug(tag)}`, { kind: "tag", tag, guides: manifest.guides });
+  }
+  for (const tag of allGeneratedGuideTags(micronautProtocol.guides.guides)) {
+    addPath(`tag-${tagSlug(tag)}`, { kind: "external", destination: `${legacyGuidesBase}tag-${tagSlug(tag)}.html` });
   }
   for (const guide of manifest.guides) {
     addPath(guide.slug, { kind: "overview", guide });

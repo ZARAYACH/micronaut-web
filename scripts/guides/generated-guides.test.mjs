@@ -58,7 +58,7 @@ test("guide renderer defaults to the small guide subset and expands guide macros
   assert.match(html, /https:\/\/micronaut\.io\/launch\?/);
   assert.match(html, /href="\.\.\/another-guide\.html"/);
   assert.match(html, /href="\.\.\/legacy-guide\.html"/);
-  assert.match(html, /href="\.\.\/micronaut-http-client-gradle-java\.zip"/);
+  assert.match(html, /href="https:\/\/guides\.micronaut\.io\/latest\/micronaut-http-client-gradle-java\.zip"/);
   assert.doesNotMatch(html, /source:|common-template:|callout:|dependency:|diffLink:/);
 });
 
@@ -98,6 +98,12 @@ test("latest guide replacement routes and parallel generated-content preparation
   const latestRoute = await fs.readFile(path.join(projectDirectory, "src", "pages", "latest", "[page].astro"), "utf8");
   const legacyRoute = await fs.readFile(path.join(projectDirectory, "src", "pages", "latest", "[page].html.ts"), "utf8");
   const zipRoute = await fs.readFile(path.join(projectDirectory, "src", "pages", "latest", "[download].zip.ts"), "utf8");
+  const guidesIndexRoute = await fs.readFile(path.join(projectDirectory, "src", "pages", "guides", "index.astro"), "utf8");
+  const guidesRoute = await fs.readFile(path.join(projectDirectory, "src", "pages", "guides", "[slug].astro"), "utf8");
+  const guidesLegacyRoute = await fs.readFile(path.join(projectDirectory, "src", "pages", "guides", "[slug].html.ts"), "utf8");
+  const guidesZipRoute = await fs.readFile(path.join(projectDirectory, "src", "pages", "guides", "[download].zip.ts"), "utf8");
+  const guideCatalog = await fs.readFile(path.join(projectDirectory, "src", "components", "web", "latest-guides-catalog.astro"), "utf8");
+  const guideCard = await fs.readFile(path.join(projectDirectory, "src", "components", "web", "latest-guide-card.tsx"), "utf8");
 
   assert.equal(packageJson.scripts["render:guides"], "node scripts/render-guides.mjs");
   assert.equal(packageJson.scripts["test:guides"], "node --test scripts/guides/*.test.mjs");
@@ -115,6 +121,19 @@ test("latest guide replacement routes and parallel generated-content preparation
   assert.match(legacyRoute, /redirect\(props\.external \? props\.destination : withBasePath\(props\.destination\), props\.external \? 302 : 301\)/);
   assert.match(zipRoute, /guides\.micronaut\.io\/latest\/\$\{option\.zipUrl\}/);
   assert.match(zipRoute, /redirect\(props\.zipUrl, 302\)/);
+  assert.match(guidesIndexRoute, /readGeneratedGuidesManifest/);
+  assert.match(guidesIndexRoute, /root="\/guides"/);
+  assert.doesNotMatch(guidesIndexRoute, /GuidesCatalogTabs|GuidesFilterPanel|micronautProtocol\.guides\.guides/);
+  assert.match(guidesRoute, /readGeneratedGuideFragment/);
+  assert.match(guidesRoute, /In this section/);
+  assert.match(guidesRoute, /guideOptionPath\(option, guidesRoot\)/);
+  assert.match(guidesRoute, /legacyGuidesBase\}tag-\$\{tagSlug\(tag\)\}\.html/);
+  assert.match(guidesLegacyRoute, /guideOverviewPath\(guide, guidesRoot\)/);
+  assert.match(guidesLegacyRoute, /legacyGuidesBase\}tag-\$\{tagSlug\(tag\)\}\.html/);
+  assert.match(guidesLegacyRoute, /guides\.micronaut\.io\/latest/);
+  assert.match(guidesZipRoute, /guides\.micronaut\.io\/latest\/\$\{option\.zipUrl\}/);
+  assert.match(guideCatalog, /root = "\/latest"/);
+  assert.match(guideCard, /guideOverviewPath\(guide, root\)/);
 });
 
 async function writeGuideFixture(guidesDirectory, slug, title) {

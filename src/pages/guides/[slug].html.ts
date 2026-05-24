@@ -32,6 +32,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
   for (const tag of allGeneratedGuideTags(manifest.guides)) {
     addPath(`tag-${tagSlug(tag)}`, guideTagPath(tag, guidesRoot).replace(/\.html$/, "/"));
   }
+  for (const tag of allGeneratedGuideTags(micronautProtocol.guides.guides)) {
+    addPath(`tag-${tagSlug(tag)}`, `${legacyGuidesBase}tag-${tagSlug(tag)}.html`, true);
+  }
   for (const guide of manifest.guides) {
     addPath(guide.slug, guideOverviewPath(guide, guidesRoot).replace(/\.html$/, "/"));
     for (const option of guide.options) {

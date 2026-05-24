@@ -68,6 +68,9 @@ function rewriteGuideUrls(input, slug) {
   return input.replace(/\b(href|src)="([^"]*)"/g, (match, attributeName, value) => {
     const legacyGuidePath = /^https:\/\/guides\.micronaut\.io\/latest\/([^?#]+)([?#].*)?$/i.exec(value);
     if (legacyGuidePath) {
+      if (legacyGuidePath[1].endsWith(".zip")) {
+        return match;
+      }
       return `${attributeName}="../${legacyGuidePath[1]}${legacyGuidePath[2] || ""}"`;
     }
     if (!value || value.startsWith("#") || value.startsWith("/") || /^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("//")) {
@@ -77,7 +80,10 @@ function rewriteGuideUrls(input, slug) {
     const pathname = suffixIndex >= 0 ? value.slice(0, suffixIndex) : value;
     const suffix = suffixIndex >= 0 ? value.slice(suffixIndex) : "";
     const normalized = pathname.replaceAll("\\", "/").replace(/^(\.\.\/)+/, "").replace(/^\.\//, "");
-    if (normalized.endsWith(".html") || normalized.endsWith(".zip")) {
+    if (normalized.endsWith(".zip")) {
+      return `${attributeName}="https://guides.micronaut.io/latest/${normalized}${suffix}"`;
+    }
+    if (normalized.endsWith(".html")) {
       return `${attributeName}="../${normalized}${suffix}"`;
     }
     const assetPath = normalized.startsWith("images/") || normalized.startsWith("img/")
