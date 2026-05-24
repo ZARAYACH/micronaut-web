@@ -69,16 +69,16 @@ export function tagSlug(tag: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function guideOptionPath(option: GeneratedGuideOption) {
-  return `/latest/${option.file}`;
+export function guideOptionPath(option: GeneratedGuideOption, root = "/latest") {
+  return `${normalizedRoot(root)}/${option.file}`;
 }
 
-export function guideOverviewPath(guide: GeneratedGuide) {
-  return `/latest/${guide.overviewFile}`;
+export function guideOverviewPath(guide: GeneratedGuide, root = "/latest") {
+  return `${normalizedRoot(root)}/${guide.overviewFile}`;
 }
 
-export function guideTagPath(tag: string) {
-  return `/latest/tag-${tagSlug(tag)}.html`;
+export function guideTagPath(tag: string, root = "/latest") {
+  return `${normalizedRoot(root)}/tag-${tagSlug(tag)}.html`;
 }
 
 export function latestGuides(guides: GeneratedGuide[], limit = 8) {
@@ -125,6 +125,11 @@ function fallbackManifest(): GeneratedGuidesManifest {
     guideCount: guides.length,
     guides
   };
+}
+
+function normalizedRoot(root: string) {
+  const value = root.endsWith("/") ? root.slice(0, -1) : root;
+  return value || "";
 }
 
 function uniqueOptions(options: GeneratedGuideOption[]) {
