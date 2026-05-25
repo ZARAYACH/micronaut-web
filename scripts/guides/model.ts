@@ -3,6 +3,49 @@ import path from "node:path";
 
 import { isDirectory, isRegularFile } from "../platform-docs/files.ts";
 
+export interface GuideApp {
+  name: string;
+  applicationType: string;
+  features: string[];
+  javaFeatures: string[];
+  kotlinFeatures: string[];
+  groovyFeatures: string[];
+}
+
+export interface Guide {
+  slug: string;
+  directory: string;
+  title: string;
+  intro: string;
+  authors: string[];
+  categories: string[];
+  publicationDate: string;
+  tags: string[];
+  languages: string[];
+  buildTools: string[];
+  testFramework: string;
+  cloud: string;
+  publish: boolean;
+  base: string;
+  asciidoc: string;
+  apps: GuideApp[];
+  minimumJavaVersion: string | number;
+  maximumJavaVersion?: string | number;
+}
+
+export interface GuideOption {
+  id: string;
+  label: string;
+  buildTool: string;
+  buildToolLabel: string;
+  language: string;
+  languageLabel: string;
+  testFramework: string;
+  file: string;
+  sourceDir: string;
+  zipUrl: string;
+}
+
 export const DEFAULT_GUIDE_SLUGS = [
   "creating-your-first-micronaut-app",
   "micronaut-http-client",
@@ -12,14 +55,14 @@ export const DEFAULT_GUIDE_SLUGS = [
 export const DEFAULT_LANGUAGES = ["java", "kotlin", "groovy"];
 export const DEFAULT_BUILD_TOOLS = ["gradle", "maven"];
 
-export async function readGuides(guidesRepositoryDirectory) {
+export async function readGuides(guidesRepositoryDirectory: string): Promise<Guide[]> {
   const guidesDirectory = path.join(guidesRepositoryDirectory, "guides");
   if (!(await isDirectory(guidesDirectory))) {
     return [];
   }
 
   const entries = await fs.readdir(guidesDirectory, { withFileTypes: true });
-  const guides = [];
+  const guides: Guide[] = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) {
       continue;
@@ -42,7 +85,7 @@ export async function readGuides(guidesRepositoryDirectory) {
   );
 }
 
-export function selectGuides(guides, selectedSlugs) {
+export function selectGuides(guides: Guide[], selectedSlugs: string[]): Guide[] {
   if (!selectedSlugs.length) {
     return guides;
   }
@@ -50,8 +93,8 @@ export function selectGuides(guides, selectedSlugs) {
   return guides.filter((guide) => selected.has(guide.slug));
 }
 
-export function guideOptions(guide) {
-  const options = [];
+export function guideOptions(guide: Guide): GuideOption[] {
+  const options: GuideOption[] = [];
   for (const buildTool of guide.buildTools) {
     for (const language of DEFAULT_LANGUAGES) {
       if (!guide.languages.includes(language)) {
@@ -74,25 +117,25 @@ export function guideOptions(guide) {
   return options;
 }
 
-export function defaultGuideOption(guide) {
+export function defaultGuideOption(guide: Guide): GuideOption | undefined {
   return guideOptions(guide).find((option) => option.buildTool === "gradle" && option.language === "java") ||
     guideOptions(guide).find((option) => option.language === "java") ||
     guideOptions(guide)[0];
 }
 
-export function guideOptionFile(slug, buildTool, language) {
+export function guideOptionFile(slug: string, buildTool: string, language: string): string {
   return `${slug}-${buildTool}-${language}.html`;
 }
 
-export function guideOverviewFile(slug) {
+export function guideOverviewFile(slug: string): string {
   return `${slug}.html`;
 }
 
-export function tagPageFile(tag) {
+export function tagPageFile(tag: string): string {
   return `tag-${tagSlug(tag)}.html`;
 }
 
-export function tagSlug(tag) {
+export function tagSlug(tag: string): string {
   return String(tag || "")
     .trim()
     .toLowerCase()
@@ -100,14 +143,14 @@ export function tagSlug(tag) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function languageExtension(language) {
+export function languageExtension(language: string): string {
   return {
     groovy: "groovy",
     kotlin: "kt"
   }[language] || "java";
 }
 
-export function languageSourceDirectory(language, sourceSet) {
+export function languageSourceDirectory(language: string, sourceSet: string): string {
   if (language === "kotlin") {
     return sourceSet === "test" ? "src/test/kotlin" : "src/main/kotlin";
   }
@@ -117,7 +160,7 @@ export function languageSourceDirectory(language, sourceSet) {
   return sourceSet === "test" ? "src/test/java" : "src/main/java";
 }
 
-export function appFeatures(guide, option, appName = "default") {
+export function appFeatures(guide: Guide, option: GuideOption, appName = "default"): string[] {
   const app = guide.apps.find((candidate) => candidate.name === appName) || guide.apps[0];
   if (!app) {
     return [];
@@ -131,7 +174,7 @@ export function appFeatures(guide, option, appName = "default") {
   return [...new Set([...app.features, ...languageSpecific].filter(Boolean))];
 }
 
-export function featuresWords(features) {
+export function featuresWords(features: string[]): string {
   const formatted = features.map((feature) => `\`${feature}\``);
   if (formatted.length <= 1) {
     return formatted[0] || "";
@@ -139,7 +182,7 @@ export function featuresWords(features) {
   return `${formatted.slice(0, -1).join(", ")}, and ${formatted.at(-1)}`;
 }
 
-export function cliCommandForApp(app) {
+export function cliCommandForApp(app?: GuideApp): string {
   return {
     CLI: "create-cli-app",
     FUNCTION: "create-function-app",
@@ -148,7 +191,7 @@ export function cliCommandForApp(app) {
   }[String(app?.applicationType || "").toUpperCase()] || "create-app";
 }
 
-function normalizeGuideMetadata(metadata, directory, fallbackSlug) {
+function normalizeGuideMetadata(metadata: Record<string, any>, directory: string, fallbackSlug: string): Guide {
   const slug = string(metadata.slug, fallbackSlug);
   const apps = normalizeApps(metadata.apps);
   return {
@@ -180,7 +223,7 @@ function normalizeGuideMetadata(metadata, directory, fallbackSlug) {
   };
 }
 
-function normalizeApps(value) {
+function normalizeApps(value: unknown): GuideApp[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -194,14 +237,14 @@ function normalizeApps(value) {
   }));
 }
 
-function testFrameworkFor(guide, language) {
+function testFrameworkFor(guide: Guide, language: string): string {
   if (guide.testFramework) {
     return guide.testFramework.toLowerCase();
   }
   return language === "groovy" ? "spock" : "junit";
 }
 
-function languageLabel(language) {
+function languageLabel(language: string): string {
   return {
     groovy: "Groovy",
     java: "Java",
@@ -209,14 +252,14 @@ function languageLabel(language) {
   }[language] || language;
 }
 
-function buildToolLabel(buildTool) {
+function buildToolLabel(buildTool: string): string {
   return {
     gradle: "Gradle",
     maven: "Maven"
   }[buildTool] || buildTool;
 }
 
-function lowerList(value, fallback) {
+function lowerList(value: unknown, fallback: string[]): string[] {
   const values = strings(value);
   if (!values.length) {
     return fallback;
@@ -224,13 +267,13 @@ function lowerList(value, fallback) {
   return values.map((item) => item.toLowerCase().replaceAll("_", "-"));
 }
 
-function strings(value) {
+function strings(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
   return value.filter((item) => item !== undefined && item !== null).map(String);
 }
 
-function string(value, fallback) {
+function string(value: unknown, fallback: string): string {
   return value === undefined || value === null ? fallback : String(value);
 }

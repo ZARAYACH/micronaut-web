@@ -12,6 +12,8 @@ const micronautOrigin = "https://micronaut.io";
 
 const now = new Date().toISOString();
 
+type Frontmatter = Record<string, any>;
+
 function decodeHtml(value) {
   return value
     .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)))
@@ -52,13 +54,13 @@ function rawHtmlTags(markdown) {
   return Array.from(bodyWithoutCode.matchAll(htmlTagPattern), (match) => match[0]);
 }
 
-function splitFrontmatter(markdown, file) {
+function splitFrontmatter(markdown, file): { data: Frontmatter; body: string } {
   const match = markdown.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
   if (!match) {
     throw new Error(`Missing frontmatter in ${file}`);
   }
   return {
-    data: YAML.load(match[1]) ?? {},
+    data: (YAML.load(match[1]) ?? {}) as Frontmatter,
     body: match[2]
   };
 }
@@ -468,7 +470,7 @@ async function syncMainSitePages() {
   const report = {
     synced: 0,
     validated: 0,
-    failed: []
+    failed: [] as string[]
   };
   for (const file of files) {
     const current = splitFrontmatter(await readFile(file, "utf8"), file);
@@ -496,7 +498,7 @@ async function syncMainSitePages() {
         report.failed.push(relative(rootDir, file));
       }
     } catch (error) {
-      report.failed.push(`${relative(rootDir, file)}: ${error.message}`);
+      report.failed.push(`${relative(rootDir, file)}: ${(error as Error).message}`);
     }
   }
   return report;
@@ -561,7 +563,7 @@ async function validateGeneratedMarkdown() {
     ...await listMarkdownFiles(pageDir),
     ...await listMarkdownFiles(blogDir)
   ];
-  const failures = [];
+  const failures: string[] = [];
   for (const file of files) {
     const { data, body } = splitFrontmatter(await readFile(file, "utf8"), file);
     if (!String(data.contentSource ?? "").startsWith("micronaut-public") && data.contentSource !== "wordpress-post") {

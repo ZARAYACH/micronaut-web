@@ -1,7 +1,37 @@
 import { promises as fs } from "node:fs";
 import { parse as parseToml } from "smol-toml";
 
-const REPOSITORY_OVERRIDES = {
+export type Properties = Record<string, string>;
+
+export interface PlatformDocsProject {
+  slug: string;
+  displayName: string;
+  projectKey: string;
+  module: string;
+  repositoryName: string;
+  publishedGuideUrl: string;
+  repositoryUrl: string;
+  branch: string;
+  submodulePath: string;
+  platformVersionKey: string;
+}
+
+interface PlatformCatalogProject {
+  alias: string;
+  module: string;
+  versionRef: string;
+  version: string;
+  projectKey: string;
+  artifactId: string;
+}
+
+interface MetadataIndexes {
+  byProjectKey: Map<string, Properties>;
+  byModule: Map<string, Properties>;
+  byRepositoryName: Map<string, Properties>;
+}
+
+const REPOSITORY_OVERRIDES: Record<string, string> = {
   mongo: "micronaut-mongodb",
   oraclecloud: "micronaut-oracle-cloud",
   serialization: "micronaut-serialization"
@@ -25,14 +55,14 @@ const UPPERCASE_WORDS = new Set([
   "xml"
 ]);
 
-export async function readProperties(file, required = true) {
+export async function readProperties(file: string, required = true): Promise<Properties> {
   const content = await fs.readFile(file, "utf8").catch((error) => {
     if (required) {
       throw error;
     }
     return "";
   });
-  const properties = {};
+  const properties: Properties = {};
 
   for (const rawLine of content.split(/\r?\n/)) {
     const line = rawLine.trim();
@@ -49,10 +79,10 @@ export async function readProperties(file, required = true) {
   return properties;
 }
 
-export function readIndexed(properties, prefix, count) {
-  const values = [];
+export function readIndexed(properties: Properties, prefix: string, count: number): Properties[] {
+  const values: Properties[] = [];
   for (let index = 0; index < count; index += 1) {
-    const entry = {};
+    const entry: Properties = {};
     const entryPrefix = `${prefix}.${index}.`;
     for (const [key, value] of Object.entries(properties)) {
       if (key.startsWith(entryPrefix)) {
@@ -64,8 +94,8 @@ export function readIndexed(properties, prefix, count) {
   return values;
 }
 
-export async function readTomlStringVersions(file, required = true) {
-  const versions = {};
+export async function readTomlStringVersions(file: string, required = true): Promise<Properties> {
+  const versions: Properties = {};
   const content = await fs.readFile(file, "utf8").catch((error) => {
     if (required) {
       throw error;
@@ -92,13 +122,19 @@ export async function readTomlStringVersions(file, required = true) {
   return versions;
 }
 
-export async function readPlatformCatalogProjects(versionCatalogFile, metadataProperties = {}) {
+export async function readPlatformCatalogProjects(
+  versionCatalogFile: string,
+  metadataProperties: Properties = {}
+): Promise<PlatformDocsProject[]> {
   const content = await fs.readFile(versionCatalogFile, "utf8");
-  const catalog = parseToml(content);
+  const catalog = parseToml(content) as {
+    versions?: Record<string, unknown>;
+    libraries?: Record<string, { module?: unknown; version?: { ref?: unknown } }>;
+  };
   const versions = catalog.versions || {};
   const libraries = catalog.libraries || {};
   const metadata = indexedProjectMetadata(metadataProperties);
-  const projects = [];
+  const projects: PlatformDocsProject[] = [];
 
   for (const [alias, library] of Object.entries(libraries)) {
     if (!alias.startsWith("boms-micronaut-")) {
@@ -133,7 +169,7 @@ export async function readPlatformCatalogProjects(versionCatalogFile, metadataPr
   return projects;
 }
 
-export function selectProjects(projects, slugs) {
+export function selectProjects(projects: PlatformDocsProject[], slugs: string[]): PlatformDocsProject[] {
   if (!slugs.length) {
     return projects;
   }
@@ -147,11 +183,11 @@ export function selectProjects(projects, slugs) {
   });
 }
 
-function indexedProjectMetadata(properties) {
+function indexedProjectMetadata(properties: Properties): MetadataIndexes {
   const entries = readIndexed(properties, "project", Number(properties["project.count"] || 0));
-  const byProjectKey = new Map();
-  const byModule = new Map();
-  const byRepositoryName = new Map();
+  const byProjectKey = new Map<string, Properties>();
+  const byModule = new Map<string, Properties>();
+  const byRepositoryName = new Map<string, Properties>();
   for (const entry of entries) {
     if (entry.projectKey) {
       byProjectKey.set(entry.projectKey, entry);
@@ -166,7 +202,7 @@ function indexedProjectMetadata(properties) {
   return { byProjectKey, byModule, byRepositoryName };
 }
 
-function projectFromPlatformCatalog(platformProject, metadata) {
+function projectFromPlatformCatalog(platformProject: PlatformCatalogProject, metadata: MetadataIndexes): PlatformDocsProject {
   const repositoryName = resolveRepositoryName(platformProject, metadata);
   const cachedMetadata = metadata.byRepositoryName.get(repositoryName) || {};
   const repositoryUrl = choose(cachedMetadata.repositoryUrl, repositoryUrlFor(repositoryName));
@@ -190,8 +226,8 @@ function projectFromPlatformCatalog(platformProject, metadata) {
   };
 }
 
-function resolveRepositoryName(platformProject, metadata) {
-  const names = new Set();
+function resolveRepositoryName(platformProject: PlatformCatalogProject, metadata: MetadataIndexes): string {
+  const names = new Set<string>();
   const cachedByProjectKey = metadata.byProjectKey.get(platformProject.projectKey);
   const cachedByModule = metadata.byModule.get(platformProject.module);
   if (cachedByProjectKey?.repositoryName) {
@@ -207,10 +243,10 @@ function resolveRepositoryName(platformProject, metadata) {
   names.add(`micronaut-${platformProject.projectKey}`);
   names.add(platformProject.alias.slice("boms-".length));
 
-  return Array.from(names).find(Boolean);
+  return Array.from(names).find(Boolean) || platformProject.alias.slice("boms-".length);
 }
 
-function artifactId(module) {
+function artifactId(module: string): string {
   const separator = module.indexOf(":");
   if (separator < 0 || separator === module.length - 1) {
     throw new Error(`Invalid module coordinates: ${module}`);
@@ -218,37 +254,37 @@ function artifactId(module) {
   return module.slice(separator + 1);
 }
 
-function stripBomSuffix(value) {
+function stripBomSuffix(value: string): string {
   return value.endsWith("-bom") ? value.slice(0, -"-bom".length) : value;
 }
 
-function repositoryUrlFor(repositoryName) {
+function repositoryUrlFor(repositoryName: string): string {
   return `https://github.com/micronaut-projects/${repositoryName}.git`;
 }
 
-function publishedGuideUrlFor(repositoryName) {
+function publishedGuideUrlFor(repositoryName: string): string {
   if (repositoryName === "micronaut-core") {
     return "https://docs.micronaut.io/latest/guide/";
   }
   return `https://micronaut-projects.github.io/${repositoryName}/latest/guide/`;
 }
 
-function branchFor(version) {
+function branchFor(version: string): string {
   const match = /^(\d+)\.(\d+)\..*$/.exec(version);
   return match ? `${match[1]}.${match[2]}.x` : "master";
 }
 
-function slugFromSubmodulePath(submodulePath) {
+function slugFromSubmodulePath(submodulePath: string): string {
   const name = submodulePath.split("/").filter(Boolean).at(-1) || submodulePath;
   return name.startsWith("micronaut-") ? name.slice("micronaut-".length) : name;
 }
 
-function displayNameFor(repositoryName) {
+function displayNameFor(repositoryName: string): string {
   const name = repositoryName.startsWith("micronaut-") ? repositoryName.slice("micronaut-".length) : repositoryName;
   return ["Micronaut", ...name.split("-").map(displayWord)].join(" ");
 }
 
-function displayWord(word) {
+function displayWord(word: string): string {
   const lower = word.toLowerCase();
   if (UPPERCASE_WORDS.has(lower)) {
     return lower.toUpperCase();
@@ -265,6 +301,6 @@ function displayWord(word) {
   return `${lower.slice(0, 1).toUpperCase()}${lower.slice(1)}`;
 }
 
-function choose(value, fallback) {
+function choose(value: string | undefined, fallback: string): string {
   return value == null || String(value).trim() === "" ? fallback : value;
 }

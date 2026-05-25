@@ -138,8 +138,10 @@ test("strict guide renderer fails when Asciidoctor reports diagnostics", async (
       }
     ),
     (error) => {
-      assert.match(`${error.stdout}\n${error.stderr}`, /Asciidoctor diagnostics/);
-      assert.match(`${error.stdout}\n${error.stderr}`, /include file not found|include file not readable/i);
+      const childError = error as { stdout?: string; stderr?: string };
+      const output = `${childError.stdout ?? ""}\n${childError.stderr ?? ""}`;
+      assert.match(output, /Asciidoctor diagnostics/);
+      assert.match(output, /include file not found|include file not readable/i);
       return true;
     }
   );

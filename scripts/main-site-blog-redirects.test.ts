@@ -175,7 +175,7 @@ async function importTypeScriptModule(sourceFile, moduleName) {
   const moduleFile = path.join(temporaryDirectory, moduleName);
   await fs.writeFile(moduleFile, result.outputText, "utf8");
   try {
-    return await import(pathToFileURL(moduleFile));
+    return await import(pathToFileURL(moduleFile).href);
   } finally {
     await fs.rm(temporaryDirectory, { force: true, recursive: true });
   }

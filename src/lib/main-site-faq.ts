@@ -1,4 +1,5 @@
 import * as parse5 from "parse5";
+import type { DefaultTreeAdapterMap } from "parse5";
 
 export type MainSiteFaqItem = {
   id: string;
@@ -6,42 +7,43 @@ export type MainSiteFaqItem = {
   answerHtml: string;
 };
 
-type HtmlNode = {
-  nodeName: string;
-  tagName?: string;
-  attrs?: Array<{
-    name: string;
-    value: string;
-  }>;
-  childNodes?: HtmlNode[];
-  value?: string;
-};
+type HtmlNode = DefaultTreeAdapterMap["node"];
+type HtmlParentNode = DefaultTreeAdapterMap["parentNode"];
+type HtmlElement = DefaultTreeAdapterMap["element"];
+type HtmlTextNode = DefaultTreeAdapterMap["textNode"];
 
-function attr(node: HtmlNode, name: string) {
-  return node.attrs?.find((item) => item.name === name)?.value;
+function hasChildNodes(node: HtmlNode): node is HtmlParentNode {
+  return "childNodes" in node;
+}
+
+function isTextNode(node: HtmlNode): node is HtmlTextNode {
+  return node.nodeName === "#text";
+}
+
+function attr(node: HtmlNode | undefined, name: string) {
+  if (!node || !("attrs" in node)) {
+    return undefined;
+  }
+  return node.attrs.find((item) => item.name === name)?.value;
 }
 
 function textContent(node: HtmlNode): string {
-  if (node.nodeName === "#text") {
-    return node.value ?? "";
+  if (isTextNode(node)) {
+    return node.value;
   }
-  return (node.childNodes ?? []).map(textContent).join("");
+  return hasChildNodes(node) ? node.childNodes.map(textContent).join("") : "";
 }
 
-function isElement(node: HtmlNode, tagName: string) {
-  return node.tagName === tagName;
+function isElement(node: HtmlNode, tagName: string): node is HtmlElement {
+  return "tagName" in node && node.tagName === tagName;
 }
 
-function isQuestionHeading(node: HtmlNode) {
-  return node.tagName ? /^h[2-4]$/.test(node.tagName) : false;
+function isQuestionHeading(node: HtmlNode): node is HtmlElement {
+  return "tagName" in node && /^h[2-4]$/.test(node.tagName);
 }
 
 function serializeOuterHtml(node: HtmlNode) {
-  const fragment = {
-    nodeName: "#document-fragment",
-    childNodes: [node]
-  } as unknown as Parameters<typeof parse5.serialize>[0];
-  return parse5.serialize(fragment);
+  return parse5.serializeOuter(node);
 }
 
 function idFromQuestion(question: string, index: number) {
@@ -53,8 +55,8 @@ function idFromQuestion(question: string, index: number) {
   return slug || `faq-${index + 1}`;
 }
 
-function itemFromListItem(node: HtmlNode, index: number): MainSiteFaqItem | undefined {
-  const children = node.childNodes ?? [];
+function itemFromListItem(node: HtmlElement, index: number): MainSiteFaqItem | undefined {
+  const children = node.childNodes;
   const heading = children.find(isQuestionHeading);
   if (!heading) {
     return undefined;
@@ -65,7 +67,7 @@ function itemFromListItem(node: HtmlNode, index: number): MainSiteFaqItem | unde
     return undefined;
   }
 
-  const headingLink = heading.childNodes?.find((child) => isElement(child, "a"));
+  const headingLink = heading.childNodes.find((child) => isElement(child, "a"));
   const anchorId = attr(headingLink ?? heading, "href")?.replace(/^#/, "")
     || attr(heading, "id")
     || idFromQuestion(question, index);
@@ -83,10 +85,10 @@ function itemFromListItem(node: HtmlNode, index: number): MainSiteFaqItem | unde
 }
 
 export function extractFaqItemsFromHtml(html: string): MainSiteFaqItem[] {
-  const fragment = parse5.parseFragment(html) as unknown as HtmlNode;
-  const lists = (fragment.childNodes ?? []).filter((node) => isElement(node, "ul"));
+  const fragment = parse5.parseFragment(html);
+  const lists = fragment.childNodes.filter((node) => isElement(node, "ul"));
   for (const list of lists) {
-    const items = (list.childNodes ?? [])
+    const items = list.childNodes
       .filter((node) => isElement(node, "li"))
       .map(itemFromListItem)
       .filter((item): item is MainSiteFaqItem => Boolean(item));

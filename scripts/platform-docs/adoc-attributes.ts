@@ -1,5 +1,5 @@
-export function parseAttributeList(value) {
-  const attributes = {};
+export function parseAttributeList(value: string): Record<string, string> {
+  const attributes: Record<string, string> = {};
   const items = [];
   let current = "";
   let quote = "";
@@ -38,7 +38,7 @@ export function parseAttributeList(value) {
   return attributes;
 }
 
-function stripQuotes(value) {
+function stripQuotes(value: string): string {
   if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
     return value.slice(1, -1);
   }

@@ -3,6 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  type PlatformDocsProject,
+  type Properties,
   readPlatformCatalogProjects,
   readProperties,
   readTomlStringVersions
@@ -29,13 +31,28 @@ const [projectProperties, platformVersions, existingFixture, protocol] = await P
   readJson(outputFile),
   readJson(protocolFile)
 ]);
-const existingProjectsBySlug = new Map((existingFixture.projects || []).map((project) => [project.slug, project]));
-const protocolProjectOrder = new Map((protocol.docs?.projects || []).map((project, index) => [project.slug, index]));
-const categories = existingFixture.categories || [];
+type FixtureProject = PlatformDocsProject & Properties & {
+  categorySlugs?: string[];
+  primaryCategory?: string;
+};
+
+type FixtureCategory = {
+  slug: string;
+  projectSlugs?: string[];
+};
+
+const existingProjectsBySlug = new Map<string, FixtureProject>(
+  ((existingFixture.projects || []) as FixtureProject[]).map((project) => [project.slug, project])
+);
+const protocolProjectOrder = new Map<string, number>(
+  (((protocol.docs as { projects?: Array<{ slug: string }> } | undefined)?.projects) || [])
+    .map((project, index) => [project.slug, index])
+);
+const categories = (existingFixture.categories || []) as FixtureCategory[];
 
 const projects = (await readPlatformCatalogProjects(platformVersionCatalogFile, projectProperties))
   .map((project) => {
-    const existingProject = existingProjectsBySlug.get(project.slug) || {};
+    const existingProject = existingProjectsBySlug.get(project.slug) || ({} as FixtureProject);
     const categorySlugs = existingProject.categorySlugs || categories
       .filter((category) => (category.projectSlugs || []).includes(project.slug))
       .map((category) => category.slug);
@@ -75,15 +92,15 @@ const fixture = {
 await fs.writeFile(outputFile, `${JSON.stringify(fixture, null, 2)}\n`);
 console.log(`Wrote ${projects.length} platform docs projects to ${path.relative(projectDirectory, outputFile)}.`);
 
-function projectOrder(project) {
+function projectOrder(project: PlatformDocsProject): number {
   return protocolProjectOrder.has(project.slug) ? protocolProjectOrder.get(project.slug) : Number.MAX_SAFE_INTEGER;
 }
 
-async function readJson(file) {
+async function readJson(file: string): Promise<Record<string, any>> {
   try {
     return JSON.parse(await fs.readFile(file, "utf8"));
   } catch (error) {
-    if (error.code === "ENOENT") {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       return {};
     }
     throw error;

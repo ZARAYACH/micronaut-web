@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import type { BundledLanguage, SpecialLanguage } from "shiki";
 
 import { cn } from "@/lib/utils";
 
@@ -27,9 +28,9 @@ type CodeBlockProps = {
   className?: string;
 };
 
-function shikiLanguage(language: string) {
+function shikiLanguage(language: string): BundledLanguage | SpecialLanguage {
   if (["bash", "groovy", "java", "json", "kotlin", "markdown", "properties", "toml", "xml", "yaml"].includes(language)) {
-    return language;
+    return language as BundledLanguage;
   }
   return "text";
 }

@@ -12,7 +12,14 @@ const outputTemplatesDirectory = path.join(outputDirectory, "templates");
 const manifestFile = path.join(outputDirectory, "assets-manifest.json");
 const manifestDirectory = path.join(outputDirectory, "manifests");
 
-const copiedTemplatePlaceholders = {
+type GeneratedTemplate = {
+  html: string;
+  placeholders: string[];
+};
+
+type TemplatePlaceholders = Record<string, string[]>;
+
+const copiedTemplatePlaceholders: TemplatePlaceholders = {
   "docs/docs-index.html": [
     "pageTitle",
     "pageDescription",
@@ -64,7 +71,7 @@ const copiedTemplatePlaceholders = {
 };
 
 const generatedSnippetTemplates = await renderGeneratedSnippetTemplates();
-const requiredTemplates = {
+const requiredTemplates: TemplatePlaceholders = {
   ...copiedTemplatePlaceholders,
   ...Object.fromEntries(
     Object.entries(generatedSnippetTemplates).map(([relativeTemplate, generated]) => [
@@ -125,7 +132,7 @@ for (const surface of ["docs", "guides"]) {
 }
 console.log(`Prepared ${Object.keys(requiredTemplates).length} HTML templates and asset manifest.`);
 
-async function renderGeneratedSnippetTemplates() {
+async function renderGeneratedSnippetTemplates(): Promise<Record<string, GeneratedTemplate>> {
   await fs.mkdir(outputDirectory, { recursive: true });
   const tempDirectory = await fs.mkdtemp(path.join(outputDirectory, ".snippet-template-renderer-"));
   const outfile = path.join(tempDirectory, "docs-snippet-templates.mjs");
@@ -151,7 +158,7 @@ async function renderGeneratedSnippetTemplates() {
       ]
     });
     const module = await import(pathToFileURL(outfile).href);
-    return module.renderDocsSnippetTemplates();
+    return module.renderDocsSnippetTemplates() as Record<string, GeneratedTemplate>;
   } finally {
     await fs.rm(tempDirectory, { recursive: true, force: true });
   }

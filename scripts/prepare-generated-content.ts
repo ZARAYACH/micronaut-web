@@ -4,15 +4,15 @@ import { fileURLToPath } from "node:url";
 
 const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const tasks = [
+const tasks: Array<[label: string, command: string, args: string[]]> = [
   ["platform docs", process.execPath, ["scripts/render-platform-docs.ts"]],
   ["guides", process.execPath, ["scripts/render-guides.ts"]]
 ];
 
 await Promise.all(tasks.map(([label, command, args]) => run(label, command, args)));
 
-function run(label, command, args) {
-  return new Promise((resolve, reject) => {
+function run(label: string, command: string, args: string[]): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: projectDirectory,
       env: process.env,

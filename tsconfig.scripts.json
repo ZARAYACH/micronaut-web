@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "noEmit": true,
+    "noImplicitAny": false,
+    "strict": false,
+    "types": ["node"]
+  },
+  "include": ["scripts/**/*.ts"],
+  "exclude": []
+}

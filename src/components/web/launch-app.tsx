@@ -1573,6 +1573,7 @@ function DecisionGroupPanel({
         title: "Additional options"
       }
     : undefined;
+  const additionalConfigurationFeatures = featureGroup?.features ?? [];
 
   function selectChoice(choice: ResolvedDecisionChoice) {
     onSelect(group, choice);
@@ -1674,12 +1675,12 @@ function DecisionGroupPanel({
               );
             })}
           </fieldset>
-          {additionalConfigurationGroup && featureGroup.features.length > 0 && (
+          {additionalConfigurationGroup && additionalConfigurationFeatures.length > 0 && (
             <>
               <Separator className="my-4" />
               <CapabilityGroupPanel
                 group={additionalConfigurationGroup}
-                features={featureGroup.features}
+                features={additionalConfigurationFeatures}
                 selectedFeatureNames={selectedFeatureNames}
                 onToggle={onToggleFeature}
               />

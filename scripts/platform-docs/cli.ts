@@ -1,9 +1,20 @@
-export function splitList(value) {
+export type ParsedArgs = {
+  _: string[];
+} & Record<string, string | string[] | boolean | undefined>;
+
+export function splitList(value: string | string[] | boolean | undefined): string[] {
   return value ? String(value).split(",").map((item) => item.trim()).filter(Boolean) : [];
 }
 
-export function parseArgs(args) {
-  const parsed = { _: [] };
+export function stringArg(value: string | string[] | boolean | undefined): string | undefined {
+  if (typeof value === "string") {
+    return value;
+  }
+  return Array.isArray(value) ? value[0] : undefined;
+}
+
+export function parseArgs(args: string[]): ParsedArgs {
+  const parsed: ParsedArgs = { _: [] };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (!arg.startsWith("--")) {
@@ -25,6 +36,6 @@ export function parseArgs(args) {
   return parsed;
 }
 
-function camelCase(value) {
+function camelCase(value: string): string {
   return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
 }

@@ -1,8 +1,42 @@
 const MAX_GENERATED_ITEMS_PER_PROJECT = 1200;
 
-export function buildDocsSearchIndex(projects, generatedHtmlBySlug = {}) {
-  const items = [];
-  const seen = new Set();
+export interface SearchProject {
+  slug: string;
+  displayName: string;
+  href?: string;
+  shortName?: string;
+  projectKey?: string;
+  module?: string;
+  repositoryName?: string;
+  repositoryUrl?: string;
+  shortDescription?: string;
+  longDescription?: string;
+  searchTerms?: string[];
+  sections?: SearchSection[];
+}
+
+interface SearchSection {
+  id: string;
+  number?: string;
+  title: string;
+  summary?: string;
+}
+
+export interface SearchItem {
+  kind: string;
+  title: string;
+  description: string;
+  href: string;
+  terms: string;
+  scope: string;
+}
+
+export function buildDocsSearchIndex(
+  projects: SearchProject[],
+  generatedHtmlBySlug: Record<string, string> = {}
+): SearchItem[] {
+  const items: SearchItem[] = [];
+  const seen = new Set<string>();
 
   for (const project of projects) {
     pushItem(items, seen, {
@@ -54,7 +88,7 @@ export function buildDocsSearchIndex(projects, generatedHtmlBySlug = {}) {
   return items;
 }
 
-export function extractGeneratedDocSearchItems(project, html) {
+export function extractGeneratedDocSearchItems(project: SearchProject, html: string): SearchItem[] {
   if (!html) {
     return [];
   }
@@ -66,8 +100,8 @@ export function extractGeneratedDocSearchItems(project, html) {
   ];
 }
 
-function extractHeadingItems(project, html) {
-  const items = [];
+function extractHeadingItems(project: SearchProject, html: string): SearchItem[] {
+  const items: SearchItem[] = [];
   const headingPattern = /<div class="guide-section-heading">\s*<h([12]) id="([^"]+)"><a class="anchor" href="#[^"]+"><\/a>([\s\S]*?)<\/h\1>/g;
   for (const match of html.matchAll(headingPattern)) {
     const label = cleanText(match[3]);
@@ -86,12 +120,12 @@ function extractHeadingItems(project, html) {
   return items;
 }
 
-function extractPropertyItems(project, html) {
-  const items = [];
+function extractPropertyItems(project: SearchProject, html: string): SearchItem[] {
+  const items: SearchItem[] = [];
   const rowPattern = /<tr\b[^>]*>([\s\S]*?)<\/tr>/g;
 
   for (const match of html.matchAll(rowPattern)) {
-    const cells = Array.from(match[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/g), (cell) => cleanText(cell[1]));
+    const cells = Array.from(match[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/g), (cell: RegExpMatchArray) => cleanText(cell[1]));
     if (cells.length < 2) {
       continue;
     }
@@ -112,8 +146,8 @@ function extractPropertyItems(project, html) {
   return items;
 }
 
-function extractClassItems(project, html) {
-  const items = [];
+function extractClassItems(project: SearchProject, html: string): SearchItem[] {
+  const items: SearchItem[] = [];
   const linkPattern = /<a\b([^>]*)>([\s\S]*?)<\/a>/g;
   for (const match of html.matchAll(linkPattern)) {
     const href = attributeValue(match[1], "href");
@@ -137,7 +171,7 @@ function extractClassItems(project, html) {
   return items;
 }
 
-function pushItem(items, seen, item) {
+function pushItem(items: SearchItem[], seen: Set<string>, item: SearchItem): void {
   const key = `${item.scope}:${item.href}:${item.title}`;
   if (seen.has(key)) {
     return;
@@ -146,7 +180,7 @@ function pushItem(items, seen, item) {
   items.push(item);
 }
 
-function absoluteDocsHref(project, href) {
+function absoluteDocsHref(project: SearchProject, href: string): string {
   if (/^[a-z][a-z\d+\-.]*:\/\//i.test(href) || href.startsWith("//")) {
     return href;
   }
@@ -154,7 +188,7 @@ function absoluteDocsHref(project, href) {
   return `${resolved.pathname}${resolved.search}${resolved.hash}`;
 }
 
-function classNameFromApiHref(href, label) {
+function classNameFromApiHref(href: string, label: string): string {
   if (looksLikeClassName(label)) {
     return label;
   }
@@ -163,27 +197,27 @@ function classNameFromApiHref(href, label) {
   return looksLikeClassName(file) ? file : "";
 }
 
-function looksLikeClassName(value) {
+function looksLikeClassName(value: string): boolean {
   return /^[A-Z_$][\w$]*(?:\.[\w$]+)?(?:\([^)]*\))?$/.test(String(value || "").trim());
 }
 
-function isConfigurationPropertyName(value) {
+function isConfigurationPropertyName(value: string): boolean {
   return /^[a-z][a-z0-9]*(?:[.\-][a-z0-9*[\]-]+)+$/i.test(String(value || "").trim());
 }
 
-function attributeValue(source, name) {
+function attributeValue(source: string, name: string): string {
   const pattern = new RegExp(`\\b${name}="([^"]*)"`);
   return pattern.exec(source)?.[1] || "";
 }
 
-function cleanText(value) {
+function cleanText(value: string): string {
   return decodeEntities(String(value || "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim());
 }
 
-function decodeEntities(value) {
+function decodeEntities(value: string): string {
   return value
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")

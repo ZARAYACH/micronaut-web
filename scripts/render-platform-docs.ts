@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import { copyProjectImageAssets } from "./platform-docs/assets.ts";
-import { parseArgs, splitList } from "./platform-docs/cli.ts";
+import { parseArgs, splitList, stringArg } from "./platform-docs/cli.ts";
 import { isDirectory, isRegularFile } from "./platform-docs/files.ts";
 import {
   readIndexed,
@@ -23,23 +23,23 @@ const execFile = promisify(execFileCallback);
 const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const options = parseArgs(process.argv.slice(2));
 const platformDocsDirectory = path.resolve(
-  options.platformDocsDir ||
-  options.platformDocs ||
+  stringArg(options.platformDocsDir) ||
+  stringArg(options.platformDocs) ||
   options._[0] ||
   process.env.PLATFORM_DOCS_DIR ||
   path.join(projectDirectory, ".platform-docs")
 );
 const platformProjectDirectory = path.resolve(
-  options.platformProjectDir ||
+  stringArg(options.platformProjectDir) ||
   process.env.PLATFORM_PROJECT_DIR ||
   path.join(platformDocsDirectory, "repos", "micronaut-platform")
 );
 const platformVersionCatalogFile = path.resolve(
-  options.platformVersionCatalog ||
+  stringArg(options.platformVersionCatalog) ||
   process.env.PLATFORM_VERSION_CATALOG ||
   path.join(platformProjectDirectory, "gradle", "libs.versions.toml")
 );
-const outputDirectory = path.resolve(options.output || path.join(projectDirectory, "src", "content", "generated-docs"));
+const outputDirectory = path.resolve(stringArg(options.output) || path.join(projectDirectory, "src", "content", "generated-docs"));
 const checkedInPlatformDocsDataDirectory = path.join(projectDirectory, "src", "data", "platform-docs");
 const strict = Boolean(options.strict || process.env.PLATFORM_DOCS_RENDER_STRICT === "true" || process.env.CI === "true");
 const renderAll = Boolean(options.all || process.env.PLATFORM_DOCS_RENDER_ALL === "true");

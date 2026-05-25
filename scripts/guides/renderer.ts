@@ -3,8 +3,15 @@ import path from "node:path";
 
 import { highlightListingBlocks, optimizeGeneratedGuideHtml, shikiStyle } from "./shared-rendering.ts";
 import { preprocessGuideSource } from "./preprocessor.ts";
+import type { Guide, GuideOption } from "./model.ts";
 
-export async function renderGuideOption(asciidoctor, guidesDirectory, guide, option, renderOptions = {}) {
+export async function renderGuideOption(
+  asciidoctor,
+  guidesDirectory: string,
+  guide: Guide,
+  option: GuideOption,
+  renderOptions: { strict?: boolean } = {}
+): Promise<string> {
   const source = await preprocessGuideSource({ guidesDirectory, guide, option });
   const logger = asciidoctor.MemoryLogger.create();
   const previousLogger = asciidoctor.LoggerManager.getLogger();
@@ -52,7 +59,12 @@ function formatAsciidoctorDiagnostic(message) {
   return `asciidoctor: ${severity}: ${source}${message.getText()}`;
 }
 
-export async function copyGuideAssets(guidesDirectory, guide, outputDirectory, options = []) {
+export async function copyGuideAssets(
+  guidesDirectory: string,
+  guide: Guide,
+  outputDirectory: string,
+  options: GuideOption[] = []
+): Promise<void> {
   const targetRoot = path.join(outputDirectory, "assets", guide.slug);
   await copyIfExists(path.join(guide.directory, "images"), path.join(targetRoot, "images"));
   await copyIfExists(path.join(guide.directory, "img"), path.join(targetRoot, "img"));
@@ -91,7 +103,7 @@ export function guideManifest(guides) {
   };
 }
 
-function rewriteGuideUrls(input, slug) {
+function rewriteGuideUrls(input: string, slug: string): string {
   return input.replace(/\b(href|src)="([^"]*)"/g, (match, attributeName, value) => {
     const legacyGuidePath = /^https:\/\/guides\.micronaut\.io\/latest\/([^?#]+)([?#].*)?$/i.exec(value);
     if (legacyGuidePath) {
@@ -120,7 +132,7 @@ function rewriteGuideUrls(input, slug) {
   });
 }
 
-async function copyIfExists(source, target) {
+async function copyIfExists(source: string, target: string): Promise<void> {
   try {
     const stat = await fs.stat(source);
     if (!stat.isDirectory()) {
@@ -133,8 +145,8 @@ async function copyIfExists(source, target) {
   await fs.cp(source, target, { recursive: true });
 }
 
-async function copyReferencedSharedAssets(guidesDirectory, outputDirectory, options) {
-  const referenced = new Set();
+async function copyReferencedSharedAssets(guidesDirectory: string, outputDirectory: string, options: GuideOption[]): Promise<void> {
+  const referenced = new Set<string>();
   for (const option of options) {
     let html;
     try {
@@ -163,7 +175,7 @@ async function copyReferencedSharedAssets(guidesDirectory, outputDirectory, opti
   }));
 }
 
-function firstSuffixIndex(value) {
+function firstSuffixIndex(value: string): number {
   const queryIndex = value.indexOf("?");
   const hashIndex = value.indexOf("#");
   if (queryIndex < 0) return hashIndex;
@@ -171,6 +183,6 @@ function firstSuffixIndex(value) {
   return Math.min(queryIndex, hashIndex);
 }
 
-function estimateMinutes(guide) {
+function estimateMinutes(guide: Guide): number {
   return Math.max(10, Math.min(60, Math.round((guide.intro.length + guide.title.length) / 20) * 5));
 }

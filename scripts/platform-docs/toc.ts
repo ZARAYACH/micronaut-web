@@ -4,22 +4,25 @@ import path from "node:path";
 
 import { isRegularFile } from "./files.ts";
 
-export async function readGuideToc(guideSourceDirectory) {
+type TocMap = Record<string, unknown>;
+
+export async function readGuideToc(guideSourceDirectory: string) {
   const tocFile = path.join(guideSourceDirectory, "toc.yml");
   const parsed = yaml.load(await fs.readFile(tocFile, "utf8"));
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error(`TOC YAML must be a map: ${tocFile}`);
   }
+  const toc = parsed as TocMap;
 
   const children = [];
-  await appendTocNodes(children, guideSourceDirectory, [], parsed, 0, "");
+  await appendTocNodes(children, guideSourceDirectory, [], toc, 0, "");
   return {
-    title: typeof parsed.title === "string" ? parsed.title : "",
+    title: typeof toc.title === "string" ? toc.title : "",
     children
   };
 }
 
-async function appendTocNodes(target, guideSourceDirectory, parentIds, toc, level, numberPrefix) {
+async function appendTocNodes(target, guideSourceDirectory: string, parentIds: string[], toc: TocMap, level: number, numberPrefix: string) {
   let index = 1;
   for (const [rawId, value] of Object.entries(toc)) {
     const id = tocKey(rawId);
@@ -33,7 +36,7 @@ async function appendTocNodes(target, guideSourceDirectory, parentIds, toc, leve
     const pathIds = [...parentIds, id];
     const children = [];
     if (value && typeof value === "object" && !Array.isArray(value)) {
-      const childSections = { ...value };
+      const childSections = { ...(value as TocMap) };
       delete childSections.title;
       await appendTocNodes(children, guideSourceDirectory, pathIds, childSections, level + 1, number);
     }
@@ -50,13 +53,14 @@ function tocKey(value) {
   throw new Error("TOC section keys must be non-blank strings.");
 }
 
-function tocTitle(id, value) {
+function tocTitle(id: string, value: unknown): string {
   if (typeof value === "string" && value.trim()) {
     return value.trim();
   }
   if (value && typeof value === "object" && !Array.isArray(value)) {
-    if (typeof value.title === "string" && value.title.trim()) {
-      return value.title.trim();
+    const map = value as TocMap;
+    if (typeof map.title === "string" && map.title.trim()) {
+      return map.title.trim();
     }
     throw new Error(`TOC section '${id}' must define a non-blank title.`);
   }

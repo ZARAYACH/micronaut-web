@@ -456,9 +456,11 @@ function diffLink(_target, attributes, context) {
   return `https://micronaut.io/launch?${params.toString()}[Diff, window="_blank"]`;
 }
 
-function parseAttributes(source) {
-  const attributes = {};
-  const positional = [];
+type Attributes = Record<string, string> & { _positional?: string[] };
+
+function parseAttributes(source): Attributes {
+  const attributes: Attributes = {};
+  const positional: string[] = [];
   for (const part of splitAttributes(source)) {
     const separator = part.indexOf("=");
     if (separator < 0) {

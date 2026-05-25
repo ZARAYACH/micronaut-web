@@ -79,11 +79,12 @@ export function shikiStyle() {
 
 async function highlightListingBlocksOnce(input) {
   const pattern = /<div class="listingblock([^"]*)"(?![^>]*\sdata-lang=)([^>]*)>\s*(<div class="title">(?:(?!<\/div>)[\s\S])*<\/div>\s*)?<div class="content">\s*<pre([^>]*)><code([^>]*)>([\s\S]*?)<\/code><\/pre>\s*<\/div>\s*<\/div>/g;
-  const matches = Array.from(input.matchAll(pattern));
+  const matches: RegExpMatchArray[] = Array.from(input.matchAll(pattern));
   let result = "";
   let position = 0;
   for (const match of matches) {
-    result += input.slice(position, match.index);
+    const matchIndex = match.index ?? 0;
+    result += input.slice(position, matchIndex);
     const classes = match[1].trim();
     const divAttributes = removeHtmlAttribute(match[2] || "", "data-lang");
     const title = match[3] || "";
@@ -91,7 +92,7 @@ async function highlightListingBlocksOnce(input) {
     const codeAttributes = match[5] || "";
     if (/\bshiki\b/.test(preAttributes)) {
       result += match[0];
-      position = match.index + match[0].length;
+      position = matchIndex + match[0].length;
       continue;
     }
     const language = codeLanguage(codeAttributes);
@@ -114,7 +115,7 @@ async function highlightListingBlocksOnce(input) {
       .replace(/&#x3C;(\d+)>/g, '<i class="conum" data-value="$1"></i>');
     highlighted = decodeCalloutMarkers(highlighted);
     result += `<div class="listingblock${classes ? ` ${classes}` : ""}"${divAttributes} data-lang="${attribute(language)}">\n${title}<div class="content">\n${highlighted}\n</div>\n</div>`;
-    position = match.index + match[0].length;
+    position = matchIndex + match[0].length;
   }
   result += input.slice(position);
   return result;
