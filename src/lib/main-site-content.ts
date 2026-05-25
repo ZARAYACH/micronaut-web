@@ -1,8 +1,8 @@
 import { getCollection, render, type CollectionEntry } from "astro:content";
-import { codeToHtml } from "shiki";
 
 import { withBasePath } from "@/lib/base-path";
 import { routeSlugsForPost } from "@/lib/blog-redirects";
+import { renderMainSiteCodeSnippets } from "@/lib/main-site-code-snippets";
 
 export type MainSitePageEntry = CollectionEntry<"mainSitePages">;
 export type BlogPostEntry = CollectionEntry<"blogPosts">;
@@ -60,26 +60,6 @@ export type SuccessStory = {
   sourceUrl?: string;
   logo?: string;
   logoClass?: string;
-};
-
-const mainSiteShikiTheme = {
-  light: "github-light-default",
-  dark: "github-dark-default"
-} as const;
-
-const shikiLanguageAliases: Record<string, string> = {
-  conf: "properties",
-  gradle: "groovy",
-  hocon: "properties",
-  javastacktrace: "java",
-  maven: "xml",
-  pom: "xml",
-  props: "properties",
-  sh: "shellscript",
-  shell: "shellscript",
-  txt: "text",
-  yml: "yaml",
-  zsh: "shellscript"
 };
 
 function slugFromEntry(entry: { id: string }) {
@@ -239,7 +219,7 @@ export async function getSuccessStories(): Promise<SuccessStory[]> {
 export async function renderMarkdownHtml(entry: MainSitePageEntry | BlogPostEntry) {
   await render(entry);
   const html = stripGeneratedPermalinkParagraphs(rewriteRootRelativeHtml(entry.rendered?.html ?? ""));
-  return highlightCodeBlocks(html);
+  return renderMainSiteCodeSnippets(html);
 }
 
 function rewriteRootRelativeHtml(html: string) {
@@ -269,97 +249,6 @@ function stripGeneratedPermalinkParagraphs(html: string) {
   });
 }
 
-async function highlightCodeBlocks(html: string) {
-  const codeBlocks = Array.from(html.matchAll(/<pre([^>]*)><code([^>]*)>([\s\S]*?)<\/code><\/pre>/gi));
-  if (codeBlocks.length === 0) {
-    return html;
-  }
-
-  let result = "";
-  let position = 0;
-  for (const match of codeBlocks) {
-    result += html.slice(position, match.index);
-    const preAttributes = match[1] ?? "";
-    const codeAttributes = match[2] ?? "";
-    const source = decodeHtml(stripHtml(match[3] ?? "")).replace(/\n$/, "");
-    const language = codeLanguage(codeAttributes);
-    if (/\bshiki\b/.test(preAttributes)) {
-      result += match[0];
-    } else {
-      result += await highlightedCodeBlock(source, language);
-    }
-    position = (match.index ?? 0) + match[0].length;
-  }
-  result += html.slice(position);
-  return result;
-}
-
-async function highlightedCodeBlock(source: string, language: string) {
-  const displayLanguage = language && language !== "text" ? language : inferCodeLanguage(source);
-  const highlighterLanguage = shikiLanguage(displayLanguage);
-  try {
-    const highlighted = await codeToHtml(source, {
-      lang: highlighterLanguage,
-      themes: mainSiteShikiTheme
-    });
-    return highlighted
-      .replace("<pre", `<pre data-lang="${attribute(displayLanguage)}"`)
-      .replace("<code>", `<code class="language-${attribute(displayLanguage)} shiki-code" data-lang="${attribute(displayLanguage)}">`);
-  } catch {
-    const highlighted = await codeToHtml(source, {
-      lang: "text",
-      themes: mainSiteShikiTheme
-    });
-    return highlighted
-      .replace("<pre", `<pre data-lang="${attribute(displayLanguage)}"`)
-      .replace("<code>", `<code class="language-${attribute(displayLanguage)} shiki-code" data-lang="${attribute(displayLanguage)}">`);
-  }
-}
-
-function codeLanguage(codeAttributes: string) {
-  const match = codeAttributes.match(/\blanguage-([A-Za-z0-9_+-]+)/)
-    ?? codeAttributes.match(/\bdata-lang="([^"]+)"/);
-  return normalizeCodeLanguage(match?.[1] ?? "text");
-}
-
-function shikiLanguage(language: string) {
-  const normalized = normalizeCodeLanguage(language);
-  return shikiLanguageAliases[normalized] || normalized || "text";
-}
-
-function normalizeCodeLanguage(language: string) {
-  return String(language || "text").trim().toLowerCase();
-}
-
-function inferCodeLanguage(source: string) {
-  const value = source.trim();
-  if (!value) {
-    return "text";
-  }
-  if (/^<\?xml\b|^<\/?[A-Za-z][\s\S]*>$|<dependency>|<parent>|<properties>|<path>|<plugin>|<groupId>/.test(value)) {
-    return "xml";
-  }
-  if (/^(?:plugins|dependencies|micronaut|java)\s*\{|(?:implementation|runtimeOnly|annotationProcessor|compileOnly|testImplementation)\s*\(|\bid\(["'][^"']+["']\)\s+version\b/.test(value)) {
-    return "groovy";
-  }
-  if (/^(?:package|import)\s+(?:jakarta|javax|io|java|org)\.|public\s+(?:class|record|interface|enum)\b|@\w+(?:\(|\s|$)/m.test(value)) {
-    return "java";
-  }
-  if (/^(?:curl|source|sdk|mn|mvn|gradle|\.\/gradlew|docker|git)\b|^\$ /m.test(value)) {
-    return "shellscript";
-  }
-  if (/^[A-Za-z0-9_.-]+\s*=\s*.+$/m.test(value)) {
-    return "properties";
-  }
-  if (/^[A-Za-z0-9_.-]+:\s+.+$/m.test(value)) {
-    return "yaml";
-  }
-  if (/^[\[{][\s\S]*[\]}]$/.test(value)) {
-    return "json";
-  }
-  return "text";
-}
-
 function isGeneratedPermalink(href: string) {
   try {
     const url = new URL(href);
@@ -383,12 +272,4 @@ function decodeHtml(value: string) {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, "\"")
     .replace(/&#039;|&apos;/g, "'");
-}
-
-function attribute(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 }

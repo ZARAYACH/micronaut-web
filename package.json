@@ -14,7 +14,7 @@
     "render:guides": "node scripts/render-guides.mjs",
     "prepare:generated-docs": "npm run render:platform-docs",
     "prepare:generated-content": "node scripts/prepare-generated-content.mjs",
-    "test:main-site": "node --test scripts/main-site-blog-redirects.test.mjs",
+    "test:main-site": "node --test scripts/main-site*.test.mjs",
     "test:platform-docs": "node --test scripts/platform-docs/*.test.mjs",
     "test:guides": "node --test scripts/guides/*.test.mjs",
     "dev": "npm run protocol && npm run prepare:generated-content && astro dev --host 127.0.0.1",

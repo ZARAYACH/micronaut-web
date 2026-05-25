@@ -14,8 +14,8 @@ export function MainCodeShowcase({ examples }: MainCodeShowcaseProps) {
   const [activeLanguages, setActiveLanguages] = useState<Record<string, CodeSnippetLanguage>>({});
 
   return (
-    <Tabs defaultValue="server" className="main-code-showcase gap-4">
-      <TabsList >
+    <Tabs defaultValue="server" className="main-code-showcase min-w-0 gap-4">
+      <TabsList className="w-full justify-start overflow-x-auto sm:w-fit sm:justify-center sm:overflow-visible">
         {examples.map((example) => (
           <TabsTrigger
             key={example.id}

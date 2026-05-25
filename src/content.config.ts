@@ -44,6 +44,20 @@ const mainSiteFooterGroups = defineCollection({
   })
 });
 
+const codeExamples = defineCollection({
+  loader: glob({
+    base: "./src/content/code-examples",
+    pattern: "*.md"
+  }),
+  schema: z.object({
+    id: z.string(),
+    order: z.number(),
+    label: z.string(),
+    title: z.string(),
+    description: z.string()
+  })
+});
+
 const blogPosts = defineCollection({
   loader: glob({
     base: "./src/content/main-site/blog",
@@ -79,6 +93,7 @@ const blogPosts = defineCollection({
 });
 
 export const collections = {
+  codeExamples,
   mainSitePages,
   mainSiteFooterGroups,
   blogPosts

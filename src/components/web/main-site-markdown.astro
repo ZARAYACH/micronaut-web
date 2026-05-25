@@ -6,7 +6,7 @@ type Props = {
 const { html = "" } = Astro.props;
 ---
 
-{html && <div class="main-site-markdown" set:html={html} />}
+{html && <div class="main-site-markdown" data-generated-docs set:html={html} />}
 
 <style>
   .main-site-markdown {

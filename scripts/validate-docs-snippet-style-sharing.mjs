@@ -122,6 +122,21 @@ const consumers = [
       "docsSnippetStyles.languageText",
       "docsSnippetStyles.kindIcon"
     ]
+  },
+  {
+    file: "src/lib/main-site-code-snippets.ts",
+    requiredUses: [
+      "renderDocsSnippetTemplates",
+      "docsSnippetStyles.buttonGhostXs",
+      "docsSnippetStyles.languageButton",
+      "docsSnippetStyles.languageButtonActive",
+      "docsSnippetStyles.languageButtonInactive",
+      "docsSnippetStyles.languageText",
+      "docsSnippetStyles.panel",
+      "docsSnippetStyles.codePre",
+      "docsSnippetStyles.codeElement",
+      "highlightCodeSnippetHtml"
+    ]
   }
 ];
 

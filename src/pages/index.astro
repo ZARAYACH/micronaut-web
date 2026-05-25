@@ -14,10 +14,10 @@ import { Separator } from "@/components/ui/separator";
 import { ActionLink } from "@/components/web/action-link";
 import { IconGlyph } from "@/components/web/icon-glyph";
 import { MainCodeShowcase } from "@/components/web/main-code-showcase";
-import { mainCodeShowcaseExamples } from "@/components/web/main-code-showcase-data";
 import SiteFooter from "@/components/web/site-footer.astro";
 import { withBasePath } from "@/lib/base-path";
 import { highlightCodeSnippetExamples } from "@/lib/docs-code-highlighting";
+import { getMainCodeShowcaseExamples } from "@/lib/main-code-showcase-content";
 import { getSuccessStories } from "@/lib/main-site-content";
 
 const features = [
@@ -104,7 +104,7 @@ const graalBullets = ["Ahead-of-time friendly", "Reduced reflection reliance", "
 const dataBullets = ["Repository APIs", "Compile-time query model", "Reduced runtime overhead"];
 const cloudBullets = ["Service discovery", "Distributed tracing", "Cloud runtimes", "Messaging and data integrations"];
 const codeProofs = ["Same annotations across server and client", "Compile-time metadata generation", "Fast tests with application context support"];
-const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(mainCodeShowcaseExamples);
+const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(await getMainCodeShowcaseExamples());
 ---
 
 <WebLayout
@@ -191,7 +191,7 @@ const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(mainC
     <section class="border-b bg-muted/40">
       <div class="mx-auto grid max-w-[var(--page-max)] gap-7 px-5 py-[var(--section-y)] sm:px-6 xl:px-0">
       <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
+        <div class="min-w-0">
           <Badge variant="outline">Key features</Badge>
           <h2 class="mt-4 max-w-[480px] text-3xl font-bold md:text-4xl">Built around Micronaut's strongest differentiators</h2>
         </div>
