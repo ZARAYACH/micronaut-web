@@ -1,11 +1,9 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import {
-  highlightListingBlocks,
-  optimizeGeneratedGuideHtml,
-  shikiStyle,
-} from "./shared-rendering.ts";
+import { renderAsciiDoc } from "../shared/asciidoc-rendering.ts";
+import { optimizeImages as optimizeGeneratedGuideHtml } from "../shared/generated-html.ts";
+import { highlightListingBlocks, shikiStyle } from "../shared/highlight.ts";
 import { preprocessGuideSource } from "./preprocessor.ts";
 import type { Guide, GuideOption } from "./model.ts";
 
@@ -21,56 +19,27 @@ export async function renderGuideOption(
     guide,
     option,
   });
-  const logger = asciidoctor.MemoryLogger.create();
-  const previousLogger = asciidoctor.LoggerManager.getLogger();
-  let html;
-  try {
-    asciidoctor.LoggerManager.setLogger(logger);
-    html = String(
-      asciidoctor.convert(source, {
-        attributes: {
-          icons: "font",
-          idprefix: "",
-          idseparator: "-",
-          sourceDir: option.sourceDir,
-          sourcedir: guide.directory,
-        },
-        base_dir: guide.directory,
-        header_footer: false,
-        safe: "unsafe",
-      }),
-    );
-  } finally {
-    asciidoctor.LoggerManager.setLogger(previousLogger);
-  }
-
-  const diagnostics = logger.getMessages().map(formatAsciidoctorDiagnostic);
-  if (diagnostics.length) {
-    if (renderOptions.strict) {
-      throw new Error(
-        `Asciidoctor diagnostics for ${option.id}: ${diagnostics.join("; ")}`,
-      );
-    }
-    for (const diagnostic of diagnostics) {
-      console.warn(diagnostic);
-    }
-  }
+  let html = renderAsciiDoc({
+    asciidoctor,
+    source,
+    diagnosticsLabel: option.id,
+    strict: renderOptions.strict,
+    convertOptions: {
+      attributes: {
+        icons: "font",
+        idprefix: "",
+        idseparator: "-",
+        sourceDir: option.sourceDir,
+        sourcedir: guide.directory,
+      },
+      base_dir: guide.directory,
+    },
+  });
 
   html = await highlightListingBlocks(html);
   html = rewriteGuideUrls(html, guide.slug);
   html = optimizeGeneratedGuideHtml(html);
   return `${shikiStyle()}\n${html.trim()}`;
-}
-
-function formatAsciidoctorDiagnostic(message: any): any {
-  const severity = message.getSeverity();
-  const location = message.getSourceLocation?.();
-  const pathName = location?.getPath?.();
-  const lineNumber = location?.getLineNumber?.();
-  const source = pathName
-    ? `${pathName}${lineNumber ? `:${lineNumber}` : ""}: `
-    : "";
-  return `asciidoctor: ${severity}: ${source}${message.getText()}`;
 }
 
 export async function copyGuideAssets(

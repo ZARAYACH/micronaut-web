@@ -3,7 +3,6 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { parseArgs, splitList, stringArg } from "./platform-docs/cli.ts";
 import {
   DEFAULT_GUIDE_SLUGS,
   defaultGuideOption,
@@ -16,6 +15,7 @@ import {
   guideManifest,
   renderGuideOption,
 } from "./guides/renderer.ts";
+import { parseArgs, splitList, stringArg } from "./shared/cli.ts";
 
 const projectDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

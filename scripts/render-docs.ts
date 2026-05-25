@@ -5,20 +5,20 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { copyProjectImageAssets } from "./platform-docs/assets.ts";
-import { parseArgs, splitList, stringArg } from "./platform-docs/cli.ts";
-import { isDirectory, isRegularFile } from "./platform-docs/files.ts";
+import { copyProjectImageAssets } from "./docs/assets.ts";
 import {
-  type PlatformDocsProject,
+  type DocsProject,
   readIndexed,
   readPlatformCatalogProjects,
   readProperties,
   readTomlStringVersions,
   selectProjects,
-} from "./platform-docs/project-manifest.ts";
-import { renderProject } from "./platform-docs/renderer.ts";
+} from "./docs/project-manifest.ts";
+import { renderProject } from "./docs/renderer.ts";
+import { parseArgs, splitList, stringArg } from "./shared/cli.ts";
+import { isDirectory, isRegularFile } from "./shared/files.ts";
 
-const DEFAULT_PLATFORM_DOCS_PROJECT_SLUGS = ["core", "data", "serde"];
+const DEFAULT_DOC_PROJECT_SLUGS = ["core", "data", "serde"];
 const execFile = promisify(execFileCallback);
 
 const projectDirectory = path.resolve(
@@ -26,17 +26,16 @@ const projectDirectory = path.resolve(
   "..",
 );
 const options = parseArgs(process.argv.slice(2));
-const platformDocsDirectory = path.resolve(
-  stringArg(options.platformDocsDir) ||
-    stringArg(options.platformDocs) ||
+const docsDirectory = path.resolve(
+  stringArg(options.docsDir) ||
     options._[0] ||
-    process.env.PLATFORM_DOCS_DIR ||
-    path.join(projectDirectory, ".platform-docs"),
+    process.env.DOCS_DIR ||
+    path.join(projectDirectory, ".docs"),
 );
 const platformProjectDirectory = path.resolve(
   stringArg(options.platformProjectDir) ||
     process.env.PLATFORM_PROJECT_DIR ||
-    path.join(platformDocsDirectory, "repos", "micronaut-platform"),
+    path.join(docsDirectory, "repos", "micronaut-platform"),
 );
 const platformVersionCatalogFile = path.resolve(
   stringArg(options.platformVersionCatalog) ||
@@ -47,48 +46,48 @@ const outputDirectory = path.resolve(
   stringArg(options.output) ||
     path.join(projectDirectory, "src", "content", "generated-docs"),
 );
-const checkedInPlatformDocsDataDirectory = path.join(
+const checkedInDocsDataDirectory = path.join(
   projectDirectory,
   "src",
   "data",
-  "platform-docs",
+  "docs",
 );
 const strict = Boolean(
   options.strict ||
-  process.env.PLATFORM_DOCS_RENDER_STRICT === "true" ||
+  process.env.DOCS_RENDER_STRICT === "true" ||
   process.env.CI === "true",
 );
 const renderAll = Boolean(
-  options.all || process.env.PLATFORM_DOCS_RENDER_ALL === "true",
+  options.all || process.env.DOCS_RENDER_ALL === "true",
 );
 const syncSources = Boolean(
-  options.syncSources || process.env.PLATFORM_DOCS_SYNC_SOURCES === "true",
+  options.syncSources || process.env.DOCS_SYNC_SOURCES === "true",
 );
 const explicitSlugs = splitList(
-  options.slugs || process.env.PLATFORM_DOCS_PROJECT_SLUGS || "",
+  options.slugs || process.env.DOCS_PROJECT_SLUGS || "",
 );
 const selectedSlugs = renderAll
   ? []
   : explicitSlugs.length
     ? explicitSlugs
-    : DEFAULT_PLATFORM_DOCS_PROJECT_SLUGS;
+    : DEFAULT_DOC_PROJECT_SLUGS;
 
 const asciidoctor = asciidoctorFactory();
 const externalProjectManifestFile = path.join(
-  platformDocsDirectory,
+  docsDirectory,
   "gradle",
-  "platform-doc-projects.properties",
+  "docs-projects.properties",
 );
 const checkedInProjectManifestFile = path.join(
-  checkedInPlatformDocsDataDirectory,
-  "platform-doc-projects.properties",
+  checkedInDocsDataDirectory,
+  "docs-projects.properties",
 );
 const metadataProperties = await readProperties(
   checkedInProjectManifestFile,
   false,
 );
 let projectManifest;
-let allProjects: PlatformDocsProject[];
+let allProjects: DocsProject[];
 if (await isRegularFile(platformVersionCatalogFile)) {
   allProjects = await readPlatformCatalogProjects(
     platformVersionCatalogFile,
@@ -103,7 +102,7 @@ if (await isRegularFile(platformVersionCatalogFile)) {
     projectManifest,
     "project",
     Number(projectManifest["project.count"] || 0),
-  ) as unknown as PlatformDocsProject[];
+  ) as unknown as DocsProject[];
 }
 const projects = selectProjects(allProjects, selectedSlugs);
 const platformVersions = await readTomlStringVersions(
@@ -124,7 +123,7 @@ let skipped = 0;
 const skippedProjects = [];
 for (const project of projects) {
   const guideSourceDirectory = path.join(
-    platformDocsDirectory,
+    docsDirectory,
     project.submodulePath,
     "src",
     "main",
@@ -143,20 +142,17 @@ for (const project of projects) {
 
     const html = await renderProject(
       asciidoctor,
-      platformDocsDirectory,
+      docsDirectory,
       project,
       platformVersions[project.platformVersionKey] || "",
+      { strict },
     );
     await fs.writeFile(
       path.join(outputDirectory, `${project.slug}.html`),
       `${html}\n`,
       "utf8",
     );
-    await copyProjectImageAssets(
-      project,
-      platformDocsDirectory,
-      outputDirectory,
-    );
+    await copyProjectImageAssets(project, docsDirectory, outputDirectory);
     rendered += 1;
     console.log(`Rendered ${project.slug}`);
   } catch (error: any) {
@@ -167,11 +163,11 @@ for (const project of projects) {
 }
 
 console.log(
-  `Rendered ${rendered} platform docs fragments to ${path.relative(projectDirectory, outputDirectory)}${skipped ? ` (${skipped} skipped)` : ""}.`,
+  `Rendered ${rendered} docs fragments to ${path.relative(projectDirectory, outputDirectory)}${skipped ? ` (${skipped} skipped)` : ""}.`,
 );
 if (strict && skippedProjects.length) {
   throw new Error(
-    `Strict platform docs render failed with skipped projects: ${skippedProjects.join("; ")}`,
+    `Strict docs render failed with skipped projects: ${skippedProjects.join("; ")}`,
   );
 }
 
@@ -216,7 +212,7 @@ async function syncProjectSources(
 ): Promise<any> {
   for (const project of projects) {
     const guideSourceDirectory = path.join(
-      platformDocsDirectory,
+      docsDirectory,
       project.submodulePath,
       "src",
       "main",
@@ -227,7 +223,7 @@ async function syncProjectSources(
       continue;
     }
 
-    const destination = path.join(platformDocsDirectory, project.submodulePath);
+    const destination = path.join(docsDirectory, project.submodulePath);
     if (await isDirectory(destination)) {
       console.warn(
         `Project source exists without docs guide, leaving it unchanged: ${path.relative(projectDirectory, destination)}`,

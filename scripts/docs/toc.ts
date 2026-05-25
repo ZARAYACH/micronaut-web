@@ -2,7 +2,7 @@ import yaml from "js-yaml";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { isRegularFile } from "./files.ts";
+import { isRegularFile } from "../shared/files.ts";
 
 type TocMap = Record<string, unknown>;
 

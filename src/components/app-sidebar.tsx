@@ -22,7 +22,10 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { platformDocsByCategory, platformDocsProjects } from "@/lib/protocol";
+import {
+  docsCatalogProjectsByCategory,
+  docsProjectCatalog,
+} from "@/lib/protocol";
 import { withBasePath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
@@ -34,17 +37,24 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   }>;
 };
 
-export function AppSidebar({ activeSlug, activeSections = [], className, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  activeSlug,
+  activeSections = [],
+  className,
+  ...props
+}: AppSidebarProps) {
   const activeProject = activeSlug
-    ? platformDocsProjects.projects.find((project) => project.slug === activeSlug)
+    ? docsProjectCatalog.projects.find((project) => project.slug === activeSlug)
     : undefined;
   const activeCategorySlug = activeSlug
-    ? platformDocsProjects.categories.find(
+    ? docsProjectCatalog.categories.find(
         (category) =>
           category.slug === activeProject?.primaryCategory &&
-          category.projectSlugs?.includes(activeSlug)
+          category.projectSlugs?.includes(activeSlug),
       )?.slug ||
-      platformDocsProjects.categories.find((category) => category.projectSlugs?.includes(activeSlug))?.slug
+      docsProjectCatalog.categories.find((category) =>
+        category.projectSlugs?.includes(activeSlug),
+      )?.slug
     : undefined;
 
   return (
@@ -62,8 +72,8 @@ export function AppSidebar({ activeSlug, activeSections = [], className, ...prop
         </div>
       </SidebarHeader>
       <SidebarContent className="gap-2 px-2 pb-2 pt-2">
-        {platformDocsProjects.categories.map((category) => {
-          const projects = platformDocsByCategory(category);
+        {docsProjectCatalog.categories.map((category) => {
+          const projects = docsCatalogProjectsByCategory(category);
           if (!projects.length) {
             return null;
           }
@@ -71,7 +81,8 @@ export function AppSidebar({ activeSlug, activeSections = [], className, ...prop
           const categoryHeaderClassName = cn(
             "gap-1.5 px-2 text-[0.78rem] leading-4",
             hasActiveProject && "text-sidebar-foreground",
-            !activeSlug && "no-underline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
+            !activeSlug &&
+              "no-underline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
           );
           return (
             <SidebarGroup key={category.slug} className="p-0">
@@ -82,23 +93,36 @@ export function AppSidebar({ activeSlug, activeSections = [], className, ...prop
                     data-docs-scroll-link
                     data-docs-target-id={category.slug}
                   >
-                    <IconGlyph name={category.icon} className="size-3.5 shrink-0" />
+                    <IconGlyph
+                      name={category.icon}
+                      className="size-3.5 shrink-0"
+                    />
                     <span className="truncate">{category.name}</span>
                   </a>
                 </SidebarGroupLabel>
               ) : (
                 <SidebarGroupLabel className={categoryHeaderClassName}>
-                  <IconGlyph name={category.icon} className="size-3.5 shrink-0" />
+                  <IconGlyph
+                    name={category.icon}
+                    className="size-3.5 shrink-0"
+                  />
                   <span className="truncate">{category.name}</span>
                 </SidebarGroupLabel>
               )}
               <SidebarMenu>
                 {projects.map((project) => {
-                  const isActiveProject = project.slug === activeSlug && category.slug === activeCategorySlug;
-                  const hasActiveSections = isActiveProject && activeSections.length > 0;
+                  const isActiveProject =
+                    project.slug === activeSlug &&
+                    category.slug === activeCategorySlug;
+                  const hasActiveSections =
+                    isActiveProject && activeSections.length > 0;
                   if (hasActiveSections) {
                     return (
-                      <Collapsible.Root key={project.slug} asChild defaultOpen={isActiveProject}>
+                      <Collapsible.Root
+                        key={project.slug}
+                        asChild
+                        defaultOpen={isActiveProject}
+                      >
                         <SidebarMenuItem>
                           <SidebarMenuButton
                             asChild
@@ -106,8 +130,14 @@ export function AppSidebar({ activeSlug, activeSections = [], className, ...prop
                             tooltip={project.displayName}
                             className="h-auto min-h-8 whitespace-normal px-2 py-1.5 text-[0.85rem] leading-[1.19rem]"
                           >
-                            <a href={withBasePath(project.href)} aria-current="page">
-                              <IconGlyph name={project.icon} className="size-4 shrink-0" />
+                            <a
+                              href={withBasePath(project.href)}
+                              aria-current="page"
+                            >
+                              <IconGlyph
+                                name={project.icon}
+                                className="size-4 shrink-0"
+                              />
                               <span className="whitespace-normal break-words group-data-[collapsible=icon]:sr-only">
                                 {project.displayName}
                               </span>
@@ -119,24 +149,35 @@ export function AppSidebar({ activeSlug, activeSections = [], className, ...prop
                               aria-label={`Toggle ${project.displayName} sections`}
                             >
                               <ChevronRight />
-                              <span className="sr-only">Toggle {project.displayName} sections</span>
+                              <span className="sr-only">
+                                Toggle {project.displayName} sections
+                              </span>
                             </SidebarMenuAction>
                           </Collapsible.Trigger>
                           <Collapsible.Content>
                             <SidebarMenuSub className="mb-2 ml-3 mr-0 mt-0.5 gap-0 border-l-0 px-0 py-0.5">
                               {activeSections.map((section) => {
-                                const [, number, title] = /^(\S+)\s+(.+)$/.exec(section.label) || [];
+                                const [, number, title] =
+                                  /^(\S+)\s+(.+)$/.exec(section.label) || [];
                                 return (
                                   <SidebarMenuSubItem key={section.id}>
                                     <SidebarMenuSubButton
                                       asChild
                                       className="my-px ml-[7px] mr-2 h-auto w-[calc(100%-15px)] items-start gap-2 whitespace-normal px-2 py-1.5 text-[0.82rem] leading-[1.18rem]"
                                     >
-                                      <a href={`#${section.id}`} data-docs-scroll-link aria-label={section.label}>
+                                      <a
+                                        href={`#${section.id}`}
+                                        data-docs-scroll-link
+                                        aria-label={section.label}
+                                      >
                                         {number ? (
-                                          <span className="w-4 shrink-0 text-sidebar-foreground/60">{number}</span>
+                                          <span className="w-4 shrink-0 text-sidebar-foreground/60">
+                                            {number}
+                                          </span>
                                         ) : null}
-                                        <span className="whitespace-normal break-words">{title || section.label}</span>
+                                        <span className="whitespace-normal break-words">
+                                          {title || section.label}
+                                        </span>
                                       </a>
                                     </SidebarMenuSubButton>
                                   </SidebarMenuSubItem>
@@ -160,7 +201,10 @@ export function AppSidebar({ activeSlug, activeSections = [], className, ...prop
                           href={withBasePath(project.href)}
                           aria-current={isActiveProject ? "page" : undefined}
                         >
-                          <IconGlyph name={project.icon} className="size-4 shrink-0" />
+                          <IconGlyph
+                            name={project.icon}
+                            className="size-4 shrink-0"
+                          />
                           <span className="whitespace-normal break-words group-data-[collapsible=icon]:sr-only">
                             {project.displayName}
                           </span>

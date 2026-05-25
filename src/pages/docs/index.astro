@@ -3,21 +3,21 @@ import WebLayout from "@/layouts/WebLayout.astro";
 import { DocsShell } from "@/components/web/docs-shell";
 import { IconBadge } from "@/components/web/icon-badge";
 import { ProjectCard } from "@/components/web/project-card";
-import { platformDocsByCategory, platformDocsProjects } from "@/lib/protocol";
+import { docsCatalogProjectsByCategory, docsProjectCatalog } from "@/lib/protocol";
 ---
 
 <WebLayout title="Micronaut Docs" surface="docs" hideHeader>
   <DocsShell client:load>
     <section class="mx-auto grid w-full max-w-[1346px] gap-6 px-5 py-7 md:px-6">
-      <h1 class="sr-only">Micronaut Platform Docs</h1>
+      <h1 class="sr-only">Micronaut Docs</h1>
       <p class="m-0 max-w-none text-base leading-7 text-muted-foreground">
         Micronaut Framework is a modern JVM framework for modular applications and services with fast startup, low memory use,
-        and compile-time dependency injection. These platform docs collect the core framework and companion modules in one place
+        and compile-time dependency injection. These docs collect the core framework and companion modules in one place
         for aligned versions, guides, APIs, and configuration references.
       </p>
       <div class="grid gap-6">
-        {platformDocsProjects.categories.map((category) => {
-          const projects = platformDocsByCategory(category);
+        {docsProjectCatalog.categories.map((category) => {
+          const projects = docsCatalogProjectsByCategory(category);
           if (!projects.length) return null;
           return (
             <section id={category.slug} class="min-w-0 scroll-mt-24">

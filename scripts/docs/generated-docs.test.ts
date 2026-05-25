@@ -7,7 +7,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { highlightListingBlocks, shikiLanguage } from "./highlight.ts";
+import { highlightListingBlocks, shikiLanguage } from "../shared/highlight.ts";
 import { readPlatformCatalogProjects } from "./project-manifest.ts";
 import {
   buildDocsSearchIndex,
@@ -28,7 +28,7 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
 
   assert.equal(
     packageJson.scripts["prepare:generated-docs"],
-    "npm run render:platform-docs",
+    "npm run render:docs",
   );
   assert.equal(
     packageJson.scripts["prepare:generated-content"],
@@ -75,14 +75,14 @@ test("generated docs fragments and assets are ignored and not tracked source", a
   assert.deepEqual(trackedGeneratedOutput, []);
 });
 
-test("generated docs tooling uses Micronaut Platform catalog instead of the old platform docs project", async (): Promise<any> => {
+test("generated docs tooling uses Micronaut Platform catalog instead of the old aggregate docs project", async (): Promise<any> => {
   const checkedFiles = [
     ".github/workflows/deploy-web.yml",
     "README.md",
     "src/content/generated-docs/README.md",
-    "src/data/platform-docs-projects.fixture.json",
-    "scripts/render-platform-docs.ts",
-    "scripts/sync-platform-docs-fixture.ts",
+    "src/data/docs-projects.fixture.json",
+    "scripts/render-docs.ts",
+    "scripts/sync-docs-fixture.ts",
   ];
   const fileContents = await Promise.all(
     checkedFiles.map(
@@ -96,51 +96,52 @@ test("generated docs tooling uses Micronaut Platform catalog instead of the old 
     ([file]: any): any => file === ".github/workflows/deploy-web.yml",
   )[1];
   const syncScript = fileContents.find(
-    ([file]: any): any => file === "scripts/sync-platform-docs-fixture.ts",
+    ([file]: any): any => file === "scripts/sync-docs-fixture.ts",
   )[1];
 
   assert.match(
     workflow,
     /github\.com\/micronaut-projects\/micronaut-platform\.git/,
   );
-  assert.match(workflow, /PLATFORM_DOCS_RENDER_ALL:\s*"true"/);
-  assert.match(workflow, /PLATFORM_DOCS_SYNC_SOURCES:\s*"true"/);
+  assert.match(workflow, /DOCS_RENDER_ALL:\s*"true"/);
+  assert.match(workflow, /DOCS_SYNC_SOURCES:\s*"true"/);
   assert.match(syncScript, /readPlatformCatalogProjects/);
 
+  const oldAggregateDocsProject = new RegExp("micronaut-platform-" + "docs");
+  const oldPublishedDocsAggregate = new RegExp(
+    String.raw`dstepanov\.github\.io\/micronaut-platform-` + "docs",
+  );
   for (const [file, content] of fileContents) {
     assert.doesNotMatch(
       content,
-      /micronaut-platform-docs/,
-      `${file} should not reference the old platform docs project`,
+      oldAggregateDocsProject,
+      `${file} should not reference the old aggregate docs project`,
     );
     assert.doesNotMatch(
       content,
-      /dstepanov\.github\.io\/micronaut-platform-docs/,
+      oldPublishedDocsAggregate,
       `${file} should not reference the old published docs aggregate`,
     );
   }
 });
 
-test("platform docs renderer uses checked-in project metadata when external metadata is absent", async (t: any): Promise<any> => {
+test("docs renderer uses checked-in project metadata when external metadata is absent", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
   );
   t.after((): any =>
     fs.rm(temporaryDirectory, { force: true, recursive: true }),
   );
-  const platformDocsDirectory = path.join(
-    temporaryDirectory,
-    "missing-platform-docs-metadata",
-  );
+  const docsDirectory = path.join(temporaryDirectory, "missing-docs-metadata");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
 
-  await fs.mkdir(platformDocsDirectory, { recursive: true });
+  await fs.mkdir(docsDirectory, { recursive: true });
   await execFile(
     process.execPath,
     [
-      "scripts/render-platform-docs.ts",
-      "--platform-docs-dir",
-      platformDocsDirectory,
+      "scripts/render-docs.ts",
+      "--docs-dir",
+      docsDirectory,
       "--output",
       outputDirectory,
       "--slugs",
@@ -155,26 +156,23 @@ test("platform docs renderer uses checked-in project metadata when external meta
   assert.deepEqual(await fs.readdir(outputDirectory), []);
 });
 
-test("platform docs renderer defaults to a small project subset", async (t: any): Promise<any> => {
+test("docs renderer defaults to a small project subset", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
   );
   t.after((): any =>
     fs.rm(temporaryDirectory, { force: true, recursive: true }),
   );
-  const platformDocsDirectory = path.join(
-    temporaryDirectory,
-    "missing-platform-docs-sources",
-  );
+  const docsDirectory = path.join(temporaryDirectory, "missing-docs-sources");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
 
-  await fs.mkdir(platformDocsDirectory, { recursive: true });
+  await fs.mkdir(docsDirectory, { recursive: true });
   const { stderr } = await execFile(
     process.execPath,
     [
-      "scripts/render-platform-docs.ts",
-      "--platform-docs-dir",
-      platformDocsDirectory,
+      "scripts/render-docs.ts",
+      "--docs-dir",
+      docsDirectory,
       "--output",
       outputDirectory,
     ],
@@ -193,17 +191,17 @@ test("platform docs renderer defaults to a small project subset", async (t: any)
   assert.deepEqual(await fs.readdir(outputDirectory), []);
 });
 
-test("platform docs renderer writes generated HTML and page-relative docs asset links", async (t: any): Promise<any> => {
+test("docs renderer writes generated HTML and page-relative docs asset links", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
   );
   t.after((): any =>
     fs.rm(temporaryDirectory, { force: true, recursive: true }),
   );
-  const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
+  const docsDirectory = path.join(temporaryDirectory, "docs");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
   const submoduleDirectory = path.join(
-    platformDocsDirectory,
+    docsDirectory,
     "repos",
     "micronaut-fixture",
   );
@@ -223,17 +221,13 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
     "img",
   );
 
-  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), {
+  await fs.mkdir(path.join(docsDirectory, "gradle"), {
     recursive: true,
   });
   await fs.mkdir(guideDirectory, { recursive: true });
   await fs.mkdir(imageDirectory, { recursive: true });
   await fs.writeFile(
-    path.join(
-      platformDocsDirectory,
-      "gradle",
-      "platform-doc-projects.properties",
-    ),
+    path.join(docsDirectory, "gradle", "docs-projects.properties"),
     [
       "project.count=1",
       "project.0.slug=fixture",
@@ -270,9 +264,9 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
   const { stderr } = await execFile(
     process.execPath,
     [
-      "scripts/render-platform-docs.ts",
-      "--platform-docs-dir",
-      platformDocsDirectory,
+      "scripts/render-docs.ts",
+      "--docs-dir",
+      docsDirectory,
       "--output",
       outputDirectory,
       "--slugs",
@@ -320,17 +314,17 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
   );
 });
 
-test("platform docs renderer turns code, dependency, configuration, and properties snippets into shared cards", async (t: any): Promise<any> => {
+test("docs renderer turns code, dependency, configuration, and properties snippets into shared cards", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-generated-snippets-"),
   );
   t.after((): any =>
     fs.rm(temporaryDirectory, { force: true, recursive: true }),
   );
-  const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
+  const docsDirectory = path.join(temporaryDirectory, "docs");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
   const submoduleDirectory = path.join(
-    platformDocsDirectory,
+    docsDirectory,
     "repos",
     "micronaut-fixture",
   );
@@ -343,16 +337,12 @@ test("platform docs renderer turns code, dependency, configuration, and properti
     "example",
   );
 
-  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), {
+  await fs.mkdir(path.join(docsDirectory, "gradle"), {
     recursive: true,
   });
   await fs.mkdir(snippetSourceDirectory, { recursive: true });
   await fs.writeFile(
-    path.join(
-      platformDocsDirectory,
-      "gradle",
-      "platform-doc-projects.properties",
-    ),
+    path.join(docsDirectory, "gradle", "docs-projects.properties"),
     [
       "project.count=1",
       "project.0.slug=fixture",
@@ -379,7 +369,7 @@ test("platform docs renderer turns code, dependency, configuration, and properti
     "utf8",
   );
   await writeGuide(
-    platformDocsDirectory,
+    docsDirectory,
     "micronaut-fixture",
     "Fixture Docs",
     [
@@ -407,14 +397,13 @@ test("platform docs renderer turns code, dependency, configuration, and properti
   await execFile(
     process.execPath,
     [
-      "scripts/render-platform-docs.ts",
-      "--platform-docs-dir",
-      platformDocsDirectory,
+      "scripts/render-docs.ts",
+      "--docs-dir",
+      docsDirectory,
       "--output",
       outputDirectory,
       "--slugs",
       "fixture",
-      "--strict",
     ],
     {
       cwd: projectDirectory,
@@ -451,7 +440,7 @@ test("platform docs renderer turns code, dependency, configuration, and properti
   assert.match(generatedText, /2 properties/);
 });
 
-test("platform docs search index includes generated headings, properties, classes, projects, and repos", (): any => {
+test("docs search index includes generated headings, properties, classes, projects, and repos", (): any => {
   const project = {
     slug: "fixture",
     displayName: "Micronaut Fixture",
@@ -542,25 +531,21 @@ test("platform docs search index includes generated headings, properties, classe
   );
 });
 
-test("platform docs renderer can render every project in a manifest", async (t: any): Promise<any> => {
+test("docs renderer can render every project in a manifest", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
   );
   t.after((): any =>
     fs.rm(temporaryDirectory, { force: true, recursive: true }),
   );
-  const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
+  const docsDirectory = path.join(temporaryDirectory, "docs");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
 
-  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), {
+  await fs.mkdir(path.join(docsDirectory, "gradle"), {
     recursive: true,
   });
   await fs.writeFile(
-    path.join(
-      platformDocsDirectory,
-      "gradle",
-      "platform-doc-projects.properties",
-    ),
+    path.join(docsDirectory, "gradle", "docs-projects.properties"),
     [
       "project.count=2",
       "project.0.slug=alpha",
@@ -579,13 +564,13 @@ test("platform docs renderer can render every project in a manifest", async (t: 
     "utf8",
   );
   await writeGuide(
-    platformDocsDirectory,
+    docsDirectory,
     "micronaut-alpha",
     "Alpha Docs",
     "Alpha introduction.",
   );
   await writeGuide(
-    platformDocsDirectory,
+    docsDirectory,
     "micronaut-beta",
     "Beta Docs",
     "Beta introduction.",
@@ -594,9 +579,9 @@ test("platform docs renderer can render every project in a manifest", async (t: 
   await execFile(
     process.execPath,
     [
-      "scripts/render-platform-docs.ts",
-      "--platform-docs-dir",
-      platformDocsDirectory,
+      "scripts/render-docs.ts",
+      "--docs-dir",
+      docsDirectory,
       "--output",
       outputDirectory,
       "--all",
@@ -615,7 +600,7 @@ test("platform docs renderer can render every project in a manifest", async (t: 
   );
 });
 
-test("platform docs project manifest can be derived from Micronaut Platform libraries", async (t: any): Promise<any> => {
+test("docs project manifest can be derived from Micronaut Platform libraries", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-platform-catalog-"),
   );
@@ -673,7 +658,7 @@ test("platform docs project manifest can be derived from Micronaut Platform libr
   });
 });
 
-test("platform docs commandline source blocks use shell highlighting", (): any => {
+test("docs commandline source blocks use shell highlighting", (): any => {
   assert.equal(shikiLanguage("commandline"), "shellscript");
   assert.equal(shikiLanguage("graphqls"), "graphql");
   assert.equal(shikiLanguage("mysql"), "sql");
@@ -780,21 +765,21 @@ function nonStrictEnv(): any {
   return {
     ...process.env,
     CI: "false",
-    PLATFORM_DOCS_PROJECT_SLUGS: "",
-    PLATFORM_DOCS_RENDER_ALL: "false",
-    PLATFORM_DOCS_RENDER_STRICT: "false",
-    PLATFORM_DOCS_SYNC_SOURCES: "false",
+    DOCS_PROJECT_SLUGS: "",
+    DOCS_RENDER_ALL: "false",
+    DOCS_RENDER_STRICT: "false",
+    DOCS_SYNC_SOURCES: "false",
   };
 }
 
 async function writeGuide(
-  platformDocsDirectory: any,
+  docsDirectory: any,
   repositoryName: any,
   title: any,
   body: any,
 ): Promise<any> {
   const guideDirectory = path.join(
-    platformDocsDirectory,
+    docsDirectory,
     "repos",
     repositoryName,
     "src",

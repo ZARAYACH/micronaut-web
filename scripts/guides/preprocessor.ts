@@ -1,7 +1,7 @@
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
 
-import { extractTaggedSource } from "../platform-docs/snippets.ts";
+import { extractTaggedSource } from "../shared/tagged-source.ts";
 import {
   appFeatures,
   cliCommandForApp,

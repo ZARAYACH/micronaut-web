@@ -1,30 +1,30 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { platformDocsExtensionRegistry } from "./extensions.ts";
+import { renderAsciiDoc } from "../shared/asciidoc-rendering.ts";
+import { optimizeImages } from "../shared/generated-html.ts";
+import { docsExtensionRegistry } from "./extensions.ts";
 import {
   highlightListingBlocks,
   shikiStyle,
   unwrapBlockParagraphs,
-} from "./highlight.ts";
-import { attribute, html } from "./html.ts";
+} from "../shared/highlight.ts";
+import { attribute, html } from "../shared/html.ts";
 import { renderAttributes, sourceDocsEditUrl } from "./project-meta.ts";
 import { readProperties } from "./project-manifest.ts";
 import { normalizeAsciiDocSource } from "./source-normalizer.ts";
 import { renderStaticDocsSnippets } from "./static-snippets.ts";
 import { readGuideToc } from "./toc.ts";
-import { optimizeImages, prefixIds, rewriteUrls } from "./urls.ts";
+import { prefixIds, rewriteUrls } from "./urls.ts";
 
 export async function renderProject(
   asciidoctor: any,
-  platformDocsDirectory: any,
+  docsDirectory: any,
   project: any,
   platformVersion: any,
+  renderOptions: { strict?: boolean } = {},
 ): Promise<any> {
-  const submoduleDirectory = path.join(
-    platformDocsDirectory,
-    project.submodulePath,
-  );
+  const submoduleDirectory = path.join(docsDirectory, project.submodulePath);
   const sourceDocsDirectory = path.join(
     submoduleDirectory,
     "src",
@@ -51,6 +51,7 @@ export async function renderProject(
     sourceDocsDirectory,
     guideSourceDirectory,
     attributes,
+    renderOptions,
   };
 
   let content = `<span class="project-document-anchor" id="${attribute(project.slug)}-docs" aria-hidden="true"></span>\n`;
@@ -77,15 +78,17 @@ async function renderNode(
   let source = await fs.readFile(sourceFile, "utf8");
   source = normalizeAsciiDocSource(source);
 
-  const converted = String(
-    asciidoctor.convert(source, {
+  const converted = renderAsciiDoc({
+    asciidoctor,
+    source,
+    diagnosticsLabel: `${context.project.slug}/${node.file}`,
+    strict: context.renderOptions.strict,
+    convertOptions: {
       attributes: context.attributes,
       base_dir: context.submoduleDirectory,
-      extension_registry: platformDocsExtensionRegistry(asciidoctor, context),
-      header_footer: false,
-      safe: "unsafe",
-    }),
-  );
+      extension_registry: docsExtensionRegistry(asciidoctor, context),
+    },
+  });
 
   let htmlContent = `${sectionHeading(context.project, node)}\n${converted}\n`;
   for (const child of node.children) {

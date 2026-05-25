@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { attribute } from "./html.ts";
+import { attribute } from "../shared/html.ts";
 
 export function prefixIds(input: any, slug: any): any {
   const prefix = `${slug}-`;
@@ -60,19 +60,6 @@ export function rewriteUrls(input: any, project: any): any {
       return `${attributeName}="${attribute(pageRelativeAssetUrl(rewritten))}"`;
     },
   );
-}
-
-export function optimizeImages(input: any): any {
-  return input.replace(/<img\b[^>]*>/gi, (tag: any): any => {
-    let optimized = tag;
-    if (!/\bloading\s*=/i.test(optimized)) {
-      optimized = optimized.replace(/<img\b/i, '<img loading="lazy"');
-    }
-    if (!/\bdecoding\s*=/i.test(optimized)) {
-      optimized = optimized.replace(/<img\b/i, '<img decoding="async"');
-    }
-    return optimized;
-  });
 }
 
 function pageRelativeAssetUrl(value: any): any {

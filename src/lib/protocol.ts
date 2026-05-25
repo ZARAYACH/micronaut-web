@@ -1,5 +1,5 @@
 import protocol from "@/data/protocol.json";
-import platformDocsProjectFixture from "@/data/platform-docs-projects.fixture.json";
+import docsProjectCatalogFixture from "@/data/docs-projects.fixture.json";
 
 export type Surface = {
   id: "main" | "docs" | "guides";
@@ -46,7 +46,6 @@ export type ProtocolProject = {
   primaryCategory: string;
   categorySlugs: string[];
   href: string;
-  publishedPlatformHref?: string;
   shortDescription: string;
   longDescription: string;
   sections: ProtocolSection[];
@@ -90,7 +89,15 @@ export type ProtocolGuide = {
 };
 
 export type SearchItem = {
-  kind: "Project" | "Guide" | "Section" | "Tag" | "Docs" | "Property" | "Class" | "Repo";
+  kind:
+    | "Project"
+    | "Guide"
+    | "Section"
+    | "Tag"
+    | "Docs"
+    | "Property"
+    | "Class"
+    | "Repo";
   title: string;
   description: string;
   href: string;
@@ -98,16 +105,20 @@ export type SearchItem = {
   scope?: "Projects" | "Docs" | "Properties" | "Classes" | "Repos";
 };
 
-export type PlatformDocsProjectFixture = {
+export type DocsProjectCatalog = {
   source: string;
   publishedSource: string;
   projectCount: number;
   categories: ProtocolCategory[];
-  projects: Array<Omit<ProtocolProject, "href" | "sections" | "references" | "searchTerms"> & {
-    shortName: string;
-    publishedPlatformHref: string;
-    version: string;
-  }>;
+  projects: Array<
+    Omit<
+      ProtocolProject,
+      "href" | "sections" | "references" | "searchTerms"
+    > & {
+      shortName: string;
+      version: string;
+    }
+  >;
 };
 
 export const micronautProtocol = protocol as {
@@ -124,28 +135,26 @@ export const micronautProtocol = protocol as {
   };
 };
 
-export const platformDocsProjects = platformDocsProjectFixture as PlatformDocsProjectFixture;
+export const docsProjectCatalog =
+  docsProjectCatalogFixture as DocsProjectCatalog;
 
 export function surfaceById(id: Surface["id"]) {
   return micronautProtocol.surfaces.find((surface) => surface.id === id)!;
 }
 
 export function projectBySlug(slug: string) {
-  return micronautProtocol.docs.projects.find((project) => project.slug === slug);
+  return micronautProtocol.docs.projects.find(
+    (project) => project.slug === slug,
+  );
 }
 
 export function guideBySlug(slug: string) {
   return micronautProtocol.guides.guides.find((guide) => guide.slug === slug);
 }
 
-export function docsByCategory(category: ProtocolCategory) {
+export function docsCatalogProjectsByCategory(category: ProtocolCategory) {
   const selected = new Set(category.projectSlugs || []);
-  return micronautProtocol.docs.projects.filter((project) => selected.has(project.slug));
-}
-
-export function platformDocsByCategory(category: ProtocolCategory) {
-  const selected = new Set(category.projectSlugs || []);
-  return platformDocsProjects.projects
+  return docsProjectCatalog.projects
     .filter((project) => selected.has(project.slug))
     .map((project) => {
       const protocolProject = projectBySlug(project.slug);
@@ -156,20 +165,31 @@ export function platformDocsByCategory(category: ProtocolCategory) {
         sections: protocolProject?.sections || [],
         references: protocolProject?.references || [
           { label: "Guide", href: project.publishedGuideUrl },
-          { label: "Repository", href: project.repositoryUrl }
+          { label: "Repository", href: project.repositoryUrl },
         ],
-        searchTerms: protocolProject?.searchTerms || []
+        searchTerms: protocolProject?.searchTerms || [],
       } as ProtocolProject;
     });
 }
 
 export function guidesByCategory(category: ProtocolCategory) {
   const selected = new Set(category.guideSlugs || []);
-  return micronautProtocol.guides.guides.filter((guide) => selected.has(guide.slug));
+  return micronautProtocol.guides.guides.filter((guide) =>
+    selected.has(guide.slug),
+  );
 }
 
 export function featuredProjects() {
-  const preferred = ["core", "serde", "data", "security", "mcp", "oracle-cloud", "sourcegen", "openapi"];
+  const preferred = [
+    "core",
+    "serde",
+    "data",
+    "security",
+    "mcp",
+    "oracle-cloud",
+    "sourcegen",
+    "openapi",
+  ];
   return preferred
     .map((slug) => projectBySlug(slug))
     .filter(Boolean) as ProtocolProject[];
@@ -182,12 +202,14 @@ export function featuredGuides() {
     "micronaut-data-jdbc-repository",
     "micronaut-security-jwt",
     "micronaut-mcp-server",
-    "micronaut-graalvm-native-image"
+    "micronaut-graalvm-native-image",
   ];
   const selected = preferred
     .map((slug) => guideBySlug(slug))
     .filter(Boolean) as ProtocolGuide[];
-  return selected.length ? selected : micronautProtocol.guides.guides.slice(0, 8);
+  return selected.length
+    ? selected
+    : micronautProtocol.guides.guides.slice(0, 8);
 }
 
 export function latestGuides(limit = 8) {
@@ -195,30 +217,48 @@ export function latestGuides(limit = 8) {
 }
 
 export function searchItems(): SearchItem[] {
-  const projectItems: SearchItem[] = micronautProtocol.docs.projects.map((project) => ({
-    kind: "Project",
-    title: project.displayName,
-    description: project.shortDescription,
-    href: project.href,
-    terms: [project.displayName, project.shortDescription, project.longDescription, ...project.searchTerms].join(" ")
-  }));
-  const sectionItems: SearchItem[] = micronautProtocol.docs.projects.flatMap((project) =>
-    project.sections.map((section) => ({
-      kind: "Section",
-      title: `${project.displayName}: ${section.title}`,
-      description: section.summary,
-      href: `${project.href}#${section.id}`,
-      terms: [project.displayName, section.title, section.summary].join(" ")
-    }))
+  const projectItems: SearchItem[] = micronautProtocol.docs.projects.map(
+    (project) => ({
+      kind: "Project",
+      title: project.displayName,
+      description: project.shortDescription,
+      href: project.href,
+      terms: [
+        project.displayName,
+        project.shortDescription,
+        project.longDescription,
+        ...project.searchTerms,
+      ].join(" "),
+    }),
   );
-  const guideItems: SearchItem[] = micronautProtocol.guides.guides.map((guide) => ({
-    kind: "Guide",
-    title: guide.title,
-    description: guide.intro,
-    href: guide.href,
-    terms: [guide.title, guide.intro, ...guide.tags, ...guide.categories, ...guide.searchTerms].join(" ")
-  }));
-  const tagItems: SearchItem[] = Array.from(new Set(micronautProtocol.guides.guides.flatMap((guide) => guide.tags)))
+  const sectionItems: SearchItem[] = micronautProtocol.docs.projects.flatMap(
+    (project) =>
+      project.sections.map((section) => ({
+        kind: "Section",
+        title: `${project.displayName}: ${section.title}`,
+        description: section.summary,
+        href: `${project.href}#${section.id}`,
+        terms: [project.displayName, section.title, section.summary].join(" "),
+      })),
+  );
+  const guideItems: SearchItem[] = micronautProtocol.guides.guides.map(
+    (guide) => ({
+      kind: "Guide",
+      title: guide.title,
+      description: guide.intro,
+      href: guide.href,
+      terms: [
+        guide.title,
+        guide.intro,
+        ...guide.tags,
+        ...guide.categories,
+        ...guide.searchTerms,
+      ].join(" "),
+    }),
+  );
+  const tagItems: SearchItem[] = Array.from(
+    new Set(micronautProtocol.guides.guides.flatMap((guide) => guide.tags)),
+  )
     .sort()
     .slice(0, 80)
     .map((tag) => ({
@@ -226,13 +266,13 @@ export function searchItems(): SearchItem[] {
       title: tag,
       description: "Guides tagged with this topic",
       href: `/guides/tag-${guideTagSlug(tag)}.html`,
-      terms: tag
+      terms: tag,
     }));
   return [...projectItems, ...sectionItems, ...guideItems, ...tagItems];
 }
 
 export function docsSearchItems(): SearchItem[] {
-  return platformDocsProjects.projects.flatMap((project) => {
+  return docsProjectCatalog.projects.flatMap((project) => {
     const protocolProject = projectBySlug(project.slug);
     const href = protocolProject?.href || `/docs/${project.slug}/`;
     const sections = protocolProject?.sections || [];
@@ -244,8 +284,10 @@ export function docsSearchItems(): SearchItem[] {
       project.repositoryName,
       protocolProject?.shortDescription,
       protocolProject?.longDescription,
-      ...(protocolProject?.searchTerms || [])
-    ].filter(Boolean).join(" ");
+      ...(protocolProject?.searchTerms || []),
+    ]
+      .filter(Boolean)
+      .join(" ");
     return [
       {
         kind: "Project" as const,
@@ -253,24 +295,34 @@ export function docsSearchItems(): SearchItem[] {
         description: protocolProject?.shortDescription || project.module,
         href,
         terms: projectTerms,
-        scope: "Projects" as const
+        scope: "Projects" as const,
       },
       ...sections.map((section) => ({
         kind: "Docs" as const,
         title: `${project.displayName}: ${section.title}`,
         description: section.summary,
         href: `${href}#${section.id}`,
-        terms: [project.displayName, section.number, section.title, section.summary].join(" "),
-        scope: "Docs" as const
+        terms: [
+          project.displayName,
+          section.number,
+          section.title,
+          section.summary,
+        ].join(" "),
+        scope: "Docs" as const,
       })),
       {
         kind: "Repo" as const,
         title: project.repositoryName,
         description: `Source repository for ${project.displayName}.`,
         href: project.repositoryUrl,
-        terms: [project.displayName, project.repositoryName, project.repositoryUrl, project.module].join(" "),
-        scope: "Repos" as const
-      }
+        terms: [
+          project.displayName,
+          project.repositoryName,
+          project.repositoryUrl,
+          project.module,
+        ].join(" "),
+        scope: "Repos" as const,
+      },
     ];
   });
 }

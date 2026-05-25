@@ -3,7 +3,7 @@ import { parse as parseToml } from "smol-toml";
 
 export type Properties = Record<string, string>;
 
-export interface PlatformDocsProject {
+export interface DocsProject {
   slug: string;
   displayName: string;
   projectKey: string;
@@ -135,7 +135,7 @@ export async function readTomlStringVersions(
 export async function readPlatformCatalogProjects(
   versionCatalogFile: string,
   metadataProperties: Properties = {},
-): Promise<PlatformDocsProject[]> {
+): Promise<DocsProject[]> {
   const content = await fs.readFile(versionCatalogFile, "utf8");
   const catalog = parseToml(content) as {
     versions?: Record<string, unknown>;
@@ -147,7 +147,7 @@ export async function readPlatformCatalogProjects(
   const versions = catalog.versions || {};
   const libraries = catalog.libraries || {};
   const metadata = indexedProjectMetadata(metadataProperties);
-  const projects: PlatformDocsProject[] = [];
+  const projects: DocsProject[] = [];
 
   for (const [alias, library] of Object.entries(libraries)) {
     if (!alias.startsWith("boms-micronaut-")) {
@@ -186,9 +186,9 @@ export async function readPlatformCatalogProjects(
 }
 
 export function selectProjects(
-  projects: PlatformDocsProject[],
+  projects: DocsProject[],
   slugs: string[],
-): PlatformDocsProject[] {
+): DocsProject[] {
   if (!slugs.length) {
     return projects;
   }
@@ -198,7 +198,7 @@ export function selectProjects(
   return slugs.map((slug: any): any => {
     const project = bySlug.get(slug);
     if (!project) {
-      throw new Error(`Unknown platform docs project slug: ${slug}`);
+      throw new Error(`Unknown docs project slug: ${slug}`);
     }
     return project;
   });
@@ -230,7 +230,7 @@ function indexedProjectMetadata(properties: Properties): MetadataIndexes {
 function projectFromPlatformCatalog(
   platformProject: PlatformCatalogProject,
   metadata: MetadataIndexes,
-): PlatformDocsProject {
+): DocsProject {
   const repositoryName = resolveRepositoryName(platformProject, metadata);
   const cachedMetadata = metadata.byRepositoryName.get(repositoryName) || {};
   const repositoryUrl = choose(

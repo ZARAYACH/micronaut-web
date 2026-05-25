@@ -2,10 +2,7 @@ import { apiLink, packageLink } from "./api-links.ts";
 import { dependencyBlocksHtml } from "./dependencies.ts";
 import { snippetBlocksHtml } from "./snippets.ts";
 
-export function platformDocsExtensionRegistry(
-  asciidoctor: any,
-  context: any,
-): any {
+export function docsExtensionRegistry(asciidoctor: any, context: any): any {
   const registry = asciidoctor.Extensions.create();
   for (const kind of [
     "api",

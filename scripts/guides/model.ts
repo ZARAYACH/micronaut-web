@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { isDirectory, isRegularFile } from "../platform-docs/files.ts";
+import { isDirectory, isRegularFile } from "../shared/files.ts";
 
 export interface GuideApp {
   name: string;

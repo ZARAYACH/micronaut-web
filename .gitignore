@@ -4,14 +4,14 @@
 .idea/
 .vscode/
 .playwright-mcp/
-.platform-docs/
+.docs/
 
 # Node and Astro output
 node_modules/
 .astro/
 dist/
 
-# Generated platform docs output
+# Generated docs output
 src/content/generated-docs/*.html
 src/content/generated-docs/assets/
 src/content/generated-guides/manifest.json

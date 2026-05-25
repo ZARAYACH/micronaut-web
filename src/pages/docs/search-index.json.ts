@@ -1,16 +1,21 @@
 import { readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 
-import { buildDocsSearchIndex } from "../../../scripts/platform-docs/search-index.ts";
-import { platformDocsProjects, projectBySlug } from "@/lib/protocol";
+import { buildDocsSearchIndex } from "../../../scripts/docs/search-index.ts";
+import { docsProjectCatalog, projectBySlug } from "@/lib/protocol";
 
-const generatedDocsDirectory = join(process.cwd(), "src", "content", "generated-docs");
+const generatedDocsDirectory = join(
+  process.cwd(),
+  "src",
+  "content",
+  "generated-docs",
+);
 
 export const prerender = true;
 
 export async function GET() {
   const generatedHtmlBySlug = await readGeneratedDocsHtml();
-  const projects = platformDocsProjects.projects.map((project) => {
+  const projects = docsProjectCatalog.projects.map((project) => {
     const protocolProject = projectBySlug(project.slug);
     return {
       ...protocolProject,
@@ -19,27 +24,36 @@ export async function GET() {
       sections: protocolProject?.sections || [],
       references: protocolProject?.references || [
         { label: "Guide", href: project.publishedGuideUrl },
-        { label: "Repository", href: project.repositoryUrl }
+        { label: "Repository", href: project.repositoryUrl },
       ],
-      searchTerms: protocolProject?.searchTerms || []
+      searchTerms: protocolProject?.searchTerms || [],
     };
   });
 
-  return new Response(JSON.stringify({ items: buildDocsSearchIndex(projects, generatedHtmlBySlug) }), {
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=300"
-    }
-  });
+  return new Response(
+    JSON.stringify({
+      items: buildDocsSearchIndex(projects, generatedHtmlBySlug),
+    }),
+    {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "public, max-age=300",
+      },
+    },
+  );
 }
 
 async function readGeneratedDocsHtml() {
   try {
-    const files = (await readdir(generatedDocsDirectory)).filter((file) => file.endsWith(".html"));
-    const entries = await Promise.all(files.map(async (file) => [
-      basename(file, ".html"),
-      await readFile(join(generatedDocsDirectory, file), "utf8")
-    ]));
+    const files = (await readdir(generatedDocsDirectory)).filter((file) =>
+      file.endsWith(".html"),
+    );
+    const entries = await Promise.all(
+      files.map(async (file) => [
+        basename(file, ".html"),
+        await readFile(join(generatedDocsDirectory, file), "utf8"),
+      ]),
+    );
     return Object.fromEntries(entries);
   } catch {
     return {};

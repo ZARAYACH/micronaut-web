@@ -8,7 +8,7 @@ const projectDirectory = path.resolve(
 );
 
 const tasks: Array<[label: string, command: string, args: string[]]> = [
-  ["platform docs", process.execPath, ["scripts/render-platform-docs.ts"]],
+  ["docs", process.execPath, ["scripts/render-docs.ts"]],
   ["guides", process.execPath, ["scripts/render-guides.ts"]],
 ];
 

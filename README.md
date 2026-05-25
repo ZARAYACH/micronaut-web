@@ -14,8 +14,8 @@ npm run build
 ```
 
 `npm run protocol` validates the checked-in protocol file without reading sibling repositories.
-`npm run sync:platform-projects` refreshes the test fixture at `src/data/platform-docs-projects.fixture.json` from a local `micronaut-projects/micronaut-platform` checkout's `gradle/libs.versions.toml` plus checked-in project metadata.
-`src/data/platform-docs/platform-doc-projects.properties` is checked-in platform docs project metadata so CI can run the docs renderer without an external metadata checkout.
+`npm run sync:docs-projects` refreshes the test fixture at `src/data/docs-projects.fixture.json` from a local `micronaut-projects/micronaut-platform` checkout's `gradle/libs.versions.toml` plus checked-in project metadata.
+`src/data/docs/docs-projects.properties` is checked-in docs project metadata so CI can run the docs renderer without an external metadata checkout.
 `npm run build` also prepares plain HTML template artifacts under `dist/micronaut-web`.
 
 ## Script Development
@@ -86,4 +86,4 @@ The expected consumer flow is:
 
 ## Shared Assets
 
-`public/micronaut-assets` contains the Micronaut logos and project/language icon SVGs copied from `~/dev/micronaut-ui`. It also keeps local copies of the classic micronaut.io feature SVGs under `public/micronaut-assets/icons/features` for product and Launch feature cards. The React shell consumes those assets through `MicronautLogo` and `IconGlyph` so the prototype matches the platform docs and micronaut.io visual systems without inventing replacement marks.
+`public/micronaut-assets` contains the Micronaut logos and project/language icon SVGs copied from `~/dev/micronaut-ui`. It also keeps local copies of the classic micronaut.io feature SVGs under `public/micronaut-assets/icons/features` for product and Launch feature cards. The React shell consumes those assets through `MicronautLogo` and `IconGlyph` so the prototype matches the docs and micronaut.io visual systems without inventing replacement marks.

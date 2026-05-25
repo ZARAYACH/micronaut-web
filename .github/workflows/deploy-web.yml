@@ -25,8 +25,8 @@ jobs:
 
       - name: Check out platform project
         run: |
-          mkdir -p "$RUNNER_TEMP/platform-docs/repos"
-          git clone --depth 1 https://github.com/micronaut-projects/micronaut-platform.git "$RUNNER_TEMP/platform-docs/repos/micronaut-platform"
+          mkdir -p "$RUNNER_TEMP/docs/repos"
+          git clone --depth 1 https://github.com/micronaut-projects/micronaut-platform.git "$RUNNER_TEMP/docs/repos/micronaut-platform"
 
       - name: Check out guides project
         run: git clone --depth 1 https://github.com/micronaut-projects/micronaut-guides.git "$RUNNER_TEMP/micronaut-guides"
@@ -51,10 +51,10 @@ jobs:
 
       - name: Build web
         env:
-          PLATFORM_DOCS_DIR: ${{ runner.temp }}/platform-docs
-          PLATFORM_DOCS_RENDER_ALL: "true"
-          PLATFORM_DOCS_RENDER_STRICT: "true"
-          PLATFORM_DOCS_SYNC_SOURCES: "true"
+          DOCS_DIR: ${{ runner.temp }}/docs
+          DOCS_RENDER_ALL: "true"
+          DOCS_RENDER_STRICT: "true"
+          DOCS_SYNC_SOURCES: "true"
           MICRONAUT_GUIDES_DIR: ${{ runner.temp }}/micronaut-guides
           GUIDES_RENDER_ALL: "true"
           GUIDES_RENDER_STRICT: "true"

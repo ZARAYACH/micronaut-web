@@ -48,7 +48,7 @@ export async function highlightListingBlocks(input: any): Promise<any> {
 }
 
 export function shikiStyle(): any {
-  return `<style data-platform-docs-shiki>
+  return `<style data-docs-shiki>
 .shiki {
   overflow: auto;
   border-radius: 0.5rem;

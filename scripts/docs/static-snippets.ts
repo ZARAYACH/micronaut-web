@@ -9,8 +9,11 @@ import { build } from "esbuild";
 import * as parse5 from "parse5";
 import { codeToHtml } from "shiki";
 
-import { attribute, html } from "./html.ts";
-import { normalizeStandaloneCalloutLines, shikiLanguage } from "./highlight.ts";
+import { attribute, html } from "../shared/html.ts";
+import {
+  normalizeStandaloneCalloutLines,
+  shikiLanguage,
+} from "../shared/highlight.ts";
 import { inlineTitleHtml } from "./listing.ts";
 import { decodeSnippetMarkerPayload } from "./snippet-markers.ts";
 

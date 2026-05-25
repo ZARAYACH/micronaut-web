@@ -1,15 +1,15 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { isDirectory } from "./files.ts";
+import { isDirectory } from "../shared/files.ts";
 
 export async function copyProjectImageAssets(
   project: any,
-  platformDocsDirectory: any,
+  docsDirectory: any,
   generatedDocsDirectory: any,
 ): Promise<any> {
   const sourceDirectory = path.join(
-    platformDocsDirectory,
+    docsDirectory,
     project.submodulePath,
     "src",
     "main",

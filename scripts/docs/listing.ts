@@ -1,4 +1,4 @@
-import { attribute, escapeRegExp, html } from "./html.ts";
+import { attribute, escapeRegExp, html } from "../shared/html.ts";
 
 export function listingBlockHtml(
   source: any,

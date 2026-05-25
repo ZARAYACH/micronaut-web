@@ -300,7 +300,7 @@ test("latest guide replacement routes and parallel generated-content preparation
     "node --test scripts/guides/*.test.ts",
   );
   assert.match(prepareScript, /Promise\.all/);
-  assert.match(prepareScript, /render-platform-docs\.ts/);
+  assert.match(prepareScript, /render-docs\.ts/);
   assert.match(prepareScript, /render-guides\.ts/);
   assert.match(
     workflow,

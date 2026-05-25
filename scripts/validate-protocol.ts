@@ -12,16 +12,16 @@ const protocolFile = path.join(
   "data",
   "protocol.json",
 );
-const platformDocsProjectFixtureFile = path.join(
+const docsProjectFixtureFile = path.join(
   projectDirectory,
   "src",
   "data",
-  "platform-docs-projects.fixture.json",
+  "docs-projects.fixture.json",
 );
 
 const protocol = JSON.parse(await fs.readFile(protocolFile, "utf8"));
-const platformDocsProjectFixture = JSON.parse(
-  await fs.readFile(platformDocsProjectFixtureFile, "utf8"),
+const docsProjectFixture = JSON.parse(
+  await fs.readFile(docsProjectFixtureFile, "utf8"),
 );
 
 assertString(protocol.protocolVersion, "protocolVersion");
@@ -44,26 +44,21 @@ for (const project of protocol.docs.projects) {
   assertString(project.href, `project(${project.slug}).href`);
 }
 
-assertArray(
-  platformDocsProjectFixture.projects,
-  "platformDocsProjectFixture.projects",
-);
-if (
-  platformDocsProjectFixture.projects.length !== protocol.docs.projects.length
-) {
+assertArray(docsProjectFixture.projects, "docsProjectFixture.projects");
+if (docsProjectFixture.projects.length !== protocol.docs.projects.length) {
   throw new Error(
-    `Expected platform docs project fixture to contain ${protocol.docs.projects.length} projects, got ${platformDocsProjectFixture.projects.length}.`,
+    `Expected docs project fixture to contain ${protocol.docs.projects.length} projects, got ${docsProjectFixture.projects.length}.`,
   );
 }
 
 const protocolProjectSlugs = new Set(
   protocol.docs.projects.map((project: any): any => project.slug),
 );
-for (const project of platformDocsProjectFixture.projects) {
-  assertString(project.slug, "platformDocsProjectFixture.project.slug");
+for (const project of docsProjectFixture.projects) {
+  assertString(project.slug, "docsProjectFixture.project.slug");
   assertString(
     project.displayName,
-    `platformDocsProjectFixture.project(${project.slug}).displayName`,
+    `docsProjectFixture.project(${project.slug}).displayName`,
   );
   if (!protocolProjectSlugs.has(project.slug)) {
     throw new Error(
@@ -79,7 +74,7 @@ for (const guide of protocol.guides.guides) {
 }
 
 console.log(
-  `Validated protocol with ${protocol.docs.projects.length} projects, ${platformDocsProjectFixture.projects.length} fixture projects, and ${protocol.guides.guides.length} guides.`,
+  `Validated protocol with ${protocol.docs.projects.length} projects, ${docsProjectFixture.projects.length} fixture projects, and ${protocol.guides.guides.length} guides.`,
 );
 
 function assertArray(value: any, name: any): any {

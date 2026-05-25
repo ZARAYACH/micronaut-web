@@ -3,12 +3,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  type PlatformDocsProject,
+  type DocsProject,
   type Properties,
   readPlatformCatalogProjects,
   readProperties,
   readTomlStringVersions,
-} from "./platform-docs/project-manifest.ts";
+} from "./docs/project-manifest.ts";
 
 const projectDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -26,17 +26,17 @@ const platformVersionCatalogFile = path.resolve(
 );
 const platformCatalogSourceUrl =
   "https://github.com/micronaut-projects/micronaut-platform/blob/master/gradle/libs.versions.toml";
-const checkedInPlatformDocsDataDirectory = path.join(
+const checkedInDocsDataDirectory = path.join(
   projectDirectory,
   "src",
   "data",
-  "platform-docs",
+  "docs",
 );
 const outputFile = path.join(
   projectDirectory,
   "src",
   "data",
-  "platform-docs-projects.fixture.json",
+  "docs-projects.fixture.json",
 );
 const protocolFile = path.join(
   projectDirectory,
@@ -48,16 +48,13 @@ const protocolFile = path.join(
 const [projectProperties, platformVersions, existingFixture, protocol] =
   await Promise.all([
     readProperties(
-      path.join(
-        checkedInPlatformDocsDataDirectory,
-        "platform-doc-projects.properties",
-      ),
+      path.join(checkedInDocsDataDirectory, "docs-projects.properties"),
     ),
     readTomlStringVersions(platformVersionCatalogFile),
     readJson(outputFile),
     readJson(protocolFile),
   ]);
-type FixtureProject = PlatformDocsProject &
+type FixtureProject = DocsProject &
   Properties & {
     categorySlugs?: string[];
     primaryCategory?: string;
@@ -111,7 +108,6 @@ const projects = (
       repositoryName: project.repositoryName,
       repositoryUrl: project.repositoryUrl,
       publishedGuideUrl: project.publishedGuideUrl,
-      publishedPlatformHref: platformCatalogSourceUrl,
       branch: project.branch,
       submodulePath: project.submodulePath,
       platformVersionKey: project.platformVersionKey,
@@ -136,7 +132,7 @@ const projects = (
 
 const fixture = {
   source:
-    "micronaut-projects/micronaut-platform gradle/libs.versions.toml plus checked-in platform docs metadata",
+    "micronaut-projects/micronaut-platform gradle/libs.versions.toml plus checked-in docs metadata",
   publishedSource: platformCatalogSourceUrl,
   projectCount: projects.length,
   categories,
@@ -145,10 +141,10 @@ const fixture = {
 
 await fs.writeFile(outputFile, `${JSON.stringify(fixture, null, 2)}\n`);
 console.log(
-  `Wrote ${projects.length} platform docs projects to ${path.relative(projectDirectory, outputFile)}.`,
+  `Wrote ${projects.length} docs projects to ${path.relative(projectDirectory, outputFile)}.`,
 );
 
-function projectOrder(project: PlatformDocsProject): number {
+function projectOrder(project: DocsProject): number {
   return protocolProjectOrder.get(project.slug) ?? Number.MAX_SAFE_INTEGER;
 }
 
