@@ -11,7 +11,7 @@ export async function getMainCodeShowcaseExamples(): Promise<CodeSnippetExample[
   const entries = await getCollection("codeExamples");
   return entries
     .sort(byOrderThenTitle)
-    .map((entry) => ({
+    .map((entry: CodeExampleEntry) => ({
       id: entry.data.id,
       label: entry.data.label,
       title: entry.data.title,

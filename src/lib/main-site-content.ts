@@ -148,7 +148,7 @@ const footerPageGroups = [
 export async function getMainSitePages(): Promise<MainSitePageModel[]> {
   const entries = await getCollection("mainSitePages");
   return entries
-    .map((entry) => ({
+    .map((entry: MainSitePageEntry) => ({
       slug: slugFromEntry(entry),
       entry
     }))
@@ -185,7 +185,7 @@ export async function getMainSiteFooterGroups(): Promise<MainSiteFooterGroup[]> 
 export async function getBlogPosts(): Promise<BlogPostModel[]> {
   const entries = await getCollection("blogPosts");
   return entries
-    .map((entry) => ({
+    .map((entry: BlogPostEntry) => ({
       slug: entry.data.slug,
       href: entry.data.href ?? `/${entry.data.slug}/`,
       routeSlugs: routeSlugsForPost(entry.data.slug),
