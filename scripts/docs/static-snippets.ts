@@ -425,11 +425,7 @@ function isElementWithClass(node: any, tagName: any, className: any): any {
 }
 
 function isSnippetCalloutValidationBlock(node: any): any {
-  return isElementWithClass(
-    node,
-    "div",
-    "docs-snippet-callout-validation",
-  );
+  return isElementWithClass(node, "div", "docs-snippet-callout-validation");
 }
 
 function addClass(node: any, className: any): any {
