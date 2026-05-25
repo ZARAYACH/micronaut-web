@@ -2,17 +2,27 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const protocolFile = path.join(projectDirectory, "src", "data", "protocol.json");
+const projectDirectory = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
+const protocolFile = path.join(
+  projectDirectory,
+  "src",
+  "data",
+  "protocol.json",
+);
 const platformDocsProjectFixtureFile = path.join(
   projectDirectory,
   "src",
   "data",
-  "platform-docs-projects.fixture.json"
+  "platform-docs-projects.fixture.json",
 );
 
 const protocol = JSON.parse(await fs.readFile(protocolFile, "utf8"));
-const platformDocsProjectFixture = JSON.parse(await fs.readFile(platformDocsProjectFixtureFile, "utf8"));
+const platformDocsProjectFixture = JSON.parse(
+  await fs.readFile(platformDocsProjectFixtureFile, "utf8"),
+);
 
 assertString(protocol.protocolVersion, "protocolVersion");
 assertString(protocol.generatedAt, "generatedAt");
@@ -34,19 +44,31 @@ for (const project of protocol.docs.projects) {
   assertString(project.href, `project(${project.slug}).href`);
 }
 
-assertArray(platformDocsProjectFixture.projects, "platformDocsProjectFixture.projects");
-if (platformDocsProjectFixture.projects.length !== protocol.docs.projects.length) {
+assertArray(
+  platformDocsProjectFixture.projects,
+  "platformDocsProjectFixture.projects",
+);
+if (
+  platformDocsProjectFixture.projects.length !== protocol.docs.projects.length
+) {
   throw new Error(
-    `Expected platform docs project fixture to contain ${protocol.docs.projects.length} projects, got ${platformDocsProjectFixture.projects.length}.`
+    `Expected platform docs project fixture to contain ${protocol.docs.projects.length} projects, got ${platformDocsProjectFixture.projects.length}.`,
   );
 }
 
-const protocolProjectSlugs = new Set(protocol.docs.projects.map((project) => project.slug));
+const protocolProjectSlugs = new Set(
+  protocol.docs.projects.map((project: any): any => project.slug),
+);
 for (const project of platformDocsProjectFixture.projects) {
   assertString(project.slug, "platformDocsProjectFixture.project.slug");
-  assertString(project.displayName, `platformDocsProjectFixture.project(${project.slug}).displayName`);
+  assertString(
+    project.displayName,
+    `platformDocsProjectFixture.project(${project.slug}).displayName`,
+  );
   if (!protocolProjectSlugs.has(project.slug)) {
-    throw new Error(`Fixture project ${project.slug} is missing from protocol docs.projects.`);
+    throw new Error(
+      `Fixture project ${project.slug} is missing from protocol docs.projects.`,
+    );
   }
 }
 
@@ -57,16 +79,16 @@ for (const guide of protocol.guides.guides) {
 }
 
 console.log(
-  `Validated protocol with ${protocol.docs.projects.length} projects, ${platformDocsProjectFixture.projects.length} fixture projects, and ${protocol.guides.guides.length} guides.`
+  `Validated protocol with ${protocol.docs.projects.length} projects, ${platformDocsProjectFixture.projects.length} fixture projects, and ${protocol.guides.guides.length} guides.`,
 );
 
-function assertArray(value, name) {
+function assertArray(value: any, name: any): any {
   if (!Array.isArray(value)) {
     throw new Error(`Expected ${name} to be an array.`);
   }
 }
 
-function assertString(value, name) {
+function assertString(value: any, name: any): any {
   if (typeof value !== "string" || !value.trim()) {
     throw new Error(`Expected ${name} to be a non-empty string.`);
   }

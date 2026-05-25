@@ -49,13 +49,15 @@ export interface GuideOption {
 export const DEFAULT_GUIDE_SLUGS = [
   "creating-your-first-micronaut-app",
   "micronaut-http-client",
-  "micronaut-data-jdbc-repository"
+  "micronaut-data-jdbc-repository",
 ];
 
 export const DEFAULT_LANGUAGES = ["java", "kotlin", "groovy"];
 export const DEFAULT_BUILD_TOOLS = ["gradle", "maven"];
 
-export async function readGuides(guidesRepositoryDirectory: string): Promise<Guide[]> {
+export async function readGuides(
+  guidesRepositoryDirectory: string,
+): Promise<Guide[]> {
   const guidesDirectory = path.join(guidesRepositoryDirectory, "guides");
   if (!(await isDirectory(guidesDirectory))) {
     return [];
@@ -79,18 +81,22 @@ export async function readGuides(guidesRepositoryDirectory: string): Promise<Gui
     }
   }
 
-  return guides.sort((left, right) =>
-    right.publicationDate.localeCompare(left.publicationDate) ||
-    left.title.localeCompare(right.title)
+  return guides.sort(
+    (left: any, right: any): any =>
+      right.publicationDate.localeCompare(left.publicationDate) ||
+      left.title.localeCompare(right.title),
   );
 }
 
-export function selectGuides(guides: Guide[], selectedSlugs: string[]): Guide[] {
+export function selectGuides(
+  guides: Guide[],
+  selectedSlugs: string[],
+): Guide[] {
   if (!selectedSlugs.length) {
     return guides;
   }
   const selected = new Set(selectedSlugs);
-  return guides.filter((guide) => selected.has(guide.slug));
+  return guides.filter((guide: any): any => selected.has(guide.slug));
 }
 
 export function guideOptions(guide: Guide): GuideOption[] {
@@ -110,7 +116,7 @@ export function guideOptions(guide: Guide): GuideOption[] {
         testFramework: testFrameworkFor(guide, language),
         file: guideOptionFile(guide.slug, buildTool, language),
         sourceDir: `${guide.slug}-${buildTool}-${language}`,
-        zipUrl: `${guide.slug}-${buildTool}-${language}.zip`
+        zipUrl: `${guide.slug}-${buildTool}-${language}.zip`,
       });
     }
   }
@@ -118,12 +124,23 @@ export function guideOptions(guide: Guide): GuideOption[] {
 }
 
 export function defaultGuideOption(guide: Guide): GuideOption | undefined {
-  return guideOptions(guide).find((option) => option.buildTool === "gradle" && option.language === "java") ||
-    guideOptions(guide).find((option) => option.language === "java") ||
-    guideOptions(guide)[0];
+  return (
+    guideOptions(guide).find(
+      (option: any): any =>
+        option.buildTool === "gradle" && option.language === "java",
+    ) ||
+    guideOptions(guide).find(
+      (option: any): any => option.language === "java",
+    ) ||
+    guideOptions(guide)[0]
+  );
 }
 
-export function guideOptionFile(slug: string, buildTool: string, language: string): string {
+export function guideOptionFile(
+  slug: string,
+  buildTool: string,
+  language: string,
+): string {
   return `${slug}-${buildTool}-${language}.html`;
 }
 
@@ -144,13 +161,18 @@ export function tagSlug(tag: string): string {
 }
 
 export function languageExtension(language: string): string {
-  return {
-    groovy: "groovy",
-    kotlin: "kt"
-  }[language] || "java";
+  return (
+    {
+      groovy: "groovy",
+      kotlin: "kt",
+    }[language] || "java"
+  );
 }
 
-export function languageSourceDirectory(language: string, sourceSet: string): string {
+export function languageSourceDirectory(
+  language: string,
+  sourceSet: string,
+): string {
   if (language === "kotlin") {
     return sourceSet === "test" ? "src/test/kotlin" : "src/main/kotlin";
   }
@@ -160,22 +182,29 @@ export function languageSourceDirectory(language: string, sourceSet: string): st
   return sourceSet === "test" ? "src/test/java" : "src/main/java";
 }
 
-export function appFeatures(guide: Guide, option: GuideOption, appName = "default"): string[] {
-  const app = guide.apps.find((candidate) => candidate.name === appName) || guide.apps[0];
+export function appFeatures(
+  guide: Guide,
+  option: GuideOption,
+  appName: any = "default",
+): string[] {
+  const app =
+    guide.apps.find((candidate: any): any => candidate.name === appName) ||
+    guide.apps[0];
   if (!app) {
     return [];
   }
 
-  const languageSpecific = {
-    groovy: app.groovyFeatures,
-    java: app.javaFeatures,
-    kotlin: app.kotlinFeatures
-  }[option.language] || [];
+  const languageSpecific =
+    {
+      groovy: app.groovyFeatures,
+      java: app.javaFeatures,
+      kotlin: app.kotlinFeatures,
+    }[option.language] || [];
   return [...new Set([...app.features, ...languageSpecific].filter(Boolean))];
 }
 
 export function featuresWords(features: string[]): string {
-  const formatted = features.map((feature) => `\`${feature}\``);
+  const formatted = features.map((feature: any): any => `\`${feature}\``);
   if (formatted.length <= 1) {
     return formatted[0] || "";
   }
@@ -183,15 +212,21 @@ export function featuresWords(features: string[]): string {
 }
 
 export function cliCommandForApp(app?: GuideApp): string {
-  return {
-    CLI: "create-cli-app",
-    FUNCTION: "create-function-app",
-    GRPC: "create-grpc-app",
-    MESSAGING: "create-messaging-app"
-  }[String(app?.applicationType || "").toUpperCase()] || "create-app";
+  return (
+    {
+      CLI: "create-cli-app",
+      FUNCTION: "create-function-app",
+      GRPC: "create-grpc-app",
+      MESSAGING: "create-messaging-app",
+    }[String(app?.applicationType || "").toUpperCase()] || "create-app"
+  );
 }
 
-function normalizeGuideMetadata(metadata: Record<string, any>, directory: string, fallbackSlug: string): Guide {
+function normalizeGuideMetadata(
+  metadata: Record<string, any>,
+  directory: string,
+  fallbackSlug: string,
+): Guide {
   const slug = string(metadata.slug, fallbackSlug);
   const apps = normalizeApps(metadata.apps);
   return {
@@ -210,16 +245,20 @@ function normalizeGuideMetadata(metadata: Record<string, any>, directory: string
     publish: metadata.publish !== false,
     base: string(metadata.base, ""),
     asciidoc: string(metadata.asciidoctor, `${slug}.adoc`),
-    apps: apps.length ? apps : [{
-      name: "default",
-      applicationType: "DEFAULT",
-      features: [],
-      javaFeatures: [],
-      kotlinFeatures: [],
-      groovyFeatures: []
-    }],
+    apps: apps.length
+      ? apps
+      : [
+          {
+            name: "default",
+            applicationType: "DEFAULT",
+            features: [],
+            javaFeatures: [],
+            kotlinFeatures: [],
+            groovyFeatures: [],
+          },
+        ],
     minimumJavaVersion: metadata.minimumJavaVersion || metadata.minJdk || 21,
-    maximumJavaVersion: metadata.maximumJavaVersion
+    maximumJavaVersion: metadata.maximumJavaVersion,
   };
 }
 
@@ -227,13 +266,13 @@ function normalizeApps(value: unknown): GuideApp[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return value.map((app) => ({
+  return value.map((app: any): any => ({
     name: string(app?.name, "default"),
     applicationType: string(app?.applicationType, "DEFAULT"),
     features: strings(app?.features),
     javaFeatures: strings(app?.javaFeatures),
     kotlinFeatures: strings(app?.kotlinFeatures),
-    groovyFeatures: strings(app?.groovyFeatures)
+    groovyFeatures: strings(app?.groovyFeatures),
   }));
 }
 
@@ -245,18 +284,22 @@ function testFrameworkFor(guide: Guide, language: string): string {
 }
 
 function languageLabel(language: string): string {
-  return {
-    groovy: "Groovy",
-    java: "Java",
-    kotlin: "Kotlin"
-  }[language] || language;
+  return (
+    {
+      groovy: "Groovy",
+      java: "Java",
+      kotlin: "Kotlin",
+    }[language] || language
+  );
 }
 
 function buildToolLabel(buildTool: string): string {
-  return {
-    gradle: "Gradle",
-    maven: "Maven"
-  }[buildTool] || buildTool;
+  return (
+    {
+      gradle: "Gradle",
+      maven: "Maven",
+    }[buildTool] || buildTool
+  );
 }
 
 function lowerList(value: unknown, fallback: string[]): string[] {
@@ -264,14 +307,18 @@ function lowerList(value: unknown, fallback: string[]): string[] {
   if (!values.length) {
     return fallback;
   }
-  return values.map((item) => item.toLowerCase().replaceAll("_", "-"));
+  return values.map((item: any): any =>
+    item.toLowerCase().replaceAll("_", "-"),
+  );
 }
 
 function strings(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return value.filter((item) => item !== undefined && item !== null).map(String);
+  return value
+    .filter((item: any): any => item !== undefined && item !== null)
+    .map(String);
 }
 
 function string(value: unknown, fallback: string): string {

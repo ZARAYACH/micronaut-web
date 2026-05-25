@@ -2,12 +2,15 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const projectDirectory = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const sharedStylesPath = "src/components/web/docs-snippet-styles.ts";
 const removedRuntimeCssPaths = [
   "scripts/generate-docs-snippet-css.ts",
   "src/styles/docs-snippet-runtime.source.css",
-  "src/styles/generated/docs-snippet-runtime.css"
+  "src/styles/generated/docs-snippet-runtime.css",
 ];
 
 const requiredSharedKeys = [
@@ -43,7 +46,7 @@ const requiredSharedKeys = [
   "languageIcon",
   "languageImageIcon",
   "languageIconFill",
-  "kindIcon"
+  "kindIcon",
 ];
 
 const consumers = [
@@ -59,8 +62,8 @@ const consumers = [
       "docsSnippetStyles.externalHeaderTitle",
       "docsSnippetStyles.externalHeaderDescription",
       "docsSnippetStyles.languageIcon",
-      "docsSnippetStyles.kindIcon"
-    ]
+      "docsSnippetStyles.kindIcon",
+    ],
   },
   {
     file: "src/components/web/docs-code-snippet.tsx",
@@ -71,23 +74,20 @@ const consumers = [
       "docsSnippetStyles.codeElement",
       "docsSnippetStyles.languageImageIcon",
       "docsSnippetStyles.languageText",
-      "ShikiCodeBlock"
-    ]
+      "ShikiCodeBlock",
+    ],
   },
   {
     file: "src/components/web/docs-snippet-templates.tsx",
     requiredUses: [
       "DocsSnippetCard",
       "DocsPropertiesSnippetCard",
-      "docsSnippetStyles.tabs"
-    ]
+      "docsSnippetStyles.tabs",
+    ],
   },
   {
     file: "src/components/web/main-code-showcase.tsx",
-    requiredUses: [
-      "DocsCodeSnippet",
-      "docsSnippetStyles.externalTitle"
-    ]
+    requiredUses: ["DocsCodeSnippet", "docsSnippetStyles.externalTitle"],
   },
   {
     file: "src/components/web/snippet-test-gallery.tsx",
@@ -100,8 +100,8 @@ const consumers = [
       "docsSnippetStyles.panel",
       "docsSnippetStyles.languageIcon",
       "docsSnippetStyles.languageIconFill",
-      "docsSnippetStyles.languageText"
-    ]
+      "docsSnippetStyles.languageText",
+    ],
   },
   {
     file: "src/components/web/generated-docs-enhancer.astro",
@@ -120,8 +120,8 @@ const consumers = [
       "docsSnippetStyles.externalTitle",
       "docsSnippetStyles.cardWithFooter",
       "docsSnippetStyles.languageText",
-      "docsSnippetStyles.kindIcon"
-    ]
+      "docsSnippetStyles.kindIcon",
+    ],
   },
   {
     file: "src/lib/main-site-code-snippets.ts",
@@ -135,9 +135,9 @@ const consumers = [
       "docsSnippetStyles.panel",
       "docsSnippetStyles.codePre",
       "docsSnippetStyles.codeElement",
-      "highlightCodeSnippetHtml"
-    ]
-  }
+      "highlightCodeSnippetHtml",
+    ],
+  },
 ];
 
 const guardedClassFragments = [
@@ -163,7 +163,7 @@ const guardedClassFragments = [
   "border border-border bg-card py-0 text-card-foreground",
   "shadow-sm shadow-black/[0.03] dark:shadow-black/20",
   "border-b border-code-border bg-code-tab",
-  "text-[0.95rem] leading-[1.45] font-bold"
+  "text-[0.95rem] leading-[1.45] font-bold",
 ];
 
 const requiredRuntimeClassFragments = [
@@ -175,7 +175,7 @@ const requiredRuntimeClassFragments = [
   "[&_td:first-child_.conum::before]:content-[attr(data-value)]",
   "[&_td:first-child_.conum+b]:hidden",
   "[&_table.tableblock]:border-collapse",
-  "[&_table.tableblock_:where(th,td)]:border"
+  "[&_table.tableblock_:where(th,td)]:border",
 ];
 
 const failures = [];
@@ -185,24 +185,30 @@ const webLayout = await readProjectFile("src/layouts/WebLayout.astro");
 
 for (const key of requiredSharedKeys) {
   if (!new RegExp(`\\b${escapeRegExp(key)}\\s*(?::|,)`).test(sharedStyles)) {
-    failures.push(`${sharedStylesPath}: expected docsSnippetStyles.${key} to be defined.`);
+    failures.push(
+      `${sharedStylesPath}: expected docsSnippetStyles.${key} to be defined.`,
+    );
   }
 }
 
 for (const consumer of consumers) {
   const source = await readProjectFile(consumer.file);
   if (!source.includes("docsSnippetStyles")) {
-    failures.push(`${consumer.file}: expected this snippet surface to use docsSnippetStyles.`);
+    failures.push(
+      `${consumer.file}: expected this snippet surface to use docsSnippetStyles.`,
+    );
   }
   for (const requiredUse of consumer.requiredUses) {
     if (!source.includes(requiredUse)) {
-      failures.push(`${consumer.file}: expected ${requiredUse} to keep snippet styling shared.`);
+      failures.push(
+        `${consumer.file}: expected ${requiredUse} to keep snippet styling shared.`,
+      );
     }
   }
   for (const fragment of guardedClassFragments) {
     for (const lineNumber of matchingLineNumbers(source, fragment)) {
       failures.push(
-        `${consumer.file}:${lineNumber}: move "${fragment}" to docsSnippetStyles instead of duplicating snippet classes.`
+        `${consumer.file}:${lineNumber}: move "${fragment}" to docsSnippetStyles instead of duplicating snippet classes.`,
       );
     }
   }
@@ -210,45 +216,57 @@ for (const consumer of consumers) {
 
 for (const fragment of requiredRuntimeClassFragments) {
   if (!sharedStyles.includes(fragment)) {
-    failures.push(`${sharedStylesPath}: expected Tailwind runtime snippet styling fragment "${fragment}".`);
+    failures.push(
+      `${sharedStylesPath}: expected Tailwind runtime snippet styling fragment "${fragment}".`,
+    );
   }
 }
 
 for (const removedPath of removedRuntimeCssPaths) {
   if (await projectFileExists(removedPath)) {
-    failures.push(`${removedPath}: snippet runtime styling should be owned by Tailwind classes in ${sharedStylesPath}.`);
+    failures.push(
+      `${removedPath}: snippet runtime styling should be owned by Tailwind classes in ${sharedStylesPath}.`,
+    );
   }
 }
 
 if (webLayout.includes("@/styles/generated/docs-snippet-runtime.css")) {
-  failures.push("src/layouts/WebLayout.astro: remove the copied snippet runtime CSS import.");
+  failures.push(
+    "src/layouts/WebLayout.astro: remove the copied snippet runtime CSS import.",
+  );
 }
 
 for (const fragment of [
   ".docs-code-block .shiki",
   ".docs-code-callouts",
-  ".docs-properties-template table.tableblock"
+  ".docs-properties-template table.tableblock",
 ]) {
   if (globalsCss.includes(fragment)) {
-    failures.push(`src/styles/globals.css: move "${fragment}" rules to Tailwind classes in ${sharedStylesPath}.`);
+    failures.push(
+      `src/styles/globals.css: move "${fragment}" rules to Tailwind classes in ${sharedStylesPath}.`,
+    );
   }
 }
 
 if (failures.length) {
-  throw new Error(`Docs snippet style sharing check failed:\n${failures.map((failure) => `- ${failure}`).join("\n")}`);
+  throw new Error(
+    `Docs snippet style sharing check failed:\n${failures.map((failure: any): any => `- ${failure}`).join("\n")}`,
+  );
 }
 
-console.log(`Validated docs snippet style sharing across ${consumers.length} consumers.`);
+console.log(
+  `Validated docs snippet style sharing across ${consumers.length} consumers.`,
+);
 
-async function readProjectFile(relativePath) {
+async function readProjectFile(relativePath: any): Promise<any> {
   return fs.readFile(path.join(projectDirectory, relativePath), "utf8");
 }
 
-async function projectFileExists(relativePath) {
+async function projectFileExists(relativePath: any): Promise<any> {
   try {
     await fs.access(path.join(projectDirectory, relativePath));
     return true;
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === "ENOENT") {
       return false;
     }
@@ -256,13 +274,15 @@ async function projectFileExists(relativePath) {
   }
 }
 
-function matchingLineNumbers(source, fragment) {
+function matchingLineNumbers(source: any, fragment: any): any {
   return source
     .split(/\r?\n/)
-    .map((line, index) => (line.includes(fragment) ? index + 1 : undefined))
+    .map((line: any, index: any): any =>
+      line.includes(fragment) ? index + 1 : undefined,
+    )
     .filter(Boolean);
 }
 
-function escapeRegExp(value) {
+function escapeRegExp(value: any): any {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -7,14 +7,18 @@ import {
   cliCommandForApp,
   featuresWords,
   languageExtension,
-  languageSourceDirectory
+  languageSourceDirectory,
 } from "./model.ts";
 
 const MACRO_LINE = /^([A-Za-z][A-Za-z0-9_-]*):([^\[]*)\[(.*)]\s*$/;
 const DEFAULT_MIN_JDK = 21;
 const LICENSE_INCLUDE = "common:license.adoc[]";
 
-export async function preprocessGuideSource({ guidesDirectory, guide, option }) {
+export async function preprocessGuideSource({
+  guidesDirectory,
+  guide,
+  option,
+}: any): Promise<any> {
   const sourceFile = path.join(guide.directory, guide.asciidoc);
   let source = await fs.readFile(sourceFile, "utf8");
   source = `${source.replace(/\s+$/, "")}\n\n${LICENSE_INCLUDE}\n`;
@@ -22,15 +26,21 @@ export async function preprocessGuideSource({ guidesDirectory, guide, option }) 
     guidesDirectory,
     guide,
     option,
-    version: await readVersion(guidesDirectory)
+    version: await readVersion(guidesDirectory),
   };
-  const expanded = normalizeOrphanCalloutLists(normalizeCalloutListNumbers(
-    await expandLines(source.split(/\r?\n/), context, new Set())
-  ));
+  const expanded = normalizeOrphanCalloutLists(
+    normalizeCalloutListNumbers(
+      await expandLines(source.split(/\r?\n/), context, new Set()),
+    ),
+  );
   return replacePlaceholders(expanded.join("\n"), context);
 }
 
-async function expandLines(lines, context, includeStack) {
+async function expandLines(
+  lines: any,
+  context: any,
+  includeStack: any,
+): Promise<any> {
   const output = [];
   let excludeLanguage = false;
   let excludeBuild = false;
@@ -56,16 +66,30 @@ async function expandLines(lines, context, includeStack) {
       continue;
     }
     if (line.startsWith(":exclude-for-languages:")) {
-      excludeLanguage = excludes(line, ":exclude-for-languages:", context.option.language);
+      excludeLanguage = excludes(
+        line,
+        ":exclude-for-languages:",
+        context.option.language,
+      );
       continue;
     }
     if (line.startsWith(":exclude-for-build:")) {
-      excludeBuild = excludes(line, ":exclude-for-build:", context.option.buildTool);
+      excludeBuild = excludes(
+        line,
+        ":exclude-for-build:",
+        context.option.buildTool,
+      );
       continue;
     }
     if (line.startsWith(":exclude-for-jdk-lower-than:")) {
-      const threshold = Number.parseInt(line.slice(":exclude-for-jdk-lower-than:".length).trim(), 10);
-      const guideMinJdk = Number.parseInt(context.guide.minimumJavaVersion || DEFAULT_MIN_JDK, 10);
+      const threshold = Number.parseInt(
+        line.slice(":exclude-for-jdk-lower-than:".length).trim(),
+        10,
+      );
+      const guideMinJdk = Number.parseInt(
+        context.guide.minimumJavaVersion || DEFAULT_MIN_JDK,
+        10,
+      );
       excludeMinJdk = Number.isFinite(threshold) && guideMinJdk >= threshold;
       continue;
     }
@@ -81,7 +105,7 @@ async function expandLines(lines, context, includeStack) {
       groupedDependencies.push(line);
       continue;
     }
-    output.push(...await expandMacroLine(line, context, includeStack));
+    output.push(...(await expandMacroLine(line, context, includeStack)));
   }
 
   if (groupedDependencies.length) {
@@ -90,7 +114,11 @@ async function expandLines(lines, context, includeStack) {
   return output;
 }
 
-async function expandMacroLine(line, context, includeStack) {
+async function expandMacroLine(
+  line: any,
+  context: any,
+  includeStack: any,
+): Promise<any> {
   const match = MACRO_LINE.exec(line);
   if (!match) {
     return [line];
@@ -105,17 +133,35 @@ async function expandMacroLine(line, context, includeStack) {
       if (target.trim() === "header-top.adoc") {
         return [];
       }
-      return includeAdoc(commonSnippetPath(context.guidesDirectory, target), context, includeStack);
+      return includeAdoc(
+        commonSnippetPath(context.guidesDirectory, target),
+        context,
+        includeStack,
+      );
     case "common-template":
-      return includeTemplate(commonSnippetPath(context.guidesDirectory, target), attributes, context, includeStack);
+      return includeTemplate(
+        commonSnippetPath(context.guidesDirectory, target),
+        attributes,
+        context,
+        includeStack,
+      );
     case "dependency":
       return dependencyLines([line], context);
     case "diffLink":
       return [diffLink(target, attributes, context)];
     case "external":
-      return includeAdoc(externalPath(context.guidesDirectory, target), context, includeStack);
+      return includeAdoc(
+        externalPath(context.guidesDirectory, target),
+        context,
+        includeStack,
+      );
     case "external-template":
-      return includeTemplate(externalPath(context.guidesDirectory, target), attributes, context, includeStack);
+      return includeTemplate(
+        externalPath(context.guidesDirectory, target),
+        attributes,
+        context,
+        includeStack,
+      );
     case "rawTest":
       return sourceBlock(target, attributes, context, "raw-test");
     case "resource":
@@ -135,7 +181,11 @@ async function expandMacroLine(line, context, includeStack) {
   }
 }
 
-async function includeAdoc(file, context, includeStack) {
+async function includeAdoc(
+  file: any,
+  context: any,
+  includeStack: any,
+): Promise<any> {
   const normalized = path.resolve(file);
   if (includeStack.has(normalized)) {
     return [];
@@ -153,25 +203,46 @@ async function includeAdoc(file, context, includeStack) {
   }
 }
 
-async function includeCallout(target, attributes, context, includeStack) {
+async function includeCallout(
+  target: any,
+  attributes: any,
+  context: any,
+  includeStack: any,
+): Promise<any> {
   const lines = await includeAdoc(
-    path.join(context.guidesDirectory, "src", "docs", "common", "callouts", `callout-${ensureSuffix(target.trim(), ".adoc")}`),
+    path.join(
+      context.guidesDirectory,
+      "src",
+      "docs",
+      "common",
+      "callouts",
+      `callout-${ensureSuffix(target.trim(), ".adoc")}`,
+    ),
     context,
-    includeStack
+    includeStack,
   );
   const explicitNumber = calloutNumber(attributes);
-  return lines.map((line) => {
+  return lines.map((line: any): any => {
     const replaced = replaceTemplateArguments(line, attributes);
-    return explicitNumber ? replaced.replace(/^<\.>/, `<${explicitNumber}>`) : replaced;
+    return explicitNumber
+      ? replaced.replace(/^<\.>/, `<${explicitNumber}>`)
+      : replaced;
   });
 }
 
-async function includeTemplate(file, attributes, context, includeStack) {
+async function includeTemplate(
+  file: any,
+  attributes: any,
+  context: any,
+  includeStack: any,
+): Promise<any> {
   const lines = await includeAdoc(file, context, includeStack);
-  return lines.map((line) => replaceTemplateArguments(line, attributes));
+  return lines.map((line: any): any =>
+    replaceTemplateArguments(line, attributes),
+  );
 }
 
-async function includeRocker(target, context) {
+async function includeRocker(target: any, context: any): Promise<any> {
   const file = path.join(
     context.guidesDirectory,
     "buildSrc",
@@ -183,7 +254,7 @@ async function includeRocker(target, context) {
     "guides",
     "feature",
     "template",
-    `${target.trim()}.rocker.raw`
+    `${target.trim()}.rocker.raw`,
   );
   try {
     return (await fs.readFile(file, "utf8")).split(/\r?\n/);
@@ -192,7 +263,12 @@ async function includeRocker(target, context) {
   }
 }
 
-async function sourceBlock(target, attributes, context, kind) {
+async function sourceBlock(
+  target: any,
+  attributes: any,
+  context: any,
+  kind: any,
+): Promise<any> {
   const file = await findSourceFile(target.trim(), attributes, context, kind);
   if (!file) {
     return [`NOTE: Missing source \`${target.trim()}\`.`];
@@ -205,12 +281,28 @@ async function sourceBlock(target, attributes, context, kind) {
     source = stripLicenseHeader(source);
   }
   source = normalizeIndent(source, attributes.indent);
-  const title = path.relative(context.guide.directory, file).replaceAll(path.sep, "/");
-  return sourceBlockLines(languageForFile(file, context.option.language), title, source);
+  const title = path
+    .relative(context.guide.directory, file)
+    .replaceAll(path.sep, "/");
+  return sourceBlockLines(
+    languageForFile(file, context.option.language),
+    title,
+    source,
+  );
 }
 
-async function resourceBlock(target, attributes, context, sourceSet) {
-  const file = await findResourceFile(target.trim(), attributes, context, sourceSet);
+async function resourceBlock(
+  target: any,
+  attributes: any,
+  context: any,
+  sourceSet: any,
+): Promise<any> {
+  const file = await findResourceFile(
+    target.trim(),
+    attributes,
+    context,
+    sourceSet,
+  );
   if (!file) {
     return [`NOTE: Missing resource \`${target.trim()}\`.`];
   }
@@ -219,11 +311,17 @@ async function resourceBlock(target, attributes, context, sourceSet) {
   source = extractTaggedSource(source, tagSelection(attributes));
   source = normalizeSourceCalloutMarkers(source);
   source = normalizeIndent(source, attributes.indent);
-  const title = path.relative(context.guide.directory, file).replaceAll(path.sep, "/");
+  const title = path
+    .relative(context.guide.directory, file)
+    .replaceAll(path.sep, "/");
   return sourceBlockLines(languageForFile(file), title, source);
 }
 
-async function zipIncludeBlock(target, attributes, context) {
+async function zipIncludeBlock(
+  target: any,
+  attributes: any,
+  context: any,
+): Promise<any> {
   const file = await findFileInSourceRoots(target.trim(), attributes, context);
   if (!file) {
     return [`NOTE: Missing zip include \`${target.trim()}\`.`];
@@ -235,29 +333,36 @@ async function zipIncludeBlock(target, attributes, context) {
   return sourceBlockLines(languageForFile(file), target.trim(), source);
 }
 
-function dependencyLines(lines, context) {
+function dependencyLines(lines: any, context: any): any {
   const dependencies = lines
-    .map((line) => MACRO_LINE.exec(line))
+    .map((line: any): any => MACRO_LINE.exec(line))
     .filter(Boolean)
-    .map((match) => ({
+    .map((match: any): any => ({
       artifactId: match[2].trim(),
-      attributes: parseAttributes(match[3])
+      attributes: parseAttributes(match[3]),
     }));
   if (!dependencies.length) {
     return [];
   }
 
   if (context.option.buildTool === "maven") {
-    const xml = dependencies.map(({ artifactId, attributes }) => {
-      const groupId = attributes.groupId || attributes.groupdId || "io.micronaut";
-      const scope = attributes.scope ? `\n    <scope>${attributes.scope}</scope>` : "";
-      const version = attributes.version ? `\n    <version>${attributes.version}</version>` : "";
-      const marker = dependencyCalloutMarker(attributes, "xml");
-      return `<dependency>${marker}
+    const xml = dependencies
+      .map(({ artifactId, attributes }: any): any => {
+        const groupId =
+          attributes.groupId || attributes.groupdId || "io.micronaut";
+        const scope = attributes.scope
+          ? `\n    <scope>${attributes.scope}</scope>`
+          : "";
+        const version = attributes.version
+          ? `\n    <version>${attributes.version}</version>`
+          : "";
+        const marker = dependencyCalloutMarker(attributes, "xml");
+        return `<dependency>${marker}
     <groupId>${groupId}</groupId>
     <artifactId>${artifactId}</artifactId>${version}${scope}
 </dependency>`;
-    }).join("\n");
+      })
+      .join("\n");
     return sourceBlockLines("xml", "Dependency", xml);
   }
 
@@ -267,18 +372,22 @@ function dependencyLines(lines, context) {
     runtime: "runtimeOnly",
     runtimeOnly: "runtimeOnly",
     compileOnly: "compileOnly",
-    annotationProcessor: "annotationProcessor"
-  };
-  const gradle = dependencies.map(({ artifactId, attributes }) => {
-    const groupId = attributes.groupId || attributes.groupdId || "io.micronaut";
-    const scope = gradleScope[attributes.scope] || attributes.scope || "implementation";
-    const version = attributes.version ? `:${attributes.version}` : "";
-    return `${scope}("${groupId}:${artifactId}${version}")${dependencyCalloutMarker(attributes, "gradle")}`;
-  }).join("\n");
+    annotationProcessor: "annotationProcessor",
+  } as Record<string, string>;
+  const gradle = dependencies
+    .map(({ artifactId, attributes }: any): any => {
+      const groupId =
+        attributes.groupId || attributes.groupdId || "io.micronaut";
+      const scope =
+        gradleScope[attributes.scope] || attributes.scope || "implementation";
+      const version = attributes.version ? `:${attributes.version}` : "";
+      return `${scope}("${groupId}:${artifactId}${version}")${dependencyCalloutMarker(attributes, "gradle")}`;
+    })
+    .join("\n");
   return sourceBlockLines("groovy", "Dependency", gradle);
 }
 
-function sourceBlockLines(language, title, source) {
+function sourceBlockLines(language: any, title: any, source: any): any {
   const lines = [""];
   if (title) {
     lines.push(`.${title}`);
@@ -291,33 +400,61 @@ function sourceBlockLines(language, title, source) {
   return lines;
 }
 
-async function findSourceFile(target, attributes, context, kind) {
+async function findSourceFile(
+  target: any,
+  attributes: any,
+  context: any,
+  kind: any,
+): Promise<any> {
   const app = attributes.app || "";
   const sourceSet = kind === "main" ? "main" : "test";
-  const extension = kind === "raw-test"
-    ? rawTestExtension(context.option.testFramework)
-    : languageExtension(context.option.language);
-  const sourceDirectory = kind === "raw-test"
-    ? rawTestSourceDirectory(context.option.testFramework)
-    : languageSourceDirectory(context.option.language, sourceSet);
-  const className = kind === "test" && target.endsWith("Test")
-    ? `${target.slice(0, -"Test".length)}${context.option.testFramework === "spock" ? "Spec" : "Test"}`
-    : target;
-  const sourcePath = path.join(sourceDirectory, "example", "micronaut", `${className}.${extension}`);
+  const extension =
+    kind === "raw-test"
+      ? rawTestExtension(context.option.testFramework)
+      : languageExtension(context.option.language);
+  const sourceDirectory =
+    kind === "raw-test"
+      ? rawTestSourceDirectory(context.option.testFramework)
+      : languageSourceDirectory(context.option.language, sourceSet);
+  const className =
+    kind === "test" && target.endsWith("Test")
+      ? `${target.slice(0, -"Test".length)}${context.option.testFramework === "spock" ? "Spec" : "Test"}`
+      : target;
+  const sourcePath = path.join(
+    sourceDirectory,
+    "example",
+    "micronaut",
+    `${className}.${extension}`,
+  );
   const relativePath = path.join(app, sourcePath);
-  return findExisting(context, [
-    path.join(context.guide.directory, relativePath),
-    path.join(context.guide.directory, app, context.option.language, sourcePath),
-    path.join(context.guide.directory, context.option.language, sourcePath),
-    ...guideSourceRoots(context).flatMap((root) => [
-      path.join(root, relativePath),
-      path.join(root, app, context.option.language, sourcePath),
-      path.join(root, context.option.language, sourcePath)
-    ])
-  ], path.basename(`${className}.${extension}`), sourceSet);
+  return findExisting(
+    context,
+    [
+      path.join(context.guide.directory, relativePath),
+      path.join(
+        context.guide.directory,
+        app,
+        context.option.language,
+        sourcePath,
+      ),
+      path.join(context.guide.directory, context.option.language, sourcePath),
+      ...guideSourceRoots(context).flatMap((root: any): any => [
+        path.join(root, relativePath),
+        path.join(root, app, context.option.language, sourcePath),
+        path.join(root, context.option.language, sourcePath),
+      ]),
+    ],
+    path.basename(`${className}.${extension}`),
+    sourceSet,
+  );
 }
 
-async function findResourceFile(target, attributes, context, sourceSet) {
+async function findResourceFile(
+  target: any,
+  attributes: any,
+  context: any,
+  sourceSet: any,
+): Promise<any> {
   const app = attributes.app || "";
   const resourcePathWithoutApp = target.startsWith("../")
     ? path.join(`src/${sourceSet}`, target.slice("../".length))
@@ -325,31 +462,58 @@ async function findResourceFile(target, attributes, context, sourceSet) {
   const resourcePath = target.startsWith("../")
     ? path.join(app, `src/${sourceSet}`, target.slice("../".length))
     : path.join(app, `src/${sourceSet}`, "resources", target);
-  return findExisting(context, [
-    path.join(context.guide.directory, resourcePath),
-    path.join(context.guide.directory, app, context.option.language, resourcePathWithoutApp),
-    path.join(context.guide.directory, context.option.language, resourcePathWithoutApp),
-    ...guideSourceRoots(context).flatMap((root) => [
-      path.join(root, resourcePath),
-      path.join(root, app, context.option.language, resourcePathWithoutApp),
-      path.join(root, context.option.language, resourcePathWithoutApp)
-    ])
-  ], path.basename(target), `src/${sourceSet}/resources`);
+  return findExisting(
+    context,
+    [
+      path.join(context.guide.directory, resourcePath),
+      path.join(
+        context.guide.directory,
+        app,
+        context.option.language,
+        resourcePathWithoutApp,
+      ),
+      path.join(
+        context.guide.directory,
+        context.option.language,
+        resourcePathWithoutApp,
+      ),
+      ...guideSourceRoots(context).flatMap((root: any): any => [
+        path.join(root, resourcePath),
+        path.join(root, app, context.option.language, resourcePathWithoutApp),
+        path.join(root, context.option.language, resourcePathWithoutApp),
+      ]),
+    ],
+    path.basename(target),
+    `src/${sourceSet}/resources`,
+  );
 }
 
-async function findFileInSourceRoots(target, attributes, context) {
+async function findFileInSourceRoots(
+  target: any,
+  attributes: any,
+  context: any,
+): Promise<any> {
   const app = attributes.app || "";
-  return findExisting(context, [
-    path.join(context.guide.directory, app, target),
-    path.join(context.guide.directory, target),
-    ...guideSourceRoots(context).flatMap((root) => [
-      path.join(root, app, target),
-      path.join(root, target)
-    ])
-  ], path.basename(target));
+  return findExisting(
+    context,
+    [
+      path.join(context.guide.directory, app, target),
+      path.join(context.guide.directory, target),
+      ...guideSourceRoots(context).flatMap((root: any): any => [
+        path.join(root, app, target),
+        path.join(root, target),
+      ]),
+    ],
+    path.basename(target),
+  );
 }
 
-async function findExisting(context, candidates, fallbackName, requiredSegment = "") {
+async function findExisting(
+  context: any,
+  candidates: any,
+  fallbackName: any,
+  requiredSegment: any = "",
+): Promise<any> {
   for (const candidate of candidates) {
     try {
       const stat = await fs.stat(candidate);
@@ -370,7 +534,11 @@ async function findExisting(context, candidates, fallbackName, requiredSegment =
   return undefined;
 }
 
-async function findByName(root, name, requiredSegment = "") {
+async function findByName(
+  root: any,
+  name: any,
+  requiredSegment: any = "",
+): Promise<any> {
   let entries;
   try {
     entries = await fs.readdir(root, { withFileTypes: true });
@@ -394,14 +562,14 @@ async function findByName(root, name, requiredSegment = "") {
   return undefined;
 }
 
-function guideSourceRoots(context) {
+function guideSourceRoots(context: any): any {
   if (!context.guide.base) {
     return [];
   }
   return [path.join(context.guidesDirectory, "guides", context.guide.base)];
 }
 
-function replacePlaceholders(source, context) {
+function replacePlaceholders(source: any, context: any): any {
   let text = source
     .replaceAll("{githubSlug}", context.guide.slug)
     .replaceAll("@guideTitle@", context.guide.title)
@@ -413,35 +581,53 @@ function replacePlaceholders(source, context) {
     .replaceAll("@build@", context.option.buildTool)
     .replaceAll("@testFramework@", context.option.testFramework)
     .replaceAll("@authors@", context.guide.authors.join(", "))
-    .replaceAll("@languageextension@", languageExtension(context.option.language))
-    .replaceAll("@testsuffix@", context.option.testFramework === "spock" ? "Spec" : "Test")
+    .replaceAll(
+      "@languageextension@",
+      languageExtension(context.option.language),
+    )
+    .replaceAll(
+      "@testsuffix@",
+      context.option.testFramework === "spock" ? "Spec" : "Test",
+    )
     .replaceAll("@sourceDir@", context.option.sourceDir)
-    .replaceAll("@minJdk@", String(context.guide.minimumJavaVersion || DEFAULT_MIN_JDK))
+    .replaceAll(
+      "@minJdk@",
+      String(context.guide.minimumJavaVersion || DEFAULT_MIN_JDK),
+    )
     .replaceAll("@api@", "https://docs.micronaut.io/latest/api");
 
   text = rewriteIncludeTargets(text, context);
-  text = text.replace(/@([\w-]*):?cli-command@/g, (_, appName) =>
-    cliCommandForApp(findApp(context.guide, appName || "default"))
+  text = text.replace(/@([\w-]*):?cli-command@/g, (_: any, appName: any): any =>
+    cliCommandForApp(findApp(context.guide, appName || "default")),
   );
-  text = text.replace(/@([\w-]*):?features@/g, (_, appName) =>
-    appFeatures(context.guide, context.option, appName || "default").join(",")
+  text = text.replace(/@([\w-]*):?features@/g, (_: any, appName: any): any =>
+    appFeatures(context.guide, context.option, appName || "default").join(","),
   );
-  text = text.replace(/@([\w-]*):?features-words@/g, (_, appName) =>
-    featuresWords(appFeatures(context.guide, context.option, appName || "default"))
+  text = text.replace(
+    /@([\w-]*):?features-words@/g,
+    (_: any, appName: any): any =>
+      featuresWords(
+        appFeatures(context.guide, context.option, appName || "default"),
+      ),
   );
   return text;
 }
 
-function processGuideLinks(line) {
+function processGuideLinks(line: any): any {
   return line.replace(/guideLink:([^\[]+)\[([^\]]+)]/g, "link:$1.html[$2]");
 }
 
-function diffLink(_target, attributes, context) {
+function diffLink(_target: any, attributes: any, context: any): any {
   const appName = attributes.app || "default";
   const app = findApp(context.guide, appName);
-  const excluded = new Set((attributes.featureExcludes || "").split("|").filter(Boolean));
-  const features = (attributes.features ? attributes.features.split("|") : appFeatures(context.guide, context.option, appName))
-    .filter((feature) => feature && !excluded.has(feature));
+  const excluded = new Set(
+    (attributes.featureExcludes || "").split("|").filter(Boolean),
+  );
+  const features = (
+    attributes.features
+      ? attributes.features.split("|")
+      : appFeatures(context.guide, context.option, appName)
+  ).filter((feature: any): any => feature && !excluded.has(feature));
   const params = new URLSearchParams();
   for (const feature of features) {
     params.append("features", feature);
@@ -458,7 +644,7 @@ function diffLink(_target, attributes, context) {
 
 type Attributes = Record<string, string> & { _positional?: string[] };
 
-function parseAttributes(source): Attributes {
+function parseAttributes(source: any): Attributes {
   const attributes: Attributes = {};
   const positional: string[] = [];
   for (const part of splitAttributes(source)) {
@@ -468,7 +654,10 @@ function parseAttributes(source): Attributes {
       continue;
     }
     const key = part.slice(0, separator).trim();
-    const value = part.slice(separator + 1).trim().replace(/^["']|["']$/g, "");
+    const value = part
+      .slice(separator + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (key) {
       attributes[key] = value;
     }
@@ -479,20 +668,24 @@ function parseAttributes(source): Attributes {
   return attributes;
 }
 
-function calloutNumber(attributes) {
-  const number = attributes.number || attributes.callout || attributes._positional?.[0] || "";
+function calloutNumber(attributes: any): any {
+  const number =
+    attributes.number ||
+    attributes.callout ||
+    attributes._positional?.[0] ||
+    "";
   return /^\d+$/.test(number) ? number : "";
 }
 
-function tagSelection(attributes) {
+function tagSelection(attributes: any): any {
   return (attributes.tags || attributes.tag || "").replaceAll("|", ",");
 }
 
-function normalizeSourceCalloutMarkers(source) {
+function normalizeSourceCalloutMarkers(source: any): any {
   return source.replace(/([ \t](?:\/\/|#|;)[ \t]*)(\d+)>$/gm, "$1<$2>");
 }
 
-function dependencyCalloutMarker(attributes, language) {
+function dependencyCalloutMarker(attributes: any, language: any): any {
   const number = calloutNumber(attributes);
   if (!number) {
     return "";
@@ -500,7 +693,7 @@ function dependencyCalloutMarker(attributes, language) {
   return language === "xml" ? ` <!--${number}-->` : ` // <${number}>`;
 }
 
-function normalizeCalloutListNumbers(lines) {
+function normalizeCalloutListNumbers(lines: any): any {
   const output = [];
   let nextCallout = 1;
   let inCalloutList = false;
@@ -508,7 +701,8 @@ function normalizeCalloutListNumbers(lines) {
   for (const line of lines) {
     const match = /^<(\.|\d+)>/.exec(line);
     if (match) {
-      const number = match[1] === "." ? nextCallout : Number.parseInt(match[1], 10);
+      const number =
+        match[1] === "." ? nextCallout : Number.parseInt(match[1], 10);
       output.push(line.replace(/^<(\.|\d+)>/, `<${number}>`));
       nextCallout = number + 1;
       inCalloutList = true;
@@ -533,20 +727,24 @@ function normalizeCalloutListNumbers(lines) {
   return output;
 }
 
-function normalizeOrphanCalloutLists(lines) {
+function normalizeOrphanCalloutLists(lines: any): any {
   const output = [];
   let inListingBlock = false;
   let listingBlockLines = [];
   let listingBlockOutputStart = -1;
   let previousListing = emptyListingContext();
 
-  for (let index = 0; index < lines.length;) {
+  for (let index = 0; index < lines.length; ) {
     const line = lines[index];
 
     if (isListingDelimiter(line)) {
       output.push(line);
       if (inListingBlock) {
-        previousListing = listingCalloutContext(listingBlockLines, listingBlockOutputStart, output.length - 1);
+        previousListing = listingCalloutContext(
+          listingBlockLines,
+          listingBlockOutputStart,
+          output.length - 1,
+        );
         listingBlockLines = [];
       } else {
         previousListing = emptyListingContext();
@@ -566,14 +764,18 @@ function normalizeOrphanCalloutLists(lines) {
 
     if (isCalloutListItem(line)) {
       const { items, nextIndex } = collectCalloutList(lines, index);
-      const { listingItems, manualItems } = splitCalloutItems(items, previousListing, output);
-      output.push(...listingItems.map((item) => item.line));
+      const { listingItems, manualItems } = splitCalloutItems(
+        items,
+        previousListing,
+        output,
+      );
+      output.push(...listingItems.map((item: any): any => item.line));
       if (manualItems.length) {
         if (listingItems.length) {
           output.push("");
         }
         output.push("[.guide-manual-callouts]");
-        output.push(...manualItems.map((item) => `. ${item.text}`));
+        output.push(...manualItems.map((item: any): any => `. ${item.text}`));
         output.push("");
       }
       previousListing = emptyListingContext();
@@ -591,37 +793,46 @@ function normalizeOrphanCalloutLists(lines) {
   return output;
 }
 
-function isListingDelimiter(line) {
+function isListingDelimiter(line: any): any {
   return line.trim() === "----";
 }
 
-function isCalloutListItem(line) {
+function isCalloutListItem(line: any): any {
   return /^<(\.|\d+)>/.test(line);
 }
 
-function listingCalloutContext(lines, outputStart, outputEnd) {
+function listingCalloutContext(
+  lines: any,
+  outputStart: any,
+  outputEnd: any,
+): any {
   const source = lines.join("\n");
   if (/^include::/m.test(source)) {
     return { unknown: true, numbers: new Set(), outputStart, outputEnd };
   }
   return {
     unknown: false,
-    numbers: new Set(Array.from(source.matchAll(/<(\d+)>|<!--(\d+)-->/g), (match) => match[1] || match[2])),
+    numbers: new Set(
+      Array.from(
+        source.matchAll(/<(\d+)>|<!--(\d+)-->/g),
+        (match: any): any => match[1] || match[2],
+      ),
+    ),
     outputStart,
-    outputEnd
+    outputEnd,
   };
 }
 
-function emptyListingContext() {
+function emptyListingContext(): any {
   return {
     unknown: false,
     numbers: new Set(),
     outputStart: -1,
-    outputEnd: -1
+    outputEnd: -1,
   };
 }
 
-function collectCalloutList(lines, startIndex) {
+function collectCalloutList(lines: any, startIndex: any): any {
   const items = [];
   let index = startIndex;
   while (index < lines.length) {
@@ -631,7 +842,7 @@ function collectCalloutList(lines, startIndex) {
       items.push({
         number: match[1],
         text: match[2],
-        line
+        line,
       });
       index += 1;
       continue;
@@ -645,7 +856,7 @@ function collectCalloutList(lines, startIndex) {
   return { items, nextIndex: index };
 }
 
-function splitCalloutItems(items, listing, output) {
+function splitCalloutItems(items: any, listing: any, output: any): any {
   if (listing.unknown) {
     return { listingItems: items, manualItems: [] };
   }
@@ -664,7 +875,7 @@ function splitCalloutItems(items, listing, output) {
   return { listingItems, manualItems };
 }
 
-function renumberListingCallouts(items, listing, output) {
+function renumberListingCallouts(items: any, listing: any, output: any): any {
   const numberMap = new Map();
   for (const item of items) {
     if (!numberMap.has(item.number)) {
@@ -676,25 +887,31 @@ function renumberListingCallouts(items, listing, output) {
     items.splice(0, items.length, ...listingItems);
     return manualItems;
   }
-  if ([...numberMap].every(([from, to]) => from === to)) {
+  if ([...numberMap].every(([from, to]: any): any => from === to)) {
     return [];
   }
   for (let index = listing.outputStart; index < listing.outputEnd; index += 1) {
-    output[index] = output[index].replace(/<(\d+)>|<!--(\d+)-->/g, (match, xmlNumber, commentNumber) => {
-      const nextNumber = numberMap.get(xmlNumber || commentNumber);
-      if (!nextNumber) {
-        return match;
-      }
-      return xmlNumber ? `<${nextNumber}>` : `<!--${nextNumber}-->`;
-    });
+    output[index] = output[index].replace(
+      /<(\d+)>|<!--(\d+)-->/g,
+      (match: any, xmlNumber: any, commentNumber: any): any => {
+        const nextNumber = numberMap.get(xmlNumber || commentNumber);
+        if (!nextNumber) {
+          return match;
+        }
+        return xmlNumber ? `<${nextNumber}>` : `<!--${nextNumber}-->`;
+      },
+    );
   }
   for (const item of items) {
-    item.line = item.line.replace(/^<(\.|\d+)>/, `<${numberMap.get(item.number) || item.number}>`);
+    item.line = item.line.replace(
+      /^<(\.|\d+)>/,
+      `<${numberMap.get(item.number) || item.number}>`,
+    );
   }
   return [];
 }
 
-function canRenumberListing(numberMap, listingNumbers) {
+function canRenumberListing(numberMap: any, listingNumbers: any): any {
   for (const [from, to] of numberMap) {
     if (from !== to && listingNumbers.has(to) && !numberMap.has(to)) {
       return false;
@@ -703,7 +920,7 @@ function canRenumberListing(numberMap, listingNumbers) {
   return true;
 }
 
-function sequentialPrefix(items) {
+function sequentialPrefix(items: any): any {
   const listingItems = [];
   const manualItems = [];
   let expected = 1;
@@ -718,7 +935,7 @@ function sequentialPrefix(items) {
   return { listingItems, manualItems };
 }
 
-function nextNonBlankLineIsCallout(lines, startIndex) {
+function nextNonBlankLineIsCallout(lines: any, startIndex: any): any {
   for (let index = startIndex; index < lines.length; index += 1) {
     if (!lines[index].trim()) {
       continue;
@@ -728,19 +945,25 @@ function nextNonBlankLineIsCallout(lines, startIndex) {
   return false;
 }
 
-function rewriteIncludeTargets(source, context) {
-  return source.replace(/^include::([^\[]+)\[([^\]]*)]/gm, (match, target, attributes) => {
-    const resolved = resolveGuideIncludeTarget(target, context);
-    return resolved ? `include::${resolved}[${attributes}]` : match;
-  });
+function rewriteIncludeTargets(source: any, context: any): any {
+  return source.replace(
+    /^include::([^\[]+)\[([^\]]*)]/gm,
+    (match: any, target: any, attributes: any): any => {
+      const resolved = resolveGuideIncludeTarget(target, context);
+      return resolved ? `include::${resolved}[${attributes}]` : match;
+    },
+  );
 }
 
-function resolveGuideIncludeTarget(target, context) {
+function resolveGuideIncludeTarget(target: any, context: any): any {
   const normalized = target
     .replaceAll("\\", "/")
     .replaceAll("@sourceDir@", context.option.sourceDir)
     .replaceAll("@lang@", context.option.language)
-    .replaceAll("@languageextension@", languageExtension(context.option.language));
+    .replaceAll(
+      "@languageextension@",
+      languageExtension(context.option.language),
+    );
   const candidates = includeTargetCandidates(normalized, context);
   for (const candidate of candidates) {
     const found = findExistingIncludeTarget(candidate, context);
@@ -751,7 +974,7 @@ function resolveGuideIncludeTarget(target, context) {
   return "";
 }
 
-function includeTargetCandidates(target, context) {
+function includeTargetCandidates(target: any, context: any): any {
   const candidates = [target];
   const withoutAttributeRoot = target.replace(/^\{sourceDir}\//, "");
   candidates.push(withoutAttributeRoot);
@@ -775,25 +998,27 @@ function includeTargetCandidates(target, context) {
   return [...new Set(candidates.filter(Boolean))];
 }
 
-function findExistingIncludeTarget(candidate, context) {
+function findExistingIncludeTarget(candidate: any, context: any): any {
   if (path.isAbsolute(candidate) && existsSync(candidate)) {
     return candidate.replaceAll(path.sep, "/");
   }
   for (const root of [context.guide.directory, ...guideSourceRoots(context)]) {
     const file = path.join(root, candidate);
     if (existsSync(file)) {
-      return path.relative(context.guide.directory, file).replaceAll(path.sep, "/");
+      return path
+        .relative(context.guide.directory, file)
+        .replaceAll(path.sep, "/");
     }
   }
   return "";
 }
 
-function splitAttributes(source) {
+function splitAttributes(source: any): any {
   const parts = [];
   let current = "";
   let quote = "";
   for (const char of source || "") {
-    if ((char === "\"" || char === "'") && (!quote || quote === char)) {
+    if ((char === '"' || char === "'") && (!quote || quote === char)) {
       quote = quote ? "" : char;
       current += char;
       continue;
@@ -806,92 +1031,126 @@ function splitAttributes(source) {
     current += char;
   }
   parts.push(current);
-  return parts.map((part) => part.trim()).filter(Boolean);
+  return parts.map((part: any): any => part.trim()).filter(Boolean);
 }
 
-function replaceTemplateArguments(line, attributes) {
-  return line.replace(/\{(\d+)(?:_([UL]))?}/g, (match, index, transform) => {
-    const value = attributes[`arg${index}`];
-    if (value === undefined) {
-      return match;
-    }
-    if (transform === "U") {
-      return value.toUpperCase();
-    }
-    if (transform === "L") {
-      return value.toLowerCase();
-    }
-    return value;
-  });
+function replaceTemplateArguments(line: any, attributes: any): any {
+  return line.replace(
+    /\{(\d+)(?:_([UL]))?}/g,
+    (match: any, index: any, transform: any): any => {
+      const value = attributes[`arg${index}`];
+      if (value === undefined) {
+        return match;
+      }
+      if (transform === "U") {
+        return value.toUpperCase();
+      }
+      if (transform === "L") {
+        return value.toLowerCase();
+      }
+      return value;
+    },
+  );
 }
 
-function commonSnippetPath(guidesDirectory, target) {
-  return path.join(guidesDirectory, "src", "docs", "common", "snippets", `common-${ensureSuffix(target.trim(), ".adoc")}`);
+function commonSnippetPath(guidesDirectory: any, target: any): any {
+  return path.join(
+    guidesDirectory,
+    "src",
+    "docs",
+    "common",
+    "snippets",
+    `common-${ensureSuffix(target.trim(), ".adoc")}`,
+  );
 }
 
-function externalPath(guidesDirectory, target) {
-  return path.join(guidesDirectory, "guides", ensureSuffix(target.trim(), ".adoc"));
+function externalPath(guidesDirectory: any, target: any): any {
+  return path.join(
+    guidesDirectory,
+    "guides",
+    ensureSuffix(target.trim(), ".adoc"),
+  );
 }
 
-function ensureSuffix(value, suffix) {
+function ensureSuffix(value: any, suffix: any): any {
   return value.endsWith(suffix) ? value : `${value}${suffix}`;
 }
 
-function excludes(line, prefix, value) {
-  return line.slice(prefix.length).split(",").some((item) => item.trim().toLowerCase() === value.toLowerCase());
+function excludes(line: any, prefix: any, value: any): any {
+  return line
+    .slice(prefix.length)
+    .split(",")
+    .some(
+      (item: any): any => item.trim().toLowerCase() === value.toLowerCase(),
+    );
 }
 
-function rawTestExtension(testFramework) {
+function rawTestExtension(testFramework: any): any {
   return testFramework === "spock" ? "groovy" : "java";
 }
 
-function rawTestSourceDirectory(testFramework) {
+function rawTestSourceDirectory(testFramework: any): any {
   return testFramework === "spock" ? "src/test/groovy" : "src/test/java";
 }
 
-function stripLicenseHeader(source) {
-  return source.replace(/^\/\*[\s\S]*?Licensed under the Apache License[\s\S]*?\*\/\s*/i, "");
+function stripLicenseHeader(source: any): any {
+  return source.replace(
+    /^\/\*[\s\S]*?Licensed under the Apache License[\s\S]*?\*\/\s*/i,
+    "",
+  );
 }
 
-function normalizeIndent(source, indentValue) {
+function normalizeIndent(source: any, indentValue: any): any {
   const indent = Number.parseInt(indentValue || "0", 10);
   if (!Number.isFinite(indent) || indent <= 0) {
     return source.trim();
   }
   const prefix = " ".repeat(indent);
-  return source.trim().split(/\r?\n/).map((line) => `${prefix}${line}`).join("\n");
+  return source
+    .trim()
+    .split(/\r?\n/)
+    .map((line: any): any => `${prefix}${line}`)
+    .join("\n");
 }
 
-function languageForFile(file, fallback = "text") {
+function languageForFile(file: any, fallback: any = "text"): any {
   const extension = path.extname(file).toLowerCase().slice(1);
-  return {
-    gradle: "groovy",
-    hbs: "html",
-    java: "java",
-    json: "json",
-    kt: "kotlin",
-    groovy: "groovy",
-    properties: "properties",
-    toml: "toml",
-    vm: "html",
-    xml: "xml",
-    yaml: "yaml",
-    yml: "yaml"
-  }[extension] || extension || fallback;
+  return (
+    {
+      gradle: "groovy",
+      hbs: "html",
+      java: "java",
+      json: "json",
+      kt: "kotlin",
+      groovy: "groovy",
+      properties: "properties",
+      toml: "toml",
+      vm: "html",
+      xml: "xml",
+      yaml: "yaml",
+      yml: "yaml",
+    }[extension] ||
+    extension ||
+    fallback
+  );
 }
 
-function findApp(guide, appName) {
-  return guide.apps.find((app) => app.name === appName) || guide.apps[0];
+function findApp(guide: any, appName: any): any {
+  return (
+    guide.apps.find((app: any): any => app.name === appName) || guide.apps[0]
+  );
 }
 
-async function readVersion(guidesDirectory) {
+async function readVersion(guidesDirectory: any): Promise<any> {
   try {
-    return (await fs.readFile(path.join(guidesDirectory, "version.txt"), "utf8")).trim();
+    return (
+      await fs.readFile(path.join(guidesDirectory, "version.txt"), "utf8")
+    ).trim();
   } catch {
     return "";
   }
 }
 
-function escapeRegExp(value) {
+function escapeRegExp(value: any): any {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

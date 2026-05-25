@@ -34,7 +34,7 @@ interface MetadataIndexes {
 const REPOSITORY_OVERRIDES: Record<string, string> = {
   mongo: "micronaut-mongodb",
   oraclecloud: "micronaut-oracle-cloud",
-  serialization: "micronaut-serialization"
+  serialization: "micronaut-serialization",
 };
 const EXCLUDED_PROJECT_KEYS = new Set(["crac", "guides"]);
 const UPPERCASE_WORDS = new Set([
@@ -52,11 +52,14 @@ const UPPERCASE_WORDS = new Set([
   "r2dbc",
   "rss",
   "sql",
-  "xml"
+  "xml",
 ]);
 
-export async function readProperties(file: string, required = true): Promise<Properties> {
-  const content = await fs.readFile(file, "utf8").catch((error) => {
+export async function readProperties(
+  file: string,
+  required: any = true,
+): Promise<Properties> {
+  const content = await fs.readFile(file, "utf8").catch((error: any): any => {
     if (required) {
       throw error;
     }
@@ -79,7 +82,11 @@ export async function readProperties(file: string, required = true): Promise<Pro
   return properties;
 }
 
-export function readIndexed(properties: Properties, prefix: string, count: number): Properties[] {
+export function readIndexed(
+  properties: Properties,
+  prefix: string,
+  count: number,
+): Properties[] {
   const values: Properties[] = [];
   for (let index = 0; index < count; index += 1) {
     const entry: Properties = {};
@@ -94,9 +101,12 @@ export function readIndexed(properties: Properties, prefix: string, count: numbe
   return values;
 }
 
-export async function readTomlStringVersions(file: string, required = true): Promise<Properties> {
+export async function readTomlStringVersions(
+  file: string,
+  required: any = true,
+): Promise<Properties> {
   const versions: Properties = {};
-  const content = await fs.readFile(file, "utf8").catch((error) => {
+  const content = await fs.readFile(file, "utf8").catch((error: any): any => {
     if (required) {
       throw error;
     }
@@ -124,12 +134,15 @@ export async function readTomlStringVersions(file: string, required = true): Pro
 
 export async function readPlatformCatalogProjects(
   versionCatalogFile: string,
-  metadataProperties: Properties = {}
+  metadataProperties: Properties = {},
 ): Promise<PlatformDocsProject[]> {
   const content = await fs.readFile(versionCatalogFile, "utf8");
   const catalog = parseToml(content) as {
     versions?: Record<string, unknown>;
-    libraries?: Record<string, { module?: unknown; version?: { ref?: unknown } }>;
+    libraries?: Record<
+      string,
+      { module?: unknown; version?: { ref?: unknown } }
+    >;
   };
   const versions = catalog.versions || {};
   const libraries = catalog.libraries || {};
@@ -142,13 +155,16 @@ export async function readPlatformCatalogProjects(
     }
 
     const module = typeof library.module === "string" ? library.module : "";
-    const versionRef = typeof library.version?.ref === "string" ? library.version.ref : "";
+    const versionRef =
+      typeof library.version?.ref === "string" ? library.version.ref : "";
     if (!versionRef.startsWith("managed-micronaut-")) {
       continue;
     }
     const version = versions[versionRef];
     if (typeof version !== "string" || !version.trim()) {
-      throw new Error(`Platform catalog does not contain ${versionRef} referenced by ${alias}.`);
+      throw new Error(
+        `Platform catalog does not contain ${versionRef} referenced by ${alias}.`,
+      );
     }
 
     const platformProject = {
@@ -157,7 +173,7 @@ export async function readPlatformCatalogProjects(
       versionRef,
       version,
       projectKey: versionRef.slice("managed-micronaut-".length),
-      artifactId: artifactId(module)
+      artifactId: artifactId(module),
     };
     if (EXCLUDED_PROJECT_KEYS.has(platformProject.projectKey)) {
       continue;
@@ -169,12 +185,17 @@ export async function readPlatformCatalogProjects(
   return projects;
 }
 
-export function selectProjects(projects: PlatformDocsProject[], slugs: string[]): PlatformDocsProject[] {
+export function selectProjects(
+  projects: PlatformDocsProject[],
+  slugs: string[],
+): PlatformDocsProject[] {
   if (!slugs.length) {
     return projects;
   }
-  const bySlug = new Map(projects.map((project) => [project.slug, project]));
-  return slugs.map((slug) => {
+  const bySlug = new Map(
+    projects.map((project: any): any => [project.slug, project]),
+  );
+  return slugs.map((slug: any): any => {
     const project = bySlug.get(slug);
     if (!project) {
       throw new Error(`Unknown platform docs project slug: ${slug}`);
@@ -184,7 +205,11 @@ export function selectProjects(projects: PlatformDocsProject[], slugs: string[])
 }
 
 function indexedProjectMetadata(properties: Properties): MetadataIndexes {
-  const entries = readIndexed(properties, "project", Number(properties["project.count"] || 0));
+  const entries = readIndexed(
+    properties,
+    "project",
+    Number(properties["project.count"] || 0),
+  );
   const byProjectKey = new Map<string, Properties>();
   const byModule = new Map<string, Properties>();
   const byRepositoryName = new Map<string, Properties>();
@@ -202,15 +227,36 @@ function indexedProjectMetadata(properties: Properties): MetadataIndexes {
   return { byProjectKey, byModule, byRepositoryName };
 }
 
-function projectFromPlatformCatalog(platformProject: PlatformCatalogProject, metadata: MetadataIndexes): PlatformDocsProject {
+function projectFromPlatformCatalog(
+  platformProject: PlatformCatalogProject,
+  metadata: MetadataIndexes,
+): PlatformDocsProject {
   const repositoryName = resolveRepositoryName(platformProject, metadata);
   const cachedMetadata = metadata.byRepositoryName.get(repositoryName) || {};
-  const repositoryUrl = choose(cachedMetadata.repositoryUrl, repositoryUrlFor(repositoryName));
-  const submodulePath = choose(cachedMetadata.submodulePath, `repos/${repositoryName}`);
-  const branch = choose(cachedMetadata.branch, branchFor(platformProject.version));
-  const displayName = choose(cachedMetadata.displayName, displayNameFor(repositoryName));
-  const slug = choose(cachedMetadata.slug, slugFromSubmodulePath(submodulePath));
-  const publishedGuideUrl = choose(cachedMetadata.publishedGuideUrl, publishedGuideUrlFor(repositoryName));
+  const repositoryUrl = choose(
+    cachedMetadata.repositoryUrl,
+    repositoryUrlFor(repositoryName),
+  );
+  const submodulePath = choose(
+    cachedMetadata.submodulePath,
+    `repos/${repositoryName}`,
+  );
+  const branch = choose(
+    cachedMetadata.branch,
+    branchFor(platformProject.version),
+  );
+  const displayName = choose(
+    cachedMetadata.displayName,
+    displayNameFor(repositoryName),
+  );
+  const slug = choose(
+    cachedMetadata.slug,
+    slugFromSubmodulePath(submodulePath),
+  );
+  const publishedGuideUrl = choose(
+    cachedMetadata.publishedGuideUrl,
+    publishedGuideUrlFor(repositoryName),
+  );
 
   return {
     slug,
@@ -222,13 +268,18 @@ function projectFromPlatformCatalog(platformProject: PlatformCatalogProject, met
     repositoryUrl,
     branch,
     submodulePath,
-    platformVersionKey: platformProject.versionRef
+    platformVersionKey: platformProject.versionRef,
   };
 }
 
-function resolveRepositoryName(platformProject: PlatformCatalogProject, metadata: MetadataIndexes): string {
+function resolveRepositoryName(
+  platformProject: PlatformCatalogProject,
+  metadata: MetadataIndexes,
+): string {
   const names = new Set<string>();
-  const cachedByProjectKey = metadata.byProjectKey.get(platformProject.projectKey);
+  const cachedByProjectKey = metadata.byProjectKey.get(
+    platformProject.projectKey,
+  );
   const cachedByModule = metadata.byModule.get(platformProject.module);
   if (cachedByProjectKey?.repositoryName) {
     names.add(cachedByProjectKey.repositoryName);
@@ -243,7 +294,10 @@ function resolveRepositoryName(platformProject: PlatformCatalogProject, metadata
   names.add(`micronaut-${platformProject.projectKey}`);
   names.add(platformProject.alias.slice("boms-".length));
 
-  return Array.from(names).find(Boolean) || platformProject.alias.slice("boms-".length);
+  return (
+    Array.from(names).find(Boolean) ||
+    platformProject.alias.slice("boms-".length)
+  );
 }
 
 function artifactId(module: string): string {
@@ -280,7 +334,9 @@ function slugFromSubmodulePath(submodulePath: string): string {
 }
 
 function displayNameFor(repositoryName: string): string {
-  const name = repositoryName.startsWith("micronaut-") ? repositoryName.slice("micronaut-".length) : repositoryName;
+  const name = repositoryName.startsWith("micronaut-")
+    ? repositoryName.slice("micronaut-".length)
+    : repositoryName;
   return ["Micronaut", ...name.split("-").map(displayWord)].join(" ");
 }
 

@@ -11,7 +11,7 @@ export function parseAttributeList(value: string): Record<string, string> {
       current += char;
       continue;
     }
-    if (char === "\"" || char === "'") {
+    if (char === '"' || char === "'") {
       quote = char;
       current += char;
       continue;
@@ -39,7 +39,10 @@ export function parseAttributeList(value: string): Record<string, string> {
 }
 
 function stripQuotes(value: string): string {
-  if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
     return value.slice(1, -1);
   }
   return value;

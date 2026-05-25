@@ -6,7 +6,7 @@ import { isRegularFile } from "./files.ts";
 
 type TocMap = Record<string, unknown>;
 
-export async function readGuideToc(guideSourceDirectory: string) {
+export async function readGuideToc(guideSourceDirectory: string): Promise<any> {
   const tocFile = path.join(guideSourceDirectory, "toc.yml");
   const parsed = yaml.load(await fs.readFile(tocFile, "utf8"));
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -14,15 +14,31 @@ export async function readGuideToc(guideSourceDirectory: string) {
   }
   const toc = parsed as TocMap;
 
-  const children = [];
+  const children: TocNode[] = [];
   await appendTocNodes(children, guideSourceDirectory, [], toc, 0, "");
   return {
     title: typeof toc.title === "string" ? toc.title : "",
-    children
+    children,
   };
 }
 
-async function appendTocNodes(target, guideSourceDirectory: string, parentIds: string[], toc: TocMap, level: number, numberPrefix: string) {
+type TocNode = {
+  level: number;
+  number: string;
+  id: string;
+  title: string;
+  file: string;
+  children: TocNode[];
+};
+
+async function appendTocNodes(
+  target: TocNode[],
+  guideSourceDirectory: string,
+  parentIds: string[],
+  toc: TocMap,
+  level: number,
+  numberPrefix: string,
+): Promise<any> {
   let index = 1;
   for (const [rawId, value] of Object.entries(toc)) {
     const id = tocKey(rawId);
@@ -34,11 +50,18 @@ async function appendTocNodes(target, guideSourceDirectory: string, parentIds: s
     const title = tocTitle(id, value);
     const file = await determineFilePath(guideSourceDirectory, parentIds, id);
     const pathIds = [...parentIds, id];
-    const children = [];
+    const children: TocNode[] = [];
     if (value && typeof value === "object" && !Array.isArray(value)) {
       const childSections = { ...(value as TocMap) };
       delete childSections.title;
-      await appendTocNodes(children, guideSourceDirectory, pathIds, childSections, level + 1, number);
+      await appendTocNodes(
+        children,
+        guideSourceDirectory,
+        pathIds,
+        childSections,
+        level + 1,
+        number,
+      );
     }
 
     target.push({ level, number, id, title, file, children });
@@ -46,7 +69,7 @@ async function appendTocNodes(target, guideSourceDirectory: string, parentIds: s
   }
 }
 
-function tocKey(value) {
+function tocKey(value: any): any {
   if (typeof value === "string" && value.trim()) {
     return value.trim();
   }
@@ -67,7 +90,11 @@ function tocTitle(id: string, value: unknown): string {
   throw new Error(`TOC section '${id}' must be a string or map.`);
 }
 
-async function determineFilePath(guideSourceDirectory, parentIds, id) {
+async function determineFilePath(
+  guideSourceDirectory: any,
+  parentIds: any,
+  id: any,
+): Promise<any> {
   let filePath = `${id}.adoc`;
   if (await isRegularFile(path.join(guideSourceDirectory, filePath))) {
     return filePath;
@@ -78,5 +105,7 @@ async function determineFilePath(guideSourceDirectory, parentIds, id) {
       return filePath;
     }
   }
-  throw new Error(`Missing guide source file for TOC section '${id}' under ${guideSourceDirectory}`);
+  throw new Error(
+    `Missing guide source file for TOC section '${id}' under ${guideSourceDirectory}`,
+  );
 }

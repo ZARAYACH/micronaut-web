@@ -33,7 +33,7 @@ export interface SearchItem {
 
 export function buildDocsSearchIndex(
   projects: SearchProject[],
-  generatedHtmlBySlug: Record<string, string> = {}
+  generatedHtmlBySlug: Record<string, string> = {},
 ): SearchItem[] {
   const items: SearchItem[] = [];
   const seen = new Set<string>();
@@ -42,7 +42,11 @@ export function buildDocsSearchIndex(
     pushItem(items, seen, {
       kind: "Project",
       title: project.displayName,
-      description: project.shortDescription || project.longDescription || project.module || "Micronaut project documentation.",
+      description:
+        project.shortDescription ||
+        project.longDescription ||
+        project.module ||
+        "Micronaut project documentation.",
       href: project.href || `/docs/${project.slug}/`,
       terms: [
         project.displayName,
@@ -52,19 +56,29 @@ export function buildDocsSearchIndex(
         project.repositoryName,
         project.shortDescription,
         project.longDescription,
-        ...(project.searchTerms || [])
-      ].filter(Boolean).join(" "),
-      scope: "Projects"
+        ...(project.searchTerms || []),
+      ]
+        .filter(Boolean)
+        .join(" "),
+      scope: "Projects",
     });
 
     for (const section of project.sections || []) {
       pushItem(items, seen, {
         kind: "Docs",
         title: `${project.displayName}: ${section.title}`,
-        description: section.summary || `${project.displayName} documentation section.`,
+        description:
+          section.summary || `${project.displayName} documentation section.`,
         href: `${project.href || `/docs/${project.slug}/`}#${section.id}`,
-        terms: [project.displayName, section.number, section.title, section.summary].filter(Boolean).join(" "),
-        scope: "Docs"
+        terms: [
+          project.displayName,
+          section.number,
+          section.title,
+          section.summary,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        scope: "Docs",
       });
     }
 
@@ -74,13 +88,26 @@ export function buildDocsSearchIndex(
         title: project.repositoryName || `${project.displayName} repository`,
         description: `Source repository for ${project.displayName}.`,
         href: project.repositoryUrl,
-        terms: [project.displayName, project.repositoryName, project.repositoryUrl, project.module].filter(Boolean).join(" "),
-        scope: "Repos"
+        terms: [
+          project.displayName,
+          project.repositoryName,
+          project.repositoryUrl,
+          project.module,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        scope: "Repos",
       });
     }
 
-    const generatedItems = extractGeneratedDocSearchItems(project, generatedHtmlBySlug[project.slug] || "");
-    for (const item of generatedItems.slice(0, MAX_GENERATED_ITEMS_PER_PROJECT)) {
+    const generatedItems = extractGeneratedDocSearchItems(
+      project,
+      generatedHtmlBySlug[project.slug] || "",
+    );
+    for (const item of generatedItems.slice(
+      0,
+      MAX_GENERATED_ITEMS_PER_PROJECT,
+    )) {
       pushItem(items, seen, item);
     }
   }
@@ -88,7 +115,10 @@ export function buildDocsSearchIndex(
   return items;
 }
 
-export function extractGeneratedDocSearchItems(project: SearchProject, html: string): SearchItem[] {
+export function extractGeneratedDocSearchItems(
+  project: SearchProject,
+  html: string,
+): SearchItem[] {
   if (!html) {
     return [];
   }
@@ -96,13 +126,17 @@ export function extractGeneratedDocSearchItems(project: SearchProject, html: str
   return [
     ...extractHeadingItems(project, html),
     ...extractPropertyItems(project, html),
-    ...extractClassItems(project, html)
+    ...extractClassItems(project, html),
   ];
 }
 
-function extractHeadingItems(project: SearchProject, html: string): SearchItem[] {
+function extractHeadingItems(
+  project: SearchProject,
+  html: string,
+): SearchItem[] {
   const items: SearchItem[] = [];
-  const headingPattern = /<div class="guide-section-heading">\s*<h([12]) id="([^"]+)"><a class="anchor" href="#[^"]+"><\/a>([\s\S]*?)<\/h\1>/g;
+  const headingPattern =
+    /<div class="guide-section-heading">\s*<h([12]) id="([^"]+)"><a class="anchor" href="#[^"]+"><\/a>([\s\S]*?)<\/h\1>/g;
   for (const match of html.matchAll(headingPattern)) {
     const label = cleanText(match[3]);
     if (!label) {
@@ -111,21 +145,32 @@ function extractHeadingItems(project: SearchProject, html: string): SearchItem[]
     items.push({
       kind: "Docs",
       title: `${project.displayName}: ${label}`,
-      description: match[1] === "1" ? "Top-level generated documentation section." : "Generated documentation subsection.",
+      description:
+        match[1] === "1"
+          ? "Top-level generated documentation section."
+          : "Generated documentation subsection.",
       href: `${project.href || `/docs/${project.slug}/`}#${match[2]}`,
-      terms: [project.displayName, project.projectKey, project.module, label].filter(Boolean).join(" "),
-      scope: "Docs"
+      terms: [project.displayName, project.projectKey, project.module, label]
+        .filter(Boolean)
+        .join(" "),
+      scope: "Docs",
     });
   }
   return items;
 }
 
-function extractPropertyItems(project: SearchProject, html: string): SearchItem[] {
+function extractPropertyItems(
+  project: SearchProject,
+  html: string,
+): SearchItem[] {
   const items: SearchItem[] = [];
   const rowPattern = /<tr\b[^>]*>([\s\S]*?)<\/tr>/g;
 
   for (const match of html.matchAll(rowPattern)) {
-    const cells = Array.from(match[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/g), (cell: RegExpMatchArray) => cleanText(cell[1]));
+    const cells = Array.from(
+      match[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/g),
+      (cell: RegExpMatchArray): any => cleanText(cell[1]),
+    );
     if (cells.length < 2) {
       continue;
     }
@@ -136,10 +181,14 @@ function extractPropertyItems(project: SearchProject, html: string): SearchItem[
     items.push({
       kind: "Property",
       title: property,
-      description: cells.slice(1).filter(Boolean).join(" - ") || `${project.displayName} configuration property.`,
+      description:
+        cells.slice(1).filter(Boolean).join(" - ") ||
+        `${project.displayName} configuration property.`,
       href: `${project.href || `/docs/${project.slug}/`}#${project.slug}-configuration`,
-      terms: [project.displayName, project.projectKey, project.module, ...cells].filter(Boolean).join(" "),
-      scope: "Properties"
+      terms: [project.displayName, project.projectKey, project.module, ...cells]
+        .filter(Boolean)
+        .join(" "),
+      scope: "Properties",
     });
   }
 
@@ -164,14 +213,26 @@ function extractClassItems(project: SearchProject, html: string): SearchItem[] {
       title: className,
       description: `${project.displayName} API reference.`,
       href: absoluteDocsHref(project, href),
-      terms: [project.displayName, project.projectKey, project.module, className, label].filter(Boolean).join(" "),
-      scope: "Classes"
+      terms: [
+        project.displayName,
+        project.projectKey,
+        project.module,
+        className,
+        label,
+      ]
+        .filter(Boolean)
+        .join(" "),
+      scope: "Classes",
     });
   }
   return items;
 }
 
-function pushItem(items: SearchItem[], seen: Set<string>, item: SearchItem): void {
+function pushItem(
+  items: SearchItem[],
+  seen: Set<string>,
+  item: SearchItem,
+): void {
   const key = `${item.scope}:${item.href}:${item.title}`;
   if (seen.has(key)) {
     return;
@@ -184,7 +245,10 @@ function absoluteDocsHref(project: SearchProject, href: string): string {
   if (/^[a-z][a-z\d+\-.]*:\/\//i.test(href) || href.startsWith("//")) {
     return href;
   }
-  const resolved = new URL(href, `https://example.test${project.href || `/docs/${project.slug}/`}`);
+  const resolved = new URL(
+    href,
+    `https://example.test${project.href || `/docs/${project.slug}/`}`,
+  );
   return `${resolved.pathname}${resolved.search}${resolved.hash}`;
 }
 
@@ -193,16 +257,22 @@ function classNameFromApiHref(href: string, label: string): string {
     return label;
   }
   const withoutHash = href.split(/[?#]/)[0];
-  const file = withoutHash.slice(withoutHash.lastIndexOf("/") + 1).replace(/\.html$/, "");
+  const file = withoutHash
+    .slice(withoutHash.lastIndexOf("/") + 1)
+    .replace(/\.html$/, "");
   return looksLikeClassName(file) ? file : "";
 }
 
 function looksLikeClassName(value: string): boolean {
-  return /^[A-Z_$][\w$]*(?:\.[\w$]+)?(?:\([^)]*\))?$/.test(String(value || "").trim());
+  return /^[A-Z_$][\w$]*(?:\.[\w$]+)?(?:\([^)]*\))?$/.test(
+    String(value || "").trim(),
+  );
 }
 
 function isConfigurationPropertyName(value: string): boolean {
-  return /^[a-z][a-z0-9]*(?:[.\-][a-z0-9*[\]-]+)+$/i.test(String(value || "").trim());
+  return /^[a-z][a-z0-9]*(?:[.\-][a-z0-9*[\]-]+)+$/i.test(
+    String(value || "").trim(),
+  );
 }
 
 function attributeValue(source: string, name: string): string {
@@ -211,10 +281,12 @@ function attributeValue(source: string, name: string): string {
 }
 
 function cleanText(value: string): string {
-  return decodeEntities(String(value || "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim());
+  return decodeEntities(
+    String(value || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
 }
 
 function decodeEntities(value: string): string {
@@ -222,7 +294,7 @@ function decodeEntities(value: string): string {
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, "\"")
+    .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&#x27;/g, "'")
     .replace(/&#x2F;/g, "/");

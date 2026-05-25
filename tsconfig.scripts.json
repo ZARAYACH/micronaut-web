@@ -3,8 +3,7 @@
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
     "noEmit": true,
-    "noImplicitAny": false,
-    "strict": false,
+    "strict": true,
     "types": ["node"]
   },
   "include": ["scripts/**/*.ts"],

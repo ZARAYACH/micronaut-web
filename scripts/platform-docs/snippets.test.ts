@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { extractTaggedSource } from "./snippets.ts";
 
-test("extractTaggedSource removes nested tag directives from selected regions", () => {
+test("extractTaggedSource removes nested tag directives from selected regions", (): any => {
   const source = `
 // tag::repository[]
 package example;
@@ -57,16 +57,16 @@ import java.util.stream.Stream;
 @Repository // <1>
 public interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Book find(String title);
-}`
+}`,
   );
 
   assert.equal(
     extractTaggedSource(source, "simple-alt"),
-    "Book find(String title);"
+    "Book find(String title);",
   );
 });
 
-test("extractTaggedSource removes all tag directives when no tag is selected", () => {
+test("extractTaggedSource removes all tag directives when no tag is selected", (): any => {
   const source = `
 class Example {
     // tag::method[]
@@ -81,11 +81,11 @@ class Example {
     `class Example {
     void run() {
     }
-}`
+}`,
   );
 });
 
-test("extractTaggedSource handles bracketless and trailing tag directives", () => {
+test("extractTaggedSource handles bracketless and trailing tag directives", (): any => {
   const source = `
 class Example {
     // tag::method[]
@@ -102,12 +102,12 @@ class Example {
   assert.equal(
     extractTaggedSource(source, "method"),
     `void run() {
-    }`
+    }`,
   );
   assert.equal(
     extractTaggedSource(source, "other"),
     `void other() {
-    }`
+    }`,
   );
   assert.equal(
     extractTaggedSource(source, ""),
@@ -117,6 +117,6 @@ class Example {
 
     void other() {
     }
-}`
+}`,
   );
 });

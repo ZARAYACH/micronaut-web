@@ -53,46 +53,46 @@ const GROOVY_KEYWORDS = new Set([
   "try",
   "void",
   "volatile",
-  "while"
+  "while",
 ]);
 
-export function configurationSamples(source) {
+export function configurationSamples(source: any): any {
   const parsed = parseConfigurationSource(source);
   return [
     {
       language: "properties",
       highlighterLanguage: "properties",
-      source: parsed === undefined ? source : toJavaProperties(parsed)
+      source: parsed === undefined ? source : toJavaProperties(parsed),
     },
     {
       language: "yaml",
       highlighterLanguage: "yaml",
-      source
+      source,
     },
     {
       language: "toml",
       highlighterLanguage: "toml",
-      source: parsed === undefined ? source : toTomlSource(parsed)
+      source: parsed === undefined ? source : toTomlSource(parsed),
     },
     {
       language: "groovy-config",
       highlighterLanguage: "groovy",
-      source: parsed === undefined ? source : toGroovyConfig(parsed)
+      source: parsed === undefined ? source : toGroovyConfig(parsed),
     },
     {
       language: "hocon",
       highlighterLanguage: "hocon",
-      source: parsed === undefined ? source : toHocon(parsed)
+      source: parsed === undefined ? source : toHocon(parsed),
     },
     {
       language: "json-config",
       highlighterLanguage: "json",
-      source: parsed === undefined ? source : JSON.stringify(parsed, null, 2)
-    }
-  ].filter((sample) => sample.source.trim());
+      source: parsed === undefined ? source : JSON.stringify(parsed, null, 2),
+    },
+  ].filter((sample: any): any => sample.source.trim());
 }
 
-function parseConfigurationSource(source) {
+function parseConfigurationSource(source: any): any {
   try {
     return yaml.load(source);
   } catch {
@@ -100,27 +100,37 @@ function parseConfigurationSource(source) {
   }
 }
 
-function isPlainObject(value) {
+function isPlainObject(value: any): any {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function toJavaProperties(value) {
+function toJavaProperties(value: any): any {
   return flattenConfiguration(value)
-    .map(({ path: propertyPath, value: propertyValue }) => `${propertyPath.join(".")}=${formatPropertiesValue(propertyValue)}`)
+    .map(
+      ({ path: propertyPath, value: propertyValue }: any): any =>
+        `${propertyPath.join(".")}=${formatPropertiesValue(propertyValue)}`,
+    )
     .join("\n");
 }
 
-function flattenConfiguration(value, propertyPath = []) {
+function flattenConfiguration(value: any, propertyPath: any = []): any {
   if (Array.isArray(value)) {
-    return value.flatMap((item, index) => flattenConfiguration(item, [...propertyPath.slice(0, -1), `${propertyPath.at(-1) || ""}[${index}]`]));
+    return value.flatMap((item: any, index: any): any =>
+      flattenConfiguration(item, [
+        ...propertyPath.slice(0, -1),
+        `${propertyPath.at(-1) || ""}[${index}]`,
+      ]),
+    );
   }
   if (isPlainObject(value)) {
-    return Object.entries(value).flatMap(([key, item]) => flattenConfiguration(item, [...propertyPath, key]));
+    return Object.entries(value).flatMap(([key, item]: any): any =>
+      flattenConfiguration(item, [...propertyPath, key]),
+    );
   }
   return propertyPath.length ? [{ path: propertyPath, value }] : [];
 }
 
-function formatPropertiesValue(value) {
+function formatPropertiesValue(value: any): any {
   if (value === null || value === undefined) {
     return "";
   }
@@ -130,14 +140,14 @@ function formatPropertiesValue(value) {
   return String(value);
 }
 
-function toTomlSource(value) {
+function toTomlSource(value: any): any {
   if (isPlainObject(value)) {
     return stringifyToml(value).trim();
   }
   return formatTomlValue(value);
 }
 
-function formatTomlValue(value) {
+function formatTomlValue(value: any): any {
   if (Array.isArray(value)) {
     return `[${value.map(formatTomlValue).join(", ")}]`;
   }
@@ -145,40 +155,44 @@ function formatTomlValue(value) {
     return String(value);
   }
   if (value === null || value === undefined) {
-    return "\"\"";
+    return '""';
   }
   return JSON.stringify(String(value));
 }
 
-function toGroovyConfig(value) {
+function toGroovyConfig(value: any): any {
   if (!isPlainObject(value)) {
     return formatGroovyValue(value);
   }
   return Object.entries(value)
-    .map(([key, item]) => formatGroovyEntry(key, item, 0))
+    .map(([key, item]: any): any => formatGroovyEntry(key, item, 0))
     .join("\n");
 }
 
-function formatGroovyEntry(key, value, depth) {
+function formatGroovyEntry(key: any, value: any, depth: any): any {
   const indent = "  ".repeat(depth);
   const token = formatGroovyKey(key);
   if (isPlainObject(value)) {
     const children = Object.entries(value)
-      .map(([childKey, child]) => formatGroovyEntry(childKey, child, depth + 1))
+      .map(([childKey, child]: any): any =>
+        formatGroovyEntry(childKey, child, depth + 1),
+      )
       .join("\n");
     return `${indent}${token} {\n${children}\n${indent}}`;
   }
   return `${indent}${token} = ${formatGroovyValue(value)}`;
 }
 
-function formatGroovyKey(key) {
+function formatGroovyKey(key: any): any {
   if (GROOVY_KEYWORDS.has(key) || /[^\x00-\x7F]/.test(key)) {
     return `'${String(key).replaceAll("\\", "\\\\").replaceAll("'", "\\'")}'`;
   }
-  return String(key).replace(/-([A-Za-z0-9])/g, (_, char) => char.toUpperCase());
+  return String(key).replace(/-([A-Za-z0-9])/g, (_: any, char: any): any =>
+    char.toUpperCase(),
+  );
 }
 
-function formatGroovyValue(value) {
+function formatGroovyValue(value: any): any {
   if (Array.isArray(value)) {
     return `[${value.map(formatGroovyValue).join(", ")}]`;
   }
@@ -191,18 +205,21 @@ function formatGroovyValue(value) {
   return `'${String(value).replaceAll("\\", "\\\\").replaceAll("'", "\\'")}'`;
 }
 
-function toHocon(value) {
+function toHocon(value: any): any {
   return formatHoconValue(value, 0);
 }
 
-function formatHoconValue(value, depth) {
+function formatHoconValue(value: any, depth: any): any {
   if (Array.isArray(value)) {
-    return `[${value.map((item) => formatHoconValue(item, depth)).join(", ")}]`;
+    return `[${value.map((item: any): any => formatHoconValue(item, depth)).join(", ")}]`;
   }
   if (isPlainObject(value)) {
     const indent = "  ".repeat(depth);
     const childIndent = "  ".repeat(depth + 1);
-    const entries = Object.entries(value).map(([key, item]) => `${childIndent}${key} = ${formatHoconValue(item, depth + 1)}`);
+    const entries = Object.entries(value).map(
+      ([key, item]: any): any =>
+        `${childIndent}${key} = ${formatHoconValue(item, depth + 1)}`,
+    );
     return `{\n${entries.join("\n")}\n${indent}}`;
   }
   if (typeof value === "number" || typeof value === "boolean") {

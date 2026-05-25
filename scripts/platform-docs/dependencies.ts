@@ -1,8 +1,16 @@
 import { macroAttribute } from "./listing.ts";
 import { snippetMarkerHtml } from "./snippet-markers.ts";
 
-export function dependencyBlocksHtml(target, attrs, context) {
-  const dependency = dependencyForTargetAndAttributes(target.trim(), attrs, context);
+export function dependencyBlocksHtml(
+  target: any,
+  attrs: any,
+  context: any,
+): any {
+  const dependency = dependencyForTargetAndAttributes(
+    target.trim(),
+    attrs,
+    context,
+  );
   const gradle = gradleDependency(dependency);
   const maven = mavenDependency(dependency);
   return snippetMarkerHtml("dependency", {
@@ -12,33 +20,42 @@ export function dependencyBlocksHtml(target, attrs, context) {
       {
         language: "gradle",
         highlighterLanguage: "gradle",
-        source: gradle
+        source: gradle,
       },
       {
         language: "maven",
         highlighterLanguage: "maven",
-        source: maven
-      }
-    ]
+        source: maven,
+      },
+    ],
   });
 }
 
-function dependencyForTargetAndAttributes(target, attrs, context) {
+function dependencyForTargetAndAttributes(
+  target: any,
+  attrs: any,
+  context: any,
+): any {
   let groupId;
   let artifactId;
   let version;
-  const groupAttribute = macroAttribute(attrs, "groupId") || macroAttribute(attrs, "group") || context.attributes.projectGroup;
+  const groupAttribute =
+    macroAttribute(attrs, "groupId") ||
+    macroAttribute(attrs, "group") ||
+    context.attributes.projectGroup;
 
   if (target.includes(":")) {
     const tokens = target.split(":");
     groupId = tokens[0] || "io.micronaut";
     artifactId = tokens[1];
-    version = tokens.length === 3 ? tokens[2] : macroAttribute(attrs, "version");
+    version =
+      tokens.length === 3 ? tokens[2] : macroAttribute(attrs, "version");
   } else {
     groupId = groupAttribute || "io.micronaut";
-    artifactId = target.startsWith("micronaut-") || !groupId.startsWith("io.micronaut.")
-      ? target
-      : `micronaut-${target}`;
+    artifactId =
+      target.startsWith("micronaut-") || !groupId.startsWith("io.micronaut.")
+        ? target
+        : `micronaut-${target}`;
     version = macroAttribute(attrs, "version");
   }
 
@@ -47,19 +64,23 @@ function dependencyForTargetAndAttributes(target, attrs, context) {
     artifactId,
     version,
     classifier: macroAttribute(attrs, "classifier"),
-    gradleScope: macroAttribute(attrs, "gradleScope") || toGradleScope(attrs) || "implementation",
-    mavenScope: macroAttribute(attrs, "mavenScope") || toMavenScope(attrs) || "compile",
+    gradleScope:
+      macroAttribute(attrs, "gradleScope") ||
+      toGradleScope(attrs) ||
+      "implementation",
+    mavenScope:
+      macroAttribute(attrs, "mavenScope") || toMavenScope(attrs) || "compile",
     title: macroAttribute(attrs, "title") || "",
-    description: macroAttribute(attrs, "description") || ""
+    description: macroAttribute(attrs, "description") || "",
   };
 }
 
-function toMavenScope(attrs) {
+function toMavenScope(attrs: any): any {
   const scope = macroAttribute(attrs, "scope");
   if (!scope) {
     return "";
   }
-  return {
+  const scopes: Record<string, string> = {
     api: "compile",
     implementation: "compile",
     testCompile: "test",
@@ -68,30 +89,32 @@ function toMavenScope(attrs) {
     testImplementation: "test",
     developmentOnly: "provided",
     compileOnly: "provided",
-    runtimeOnly: "runtime"
-  }[scope] || scope;
+    runtimeOnly: "runtime",
+  };
+  return scopes[scope] || scope;
 }
 
-function toGradleScope(attrs) {
+function toGradleScope(attrs: any): any {
   const scope = macroAttribute(attrs, "scope");
   if (!scope) {
     return "";
   }
-  return {
+  const scopes: Record<string, string> = {
     compile: "implementation",
     testCompile: "testImplementation",
     test: "testImplementation",
     runtime: "runtimeOnly",
-    provided: "developmentOnly"
-  }[scope] || scope;
+    provided: "developmentOnly",
+  };
+  return scopes[scope] || scope;
 }
 
-function gradleDependency(dependency) {
+function gradleDependency(dependency: any): any {
   const gav = `${dependency.groupId}:${dependency.artifactId}${dependency.version !== undefined || dependency.classifier !== undefined ? ":" : ""}${dependency.version || ""}${dependency.classifier !== undefined ? `:${dependency.classifier}` : ""}`;
   return `${dependency.gradleScope}("${gav}")`;
 }
 
-function mavenDependency(dependency) {
+function mavenDependency(dependency: any): any {
   if (dependency.mavenScope === "annotationProcessor") {
     return `<annotationProcessorPaths>
     <path>

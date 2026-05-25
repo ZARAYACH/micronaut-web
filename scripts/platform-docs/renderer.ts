@@ -2,7 +2,11 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 import { platformDocsExtensionRegistry } from "./extensions.ts";
-import { highlightListingBlocks, shikiStyle, unwrapBlockParagraphs } from "./highlight.ts";
+import {
+  highlightListingBlocks,
+  shikiStyle,
+  unwrapBlockParagraphs,
+} from "./highlight.ts";
 import { attribute, html } from "./html.ts";
 import { renderAttributes, sourceDocsEditUrl } from "./project-meta.ts";
 import { readProperties } from "./project-manifest.ts";
@@ -11,20 +15,42 @@ import { renderStaticDocsSnippets } from "./static-snippets.ts";
 import { readGuideToc } from "./toc.ts";
 import { optimizeImages, prefixIds, rewriteUrls } from "./urls.ts";
 
-export async function renderProject(asciidoctor, platformDocsDirectory, project, platformVersion) {
-  const submoduleDirectory = path.join(platformDocsDirectory, project.submodulePath);
-  const sourceDocsDirectory = path.join(submoduleDirectory, "src", "main", "docs");
+export async function renderProject(
+  asciidoctor: any,
+  platformDocsDirectory: any,
+  project: any,
+  platformVersion: any,
+): Promise<any> {
+  const submoduleDirectory = path.join(
+    platformDocsDirectory,
+    project.submodulePath,
+  );
+  const sourceDocsDirectory = path.join(
+    submoduleDirectory,
+    "src",
+    "main",
+    "docs",
+  );
   const guideSourceDirectory = path.join(sourceDocsDirectory, "guide");
   const toc = await readGuideToc(guideSourceDirectory);
-  const projectProperties = await readProperties(path.join(submoduleDirectory, "gradle.properties"), false);
-  const attributes = renderAttributes(project, platformVersion, submoduleDirectory, sourceDocsDirectory, projectProperties);
+  const projectProperties = await readProperties(
+    path.join(submoduleDirectory, "gradle.properties"),
+    false,
+  );
+  const attributes = renderAttributes(
+    project,
+    platformVersion,
+    submoduleDirectory,
+    sourceDocsDirectory,
+    projectProperties,
+  );
   const context = {
     project,
     platformVersion,
     submoduleDirectory,
     sourceDocsDirectory,
     guideSourceDirectory,
-    attributes
+    attributes,
   };
 
   let content = `<span class="project-document-anchor" id="${attribute(project.slug)}-docs" aria-hidden="true"></span>\n`;
@@ -42,18 +68,24 @@ export async function renderProject(asciidoctor, platformDocsDirectory, project,
   return `${shikiStyle()}\n${content.trim()}`;
 }
 
-async function renderNode(asciidoctor, context, node) {
+async function renderNode(
+  asciidoctor: any,
+  context: any,
+  node: any,
+): Promise<any> {
   const sourceFile = path.join(context.guideSourceDirectory, node.file);
   let source = await fs.readFile(sourceFile, "utf8");
   source = normalizeAsciiDocSource(source);
 
-  const converted = String(asciidoctor.convert(source, {
-    attributes: context.attributes,
-    base_dir: context.submoduleDirectory,
-    extension_registry: platformDocsExtensionRegistry(asciidoctor, context),
-    header_footer: false,
-    safe: "unsafe"
-  }));
+  const converted = String(
+    asciidoctor.convert(source, {
+      attributes: context.attributes,
+      base_dir: context.submoduleDirectory,
+      extension_registry: platformDocsExtensionRegistry(asciidoctor, context),
+      header_footer: false,
+      safe: "unsafe",
+    }),
+  );
 
   let htmlContent = `${sectionHeading(context.project, node)}\n${converted}\n`;
   for (const child of node.children) {
@@ -62,7 +94,7 @@ async function renderNode(asciidoctor, context, node) {
   return htmlContent;
 }
 
-function sectionHeading(project, node) {
+function sectionHeading(project: any, node: any): any {
   const headingLevel = node.level === 0 ? 1 : 2;
   const id = attribute(node.id);
   const editUrl = `${sourceDocsEditUrl(project)}/guide/${node.file}`;

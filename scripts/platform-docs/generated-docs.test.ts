@@ -9,69 +9,129 @@ import { promisify } from "node:util";
 
 import { highlightListingBlocks, shikiLanguage } from "./highlight.ts";
 import { readPlatformCatalogProjects } from "./project-manifest.ts";
-import { buildDocsSearchIndex, extractGeneratedDocSearchItems } from "./search-index.ts";
+import {
+  buildDocsSearchIndex,
+  extractGeneratedDocSearchItems,
+} from "./search-index.ts";
 
 const execFile = promisify(execFileCallback);
-const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+const projectDirectory = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+);
 
-test("generated docs are prepared before Astro dev and build", async () => {
-  const packageJson = JSON.parse(await fs.readFile(path.join(projectDirectory, "package.json"), "utf8"));
+test("generated docs are prepared before Astro dev and build", async (): Promise<any> => {
+  const packageJson = JSON.parse(
+    await fs.readFile(path.join(projectDirectory, "package.json"), "utf8"),
+  );
 
-  assert.equal(packageJson.scripts["prepare:generated-docs"], "npm run render:platform-docs");
-  assert.equal(packageJson.scripts["prepare:generated-content"], "node scripts/prepare-generated-content.ts");
-  assertScriptOrder(packageJson.scripts.dev, "npm run prepare:generated-content", "astro dev");
-  assertScriptOrder(packageJson.scripts.build, "npm run prepare:generated-content", "astro build");
+  assert.equal(
+    packageJson.scripts["prepare:generated-docs"],
+    "npm run render:platform-docs",
+  );
+  assert.equal(
+    packageJson.scripts["prepare:generated-content"],
+    "node scripts/prepare-generated-content.ts",
+  );
+  assertScriptOrder(
+    packageJson.scripts.dev,
+    "npm run prepare:generated-content",
+    "astro dev",
+  );
+  assertScriptOrder(
+    packageJson.scripts.build,
+    "npm run prepare:generated-content",
+    "astro build",
+  );
 });
 
-test("generated docs fragments and assets are ignored and not tracked source", async () => {
+test("generated docs fragments and assets are ignored and not tracked source", async (): Promise<any> => {
   const ignoredPaths = [
     "src/content/generated-docs/generated-docs-test.html",
-    "src/content/generated-docs/assets/generated-docs-test/docs/img/example.png"
+    "src/content/generated-docs/assets/generated-docs-test/docs/img/example.png",
   ];
-  const { stdout: ignoredOutput } = await execFile("git", ["check-ignore", ...ignoredPaths], {
-    cwd: projectDirectory
-  });
+  const { stdout: ignoredOutput } = await execFile(
+    "git",
+    ["check-ignore", ...ignoredPaths],
+    {
+      cwd: projectDirectory,
+    },
+  );
   assert.deepEqual(lines(ignoredOutput), ignoredPaths);
 
-  const { stdout: trackedOutput } = await execFile("git", ["ls-files", "--", "src/content/generated-docs"], {
-    cwd: projectDirectory
-  });
-  const trackedGeneratedOutput = lines(trackedOutput).filter((file) =>
-    file.endsWith(".html") || file.startsWith("src/content/generated-docs/assets/")
+  const { stdout: trackedOutput } = await execFile(
+    "git",
+    ["ls-files", "--", "src/content/generated-docs"],
+    {
+      cwd: projectDirectory,
+    },
+  );
+  const trackedGeneratedOutput = lines(trackedOutput).filter(
+    (file: any): any =>
+      file.endsWith(".html") ||
+      file.startsWith("src/content/generated-docs/assets/"),
   );
   assert.deepEqual(trackedGeneratedOutput, []);
 });
 
-test("generated docs tooling uses Micronaut Platform catalog instead of the old platform docs project", async () => {
+test("generated docs tooling uses Micronaut Platform catalog instead of the old platform docs project", async (): Promise<any> => {
   const checkedFiles = [
     ".github/workflows/deploy-web.yml",
     "README.md",
     "src/content/generated-docs/README.md",
     "src/data/platform-docs-projects.fixture.json",
     "scripts/render-platform-docs.ts",
-    "scripts/sync-platform-docs-fixture.ts"
+    "scripts/sync-platform-docs-fixture.ts",
   ];
   const fileContents = await Promise.all(
-    checkedFiles.map(async (file) => [file, await fs.readFile(path.join(projectDirectory, file), "utf8")])
+    checkedFiles.map(
+      async (file: any): Promise<any> => [
+        file,
+        await fs.readFile(path.join(projectDirectory, file), "utf8"),
+      ],
+    ),
   );
-  const workflow = fileContents.find(([file]) => file === ".github/workflows/deploy-web.yml")[1];
-  const syncScript = fileContents.find(([file]) => file === "scripts/sync-platform-docs-fixture.ts")[1];
+  const workflow = fileContents.find(
+    ([file]: any): any => file === ".github/workflows/deploy-web.yml",
+  )[1];
+  const syncScript = fileContents.find(
+    ([file]: any): any => file === "scripts/sync-platform-docs-fixture.ts",
+  )[1];
 
-  assert.match(workflow, /github\.com\/micronaut-projects\/micronaut-platform\.git/);
+  assert.match(
+    workflow,
+    /github\.com\/micronaut-projects\/micronaut-platform\.git/,
+  );
   assert.match(workflow, /PLATFORM_DOCS_RENDER_ALL:\s*"true"/);
   assert.match(workflow, /PLATFORM_DOCS_SYNC_SOURCES:\s*"true"/);
   assert.match(syncScript, /readPlatformCatalogProjects/);
 
   for (const [file, content] of fileContents) {
-    assert.doesNotMatch(content, /micronaut-platform-docs/, `${file} should not reference the old platform docs project`);
-    assert.doesNotMatch(content, /dstepanov\.github\.io\/micronaut-platform-docs/, `${file} should not reference the old published docs aggregate`);
+    assert.doesNotMatch(
+      content,
+      /micronaut-platform-docs/,
+      `${file} should not reference the old platform docs project`,
+    );
+    assert.doesNotMatch(
+      content,
+      /dstepanov\.github\.io\/micronaut-platform-docs/,
+      `${file} should not reference the old published docs aggregate`,
+    );
   }
 });
 
-test("platform docs renderer uses checked-in project metadata when external metadata is absent", async (t) => {
-  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
-  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
-  const platformDocsDirectory = path.join(temporaryDirectory, "missing-platform-docs-metadata");
+test("platform docs renderer uses checked-in project metadata when external metadata is absent", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
+  const platformDocsDirectory = path.join(
+    temporaryDirectory,
+    "missing-platform-docs-metadata",
+  );
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
 
   await fs.mkdir(platformDocsDirectory, { recursive: true });
@@ -84,21 +144,28 @@ test("platform docs renderer uses checked-in project metadata when external meta
       "--output",
       outputDirectory,
       "--slugs",
-      "core"
+      "core",
     ],
     {
       cwd: projectDirectory,
-      env: nonStrictEnv()
-    }
+      env: nonStrictEnv(),
+    },
   );
 
   assert.deepEqual(await fs.readdir(outputDirectory), []);
 });
 
-test("platform docs renderer defaults to a small project subset", async (t) => {
-  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
-  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
-  const platformDocsDirectory = path.join(temporaryDirectory, "missing-platform-docs-sources");
+test("platform docs renderer defaults to a small project subset", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
+  const platformDocsDirectory = path.join(
+    temporaryDirectory,
+    "missing-platform-docs-sources",
+  );
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
 
   await fs.mkdir(platformDocsDirectory, { recursive: true });
@@ -109,37 +176,64 @@ test("platform docs renderer defaults to a small project subset", async (t) => {
       "--platform-docs-dir",
       platformDocsDirectory,
       "--output",
-      outputDirectory
+      outputDirectory,
     ],
     {
       cwd: projectDirectory,
-      env: nonStrictEnv()
-    }
+      env: nonStrictEnv(),
+    },
   );
 
   assert.deepEqual(
     lines(stderr)
-      .filter((line) => line.startsWith("Skipping "))
-      .map((line) => line.replace(/^Skipping ([^:]+):.*$/, "$1")),
-    ["core", "data", "serde"]
+      .filter((line: any): any => line.startsWith("Skipping "))
+      .map((line: any): any => line.replace(/^Skipping ([^:]+):.*$/, "$1")),
+    ["core", "data", "serde"],
   );
   assert.deepEqual(await fs.readdir(outputDirectory), []);
 });
 
-test("platform docs renderer writes generated HTML and page-relative docs asset links", async (t) => {
-  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
-  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+test("platform docs renderer writes generated HTML and page-relative docs asset links", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
   const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
-  const submoduleDirectory = path.join(platformDocsDirectory, "repos", "micronaut-fixture");
-  const guideDirectory = path.join(submoduleDirectory, "src", "main", "docs", "guide");
-  const imageDirectory = path.join(submoduleDirectory, "src", "main", "docs", "resources", "img");
+  const submoduleDirectory = path.join(
+    platformDocsDirectory,
+    "repos",
+    "micronaut-fixture",
+  );
+  const guideDirectory = path.join(
+    submoduleDirectory,
+    "src",
+    "main",
+    "docs",
+    "guide",
+  );
+  const imageDirectory = path.join(
+    submoduleDirectory,
+    "src",
+    "main",
+    "docs",
+    "resources",
+    "img",
+  );
 
-  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), { recursive: true });
+  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), {
+    recursive: true,
+  });
   await fs.mkdir(guideDirectory, { recursive: true });
   await fs.mkdir(imageDirectory, { recursive: true });
   await fs.writeFile(
-    path.join(platformDocsDirectory, "gradle", "platform-doc-projects.properties"),
+    path.join(
+      platformDocsDirectory,
+      "gradle",
+      "platform-doc-projects.properties",
+    ),
     [
       "project.count=1",
       "project.0.slug=fixture",
@@ -147,14 +241,14 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
       "project.0.submodulePath=repos/micronaut-fixture",
       "project.0.repositoryUrl=https://github.com/micronaut-projects/micronaut-fixture.git",
       "project.0.branch=master",
-      "project.0.platformVersionKey=micronaut"
+      "project.0.platformVersionKey=micronaut",
     ].join("\n"),
-    "utf8"
+    "utf8",
   );
   await fs.writeFile(
     path.join(guideDirectory, "toc.yml"),
     "title: Fixture Docs\nintroduction: Introduction\n",
-    "utf8"
+    "utf8",
   );
   await fs.writeFile(
     path.join(guideDirectory, "introduction.adoc"),
@@ -163,14 +257,14 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
       "",
       "include::{includedir}configurationProperties/io.micronaut.fixture.GeneratedConfiguration.adoc[]",
       "",
-      "image::diagram.svg[Fixture diagram]"
+      "image::diagram.svg[Fixture diagram]",
     ].join("\n"),
-    "utf8"
+    "utf8",
   );
   await fs.writeFile(
     path.join(imageDirectory, "diagram.svg"),
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>',
-    "utf8"
+    "utf8",
   );
 
   const { stderr } = await execFile(
@@ -182,42 +276,83 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
       "--output",
       outputDirectory,
       "--slugs",
-      "fixture"
+      "fixture",
     ],
     {
-      cwd: projectDirectory
-    }
+      cwd: projectDirectory,
+    },
   );
   assert.doesNotMatch(stderr, /include file not found|GeneratedConfiguration/i);
 
-  const generatedHtml = await fs.readFile(path.join(outputDirectory, "fixture.html"), "utf8");
+  const generatedHtml = await fs.readFile(
+    path.join(outputDirectory, "fixture.html"),
+    "utf8",
+  );
   const pageRelativeAssetUrl = "../assets/fixture/docs/img/diagram.svg";
 
-  assert.match(generatedHtml, /This generated fixture body should render into the docs page\./);
+  assert.match(
+    generatedHtml,
+    /This generated fixture body should render into the docs page\./,
+  );
   assert.match(generatedHtml, /id="fixture-introduction"/);
-  assert.match(generatedHtml, new RegExp(`src="${escapeRegExp(pageRelativeAssetUrl)}"`));
-  assert.equal(
-    new URL(pageRelativeAssetUrl, "https://example.test/docs/fixture/").pathname,
-    "/docs/assets/fixture/docs/img/diagram.svg"
+  assert.match(
+    generatedHtml,
+    new RegExp(`src="${escapeRegExp(pageRelativeAssetUrl)}"`),
   );
   assert.equal(
-    await fs.readFile(path.join(outputDirectory, "assets", "fixture", "docs", "img", "diagram.svg"), "utf8"),
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>'
+    new URL(pageRelativeAssetUrl, "https://example.test/docs/fixture/")
+      .pathname,
+    "/docs/assets/fixture/docs/img/diagram.svg",
+  );
+  assert.equal(
+    await fs.readFile(
+      path.join(
+        outputDirectory,
+        "assets",
+        "fixture",
+        "docs",
+        "img",
+        "diagram.svg",
+      ),
+      "utf8",
+    ),
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>',
   );
 });
 
-test("platform docs renderer turns code, dependency, configuration, and properties snippets into shared cards", async (t) => {
-  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-snippets-"));
-  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+test("platform docs renderer turns code, dependency, configuration, and properties snippets into shared cards", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-generated-snippets-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
   const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
-  const submoduleDirectory = path.join(platformDocsDirectory, "repos", "micronaut-fixture");
-  const snippetSourceDirectory = path.join(submoduleDirectory, "test-suite", "src", "test", "java", "example");
+  const submoduleDirectory = path.join(
+    platformDocsDirectory,
+    "repos",
+    "micronaut-fixture",
+  );
+  const snippetSourceDirectory = path.join(
+    submoduleDirectory,
+    "test-suite",
+    "src",
+    "test",
+    "java",
+    "example",
+  );
 
-  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), { recursive: true });
+  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), {
+    recursive: true,
+  });
   await fs.mkdir(snippetSourceDirectory, { recursive: true });
   await fs.writeFile(
-    path.join(platformDocsDirectory, "gradle", "platform-doc-projects.properties"),
+    path.join(
+      platformDocsDirectory,
+      "gradle",
+      "platform-doc-projects.properties",
+    ),
     [
       "project.count=1",
       "project.0.slug=fixture",
@@ -225,9 +360,9 @@ test("platform docs renderer turns code, dependency, configuration, and properti
       "project.0.submodulePath=repos/micronaut-fixture",
       "project.0.repositoryUrl=https://github.com/micronaut-projects/micronaut-fixture.git",
       "project.0.branch=master",
-      "project.0.platformVersionKey=micronaut"
+      "project.0.platformVersionKey=micronaut",
     ].join("\n"),
-    "utf8"
+    "utf8",
   );
   await fs.writeFile(
     path.join(snippetSourceDirectory, "FixtureSnippet.java"),
@@ -239,9 +374,9 @@ test("platform docs renderer turns code, dependency, configuration, and properti
       "    void run() { // <1>",
       "    }",
       "}",
-      "// end::body[]"
+      "// end::body[]",
     ].join("\n"),
-    "utf8"
+    "utf8",
   );
   await writeGuide(
     platformDocsDirectory,
@@ -265,8 +400,8 @@ test("platform docs renderer turns code, dependency, configuration, and properti
       "|===",
       "|Property |Type |Description",
       "|micronaut.server.port |Integer |Server port",
-      "|==="
-    ].join("\n")
+      "|===",
+    ].join("\n"),
   );
 
   await execFile(
@@ -279,14 +414,17 @@ test("platform docs renderer turns code, dependency, configuration, and properti
       outputDirectory,
       "--slugs",
       "fixture",
-      "--strict"
+      "--strict",
     ],
     {
-      cwd: projectDirectory
-    }
+      cwd: projectDirectory,
+    },
   );
 
-  const generatedHtml = await fs.readFile(path.join(outputDirectory, "fixture.html"), "utf8");
+  const generatedHtml = await fs.readFile(
+    path.join(outputDirectory, "fixture.html"),
+    "utf8",
+  );
   const generatedText = textOnly(generatedHtml);
 
   assert.doesNotMatch(generatedHtml, /<micronaut-snippet/i);
@@ -295,7 +433,11 @@ test("platform docs renderer turns code, dependency, configuration, and properti
   assert.match(generatedHtml, /docs-properties-template/);
   assert.match(generatedHtml, /docs-code-callouts/);
   assert.match(generatedHtml, /<i class="conum" data-value="1"><\/i>/);
-  assert.ok(generatedHtml.includes("[&amp;_td:first-child_.conum::before]:content-[attr(data-value)]"));
+  assert.ok(
+    generatedHtml.includes(
+      "[&amp;_td:first-child_.conum::before]:content-[attr(data-value)]",
+    ),
+  );
   assert.ok(generatedHtml.includes("[&amp;_td:first-child_.conum+b]:hidden"));
   assert.match(generatedText, /Fixture Snippet/);
   assert.match(generatedText, /Rendered from snippet macro/);
@@ -309,7 +451,7 @@ test("platform docs renderer turns code, dependency, configuration, and properti
   assert.match(generatedText, /2 properties/);
 });
 
-test("platform docs search index includes generated headings, properties, classes, projects, and repos", () => {
+test("platform docs search index includes generated headings, properties, classes, projects, and repos", (): any => {
   const project = {
     slug: "fixture",
     displayName: "Micronaut Fixture",
@@ -317,7 +459,8 @@ test("platform docs search index includes generated headings, properties, classe
     projectKey: "fixture",
     module: "io.micronaut.fixture:micronaut-fixture-bom",
     repositoryName: "micronaut-fixture",
-    repositoryUrl: "https://github.com/micronaut-projects/micronaut-fixture.git",
+    repositoryUrl:
+      "https://github.com/micronaut-projects/micronaut-fixture.git",
     href: "/docs/fixture/",
     shortDescription: "Fixture integration",
     longDescription: "Fixture generated docs test project.",
@@ -327,9 +470,9 @@ test("platform docs search index includes generated headings, properties, classe
         id: "fixture-overview",
         number: "1",
         title: "Overview",
-        summary: "Fixture overview fallback."
-      }
-    ]
+        summary: "Fixture overview fallback.",
+      },
+    ],
   };
   const html = [
     '<div class="guide-section-heading">',
@@ -345,30 +488,79 @@ test("platform docs search index includes generated headings, properties, classe
     "    </tbody>",
     "  </table>",
     "</div>",
-    '<p>Use <a href="../assets/fixture/docs/api/io/micronaut/fixture/FixtureClient.html">FixtureClient</a>.</p>'
+    '<p>Use <a href="../assets/fixture/docs/api/io/micronaut/fixture/FixtureClient.html">FixtureClient</a>.</p>',
   ].join("\n");
 
   const generatedItems = extractGeneratedDocSearchItems(project, html);
-  assert.ok(generatedItems.some((item) => item.scope === "Docs" && item.title.includes("HTTP Client")));
-  assert.ok(generatedItems.some((item) => item.scope === "Properties" && item.title === "micronaut.fixture.enabled"));
-  assert.ok(generatedItems.some((item) => item.scope === "Classes" && item.title === "FixtureClient"));
+  assert.ok(
+    generatedItems.some(
+      (item: any): any =>
+        item.scope === "Docs" && item.title.includes("HTTP Client"),
+    ),
+  );
+  assert.ok(
+    generatedItems.some(
+      (item: any): any =>
+        item.scope === "Properties" &&
+        item.title === "micronaut.fixture.enabled",
+    ),
+  );
+  assert.ok(
+    generatedItems.some(
+      (item: any): any =>
+        item.scope === "Classes" && item.title === "FixtureClient",
+    ),
+  );
 
   const index = buildDocsSearchIndex([project], { fixture: html });
-  assert.ok(index.some((item) => item.scope === "Projects" && item.href === "/docs/fixture/"));
-  assert.ok(index.some((item) => item.scope === "Repos" && item.href === project.repositoryUrl));
-  assert.ok(index.some((item) => item.scope === "Docs" && item.href === "/docs/fixture/#fixture-overview"));
-  assert.ok(index.some((item) => item.scope === "Classes" && item.href === "/docs/assets/fixture/docs/api/io/micronaut/fixture/FixtureClient.html"));
+  assert.ok(
+    index.some(
+      (item: any): any =>
+        item.scope === "Projects" && item.href === "/docs/fixture/",
+    ),
+  );
+  assert.ok(
+    index.some(
+      (item: any): any =>
+        item.scope === "Repos" && item.href === project.repositoryUrl,
+    ),
+  );
+  assert.ok(
+    index.some(
+      (item: any): any =>
+        item.scope === "Docs" &&
+        item.href === "/docs/fixture/#fixture-overview",
+    ),
+  );
+  assert.ok(
+    index.some(
+      (item: any): any =>
+        item.scope === "Classes" &&
+        item.href ===
+          "/docs/assets/fixture/docs/api/io/micronaut/fixture/FixtureClient.html",
+    ),
+  );
 });
 
-test("platform docs renderer can render every project in a manifest", async (t) => {
-  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
-  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+test("platform docs renderer can render every project in a manifest", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-generated-docs-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
   const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
   const outputDirectory = path.join(temporaryDirectory, "generated-docs");
 
-  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), { recursive: true });
+  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), {
+    recursive: true,
+  });
   await fs.writeFile(
-    path.join(platformDocsDirectory, "gradle", "platform-doc-projects.properties"),
+    path.join(
+      platformDocsDirectory,
+      "gradle",
+      "platform-doc-projects.properties",
+    ),
     [
       "project.count=2",
       "project.0.slug=alpha",
@@ -382,12 +574,22 @@ test("platform docs renderer can render every project in a manifest", async (t) 
       "project.1.submodulePath=repos/micronaut-beta",
       "project.1.repositoryUrl=https://github.com/micronaut-projects/micronaut-beta.git",
       "project.1.branch=master",
-      "project.1.platformVersionKey=micronaut"
+      "project.1.platformVersionKey=micronaut",
     ].join("\n"),
-    "utf8"
+    "utf8",
   );
-  await writeGuide(platformDocsDirectory, "micronaut-alpha", "Alpha Docs", "Alpha introduction.");
-  await writeGuide(platformDocsDirectory, "micronaut-beta", "Beta Docs", "Beta introduction.");
+  await writeGuide(
+    platformDocsDirectory,
+    "micronaut-alpha",
+    "Alpha Docs",
+    "Alpha introduction.",
+  );
+  await writeGuide(
+    platformDocsDirectory,
+    "micronaut-beta",
+    "Beta Docs",
+    "Beta introduction.",
+  );
 
   await execFile(
     process.execPath,
@@ -398,37 +600,43 @@ test("platform docs renderer can render every project in a manifest", async (t) 
       "--output",
       outputDirectory,
       "--all",
-      "--strict"
+      "--strict",
     ],
     {
-      cwd: projectDirectory
-    }
+      cwd: projectDirectory,
+    },
   );
 
-  assert.deepEqual((await fs.readdir(outputDirectory)).filter((file) => file.endsWith(".html")).sort(), [
-    "alpha.html",
-    "beta.html"
-  ]);
+  assert.deepEqual(
+    (await fs.readdir(outputDirectory))
+      .filter((file: any): any => file.endsWith(".html"))
+      .sort(),
+    ["alpha.html", "beta.html"],
+  );
 });
 
-test("platform docs project manifest can be derived from Micronaut Platform libraries", async (t) => {
-  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-platform-catalog-"));
-  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+test("platform docs project manifest can be derived from Micronaut Platform libraries", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-platform-catalog-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
   const catalogFile = path.join(temporaryDirectory, "libs.versions.toml");
   await fs.writeFile(
     catalogFile,
     [
       "[versions]",
-      "managed-micronaut-core = \"5.0.0-RC2\"",
-      "managed-micronaut-data = \"5.0.0-RC1\"",
-      "managed-micronaut-guides = \"0.3.0\"",
+      'managed-micronaut-core = "5.0.0-RC2"',
+      'managed-micronaut-data = "5.0.0-RC1"',
+      'managed-micronaut-guides = "0.3.0"',
       "",
       "[libraries]",
-      "boms-micronaut-core = { module = \"io.micronaut:micronaut-core-bom\", version.ref = \"managed-micronaut-core\" }",
-      "boms-micronaut-data = { module = \"io.micronaut.data:micronaut-data-bom\", version.ref = \"managed-micronaut-data\" }",
-      "boms-micronaut-guides = { module = \"io.micronaut.guides:micronaut-guides-bom\", version.ref = \"managed-micronaut-guides\" }"
+      'boms-micronaut-core = { module = "io.micronaut:micronaut-core-bom", version.ref = "managed-micronaut-core" }',
+      'boms-micronaut-data = { module = "io.micronaut.data:micronaut-data-bom", version.ref = "managed-micronaut-data" }',
+      'boms-micronaut-guides = { module = "io.micronaut.guides:micronaut-guides-bom", version.ref = "managed-micronaut-guides" }',
     ].join("\n"),
-    "utf8"
+    "utf8",
   );
 
   const projects = await readPlatformCatalogProjects(catalogFile, {
@@ -438,14 +646,19 @@ test("platform docs project manifest can be derived from Micronaut Platform libr
     "project.0.projectKey": "data",
     "project.0.module": "io.micronaut.data:micronaut-data-bom",
     "project.0.repositoryName": "micronaut-data",
-    "project.0.publishedGuideUrl": "https://micronaut-projects.github.io/micronaut-data/latest/guide/",
-    "project.0.repositoryUrl": "https://github.com/micronaut-projects/micronaut-data.git",
+    "project.0.publishedGuideUrl":
+      "https://micronaut-projects.github.io/micronaut-data/latest/guide/",
+    "project.0.repositoryUrl":
+      "https://github.com/micronaut-projects/micronaut-data.git",
     "project.0.branch": "5.0.x",
     "project.0.submodulePath": "repos/micronaut-data",
-    "project.0.platformVersionKey": "managed-micronaut-data"
+    "project.0.platformVersionKey": "managed-micronaut-data",
   });
 
-  assert.deepEqual(projects.map((project) => project.slug), ["core", "data"]);
+  assert.deepEqual(
+    projects.map((project: any): any => project.slug),
+    ["core", "data"],
+  );
   assert.deepEqual(projects[0], {
     slug: "core",
     displayName: "Micronaut Core",
@@ -456,98 +669,160 @@ test("platform docs project manifest can be derived from Micronaut Platform libr
     repositoryUrl: "https://github.com/micronaut-projects/micronaut-core.git",
     branch: "5.0.x",
     submodulePath: "repos/micronaut-core",
-    platformVersionKey: "managed-micronaut-core"
+    platformVersionKey: "managed-micronaut-core",
   });
 });
 
-test("platform docs commandline source blocks use shell highlighting", () => {
+test("platform docs commandline source blocks use shell highlighting", (): any => {
   assert.equal(shikiLanguage("commandline"), "shellscript");
   assert.equal(shikiLanguage("graphqls"), "graphql");
   assert.equal(shikiLanguage("mysql"), "sql");
 });
 
-test("properties listings attach standalone callout markers to the next property line", async () => {
-  const html = await highlightListingBlocks([
-    '<div class="listingblock">',
-    '<div class="content">',
-    '<pre><code class="language-properties">micronaut.mcp.server.info.name=Weather',
-    '&lt;1&gt;',
-    'micronaut.mcp.server.transport=HTTP</code></pre>',
-    '</div>',
-    '</div>'
-  ].join("\n"));
+test("properties listings attach standalone callout markers to the next property line", async (): Promise<any> => {
+  const html = await highlightListingBlocks(
+    [
+      '<div class="listingblock">',
+      '<div class="content">',
+      '<pre><code class="language-properties">micronaut.mcp.server.info.name=Weather',
+      "&lt;1&gt;",
+      "micronaut.mcp.server.transport=HTTP</code></pre>",
+      "</div>",
+      "</div>",
+    ].join("\n"),
+  );
 
-  const transportLine = /<span class="line">[^\n]*micronaut\.mcp\.server\.transport[^\n]*<\/span>/.exec(html)?.[0] || "";
+  const transportLine =
+    /<span class="line">[^\n]*micronaut\.mcp\.server\.transport[^\n]*<\/span>/.exec(
+      html,
+    )?.[0] || "";
   assert.match(transportLine, /<i class="conum" data-value="1"><\/i>/);
-  assert.doesNotMatch(html, /<span class="line"><span[^>]*><i class="conum" data-value="1"><\/i><\/span><\/span>\s*<span class="line">[^\n]*micronaut\.mcp\.server\.transport/);
+  assert.doesNotMatch(
+    html,
+    /<span class="line"><span[^>]*><i class="conum" data-value="1"><\/i><\/span><\/span>\s*<span class="line">[^\n]*micronaut\.mcp\.server\.transport/,
+  );
 });
 
-test("properties listings attach comment-only callout markers to the next property line", async () => {
-  const html = await highlightListingBlocks([
-    '<div class="listingblock">',
-    '<div class="content">',
-    '<pre><code class="language-properties">micronaut.mcp.server.info.name=Weather',
-    'micronaut.mcp.server.info.version=0.0.1',
-    '# &lt;1&gt;',
-    'micronaut.mcp.server.transport=HTTP</code></pre>',
-    '</div>',
-    '</div>'
-  ].join("\n"));
+test("properties listings attach comment-only callout markers to the next property line", async (): Promise<any> => {
+  const html = await highlightListingBlocks(
+    [
+      '<div class="listingblock">',
+      '<div class="content">',
+      '<pre><code class="language-properties">micronaut.mcp.server.info.name=Weather',
+      "micronaut.mcp.server.info.version=0.0.1",
+      "# &lt;1&gt;",
+      "micronaut.mcp.server.transport=HTTP</code></pre>",
+      "</div>",
+      "</div>",
+    ].join("\n"),
+  );
 
-  const transportLine = /<span class="line">[^\n]*micronaut\.mcp\.server\.transport[^\n]*<\/span>/.exec(html)?.[0] || "";
+  const transportLine =
+    /<span class="line">[^\n]*micronaut\.mcp\.server\.transport[^\n]*<\/span>/.exec(
+      html,
+    )?.[0] || "";
   assert.match(transportLine, /HTTP <i class="conum" data-value="1"><\/i>/);
   assert.doesNotMatch(html, />#[^<]*<i class="conum" data-value="1"><\/i>/);
 });
 
-test("docs routes render generated fragments and serve generated assets", async () => {
-  const docsPageSource = await fs.readFile(path.join(projectDirectory, "src", "pages", "docs", "[slug].astro"), "utf8");
-  const assetsRouteSource = await fs.readFile(path.join(projectDirectory, "src", "pages", "docs", "assets", "[...path].ts"), "utf8");
-  const searchIndexRouteSource = await fs.readFile(path.join(projectDirectory, "src", "pages", "docs", "search-index.json.ts"), "utf8");
+test("docs routes render generated fragments and serve generated assets", async (): Promise<any> => {
+  const docsPageSource = await fs.readFile(
+    path.join(projectDirectory, "src", "pages", "docs", "[slug].astro"),
+    "utf8",
+  );
+  const assetsRouteSource = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "pages",
+      "docs",
+      "assets",
+      "[...path].ts",
+    ),
+    "utf8",
+  );
+  const searchIndexRouteSource = await fs.readFile(
+    path.join(projectDirectory, "src", "pages", "docs", "search-index.json.ts"),
+    "utf8",
+  );
 
-  assert.match(docsPageSource, /readFile\(join\(process\.cwd\(\),[\s\S]*"generated-docs"[\s\S]*`\$\{project\.slug\}\.html`/);
+  assert.match(
+    docsPageSource,
+    /readFile\(join\(process\.cwd\(\),[\s\S]*"generated-docs"[\s\S]*`\$\{project\.slug\}\.html`/,
+  );
   assert.match(docsPageSource, /data-generated-docs/);
   assert.match(docsPageSource, /set:html=\{generatedDocHtml\}/);
-  assert.match(assetsRouteSource, /"src", "content", "generated-docs", "assets"/);
-  assert.match(assetsRouteSource, /fs\.readFile\(path\.join\(generatedAssetsDirectory/);
+  assert.match(
+    assetsRouteSource,
+    /"src", "content", "generated-docs", "assets"/,
+  );
+  assert.match(
+    assetsRouteSource,
+    /fs\.readFile\(path\.join\(generatedAssetsDirectory/,
+  );
   assert.match(searchIndexRouteSource, /buildDocsSearchIndex/);
   assert.match(searchIndexRouteSource, /"generated-docs"/);
 });
 
-function assertScriptOrder(script, producer, consumer) {
+function assertScriptOrder(script: any, producer: any, consumer: any): any {
   assert.equal(typeof script, "string");
-  const producerIndex = script.indexOf(producer );
+  const producerIndex = script.indexOf(producer);
   const consumerIndex = script.indexOf(consumer);
   assert.notEqual(producerIndex, -1, `${script} should include '${producer}'`);
   assert.notEqual(consumerIndex, -1, `${script} should include '${consumer}'`);
-  assert.ok(producerIndex < consumerIndex, `${script} should run '${producer}' before '${consumer}'`);
+  assert.ok(
+    producerIndex < consumerIndex,
+    `${script} should run '${producer}' before '${consumer}'`,
+  );
 }
 
-function nonStrictEnv() {
+function nonStrictEnv(): any {
   return {
     ...process.env,
     CI: "false",
     PLATFORM_DOCS_PROJECT_SLUGS: "",
     PLATFORM_DOCS_RENDER_ALL: "false",
     PLATFORM_DOCS_RENDER_STRICT: "false",
-    PLATFORM_DOCS_SYNC_SOURCES: "false"
+    PLATFORM_DOCS_SYNC_SOURCES: "false",
   };
 }
 
-async function writeGuide(platformDocsDirectory, repositoryName, title, body) {
-  const guideDirectory = path.join(platformDocsDirectory, "repos", repositoryName, "src", "main", "docs", "guide");
+async function writeGuide(
+  platformDocsDirectory: any,
+  repositoryName: any,
+  title: any,
+  body: any,
+): Promise<any> {
+  const guideDirectory = path.join(
+    platformDocsDirectory,
+    "repos",
+    repositoryName,
+    "src",
+    "main",
+    "docs",
+    "guide",
+  );
   await fs.mkdir(guideDirectory, { recursive: true });
-  await fs.writeFile(path.join(guideDirectory, "toc.yml"), `title: ${title}\nintroduction: Introduction\n`, "utf8");
-  await fs.writeFile(path.join(guideDirectory, "introduction.adoc"), body, "utf8");
+  await fs.writeFile(
+    path.join(guideDirectory, "toc.yml"),
+    `title: ${title}\nintroduction: Introduction\n`,
+    "utf8",
+  );
+  await fs.writeFile(
+    path.join(guideDirectory, "introduction.adoc"),
+    body,
+    "utf8",
+  );
 }
 
-function lines(value) {
+function lines(value: any): any {
   return value.split(/\r?\n/).filter(Boolean);
 }
 
-function escapeRegExp(value) {
+function escapeRegExp(value: any): any {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function textOnly(value) {
+function textOnly(value: any): any {
   return value.replace(/<[^>]*>/g, "");
 }

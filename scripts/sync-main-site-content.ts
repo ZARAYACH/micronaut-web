@@ -14,77 +14,91 @@ const now = new Date().toISOString();
 
 type Frontmatter = Record<string, any>;
 
-function decodeHtml(value) {
+function decodeHtml(value: any): any {
   return value
-    .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)))
-    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number.parseInt(code, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_match: any, code: any): any =>
+      String.fromCodePoint(Number.parseInt(code, 16)),
+    )
+    .replace(/&#(\d+);/g, (_match: any, code: any): any =>
+      String.fromCodePoint(Number.parseInt(code, 10)),
+    )
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, "\"")
+    .replace(/&quot;/g, '"')
     .replace(/&#039;|&apos;/g, "'");
 }
 
-function htmlToText(html) {
+function htmlToText(html: any): any {
   return decodeHtml(html)
     .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(?:p|h[1-6]|li|div|section|article|tr|pre|blockquote)>/gi, "\n")
+    .replace(
+      /<\/(?:p|h[1-6]|li|div|section|article|tr|pre|blockquote)>/gi,
+      "\n",
+    )
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function normalizeText(value) {
+function normalizeText(value: any): any {
   return htmlToText(value)
-    .replace(/[“”]/g, "\"")
+    .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-const htmlTagPattern = /<\/?(?:a|abbr|address|article|aside|audio|b|blockquote|br|button|canvas|caption|cite|code|col|colgroup|data|dd|del|details|dfn|dialog|div|dl|dt|em|embed|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|i|iframe|img|input|ins|kbd|label|legend|li|main|mark|menu|meter|nav|object|ol|option|p|picture|pre|progress|q|rp|rt|ruby|s|samp|script|section|select|small|source|span|strong|style|sub|summary|sup|svg|table|tbody|td|template|textarea|tfoot|th|thead|time|tr|u|ul|var|video|wbr)(?:\s[^>]*)?>/gi;
+const htmlTagPattern =
+  /<\/?(?:a|abbr|address|article|aside|audio|b|blockquote|br|button|canvas|caption|cite|code|col|colgroup|data|dd|del|details|dfn|dialog|div|dl|dt|em|embed|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|i|iframe|img|input|ins|kbd|label|legend|li|main|mark|menu|meter|nav|object|ol|option|p|picture|pre|progress|q|rp|rt|ruby|s|samp|script|section|select|small|source|span|strong|style|sub|summary|sup|svg|table|tbody|td|template|textarea|tfoot|th|thead|time|tr|u|ul|var|video|wbr)(?:\s[^>]*)?>/gi;
 
-function rawHtmlTags(markdown) {
+function rawHtmlTags(markdown: any): any {
   const bodyWithoutCode = markdown
     .replace(/```[\s\S]*?```/g, "")
     .replace(/`[^`\n]*`/g, "");
-  return Array.from(bodyWithoutCode.matchAll(htmlTagPattern), (match) => match[0]);
+  return Array.from(
+    bodyWithoutCode.matchAll(htmlTagPattern),
+    (match: any): any => match[0],
+  );
 }
 
-function splitFrontmatter(markdown, file): { data: Frontmatter; body: string } {
+function splitFrontmatter(
+  markdown: any,
+  file: any,
+): { data: Frontmatter; body: string } {
   const match = markdown.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
   if (!match) {
     throw new Error(`Missing frontmatter in ${file}`);
   }
   return {
     data: (YAML.load(match[1]) ?? {}) as Frontmatter,
-    body: match[2]
+    body: match[2],
   };
 }
 
-function stringifyMarkdown(data, body) {
+function stringifyMarkdown(data: any, body: any): any {
   return `---\n${YAML.dump(data, {
     lineWidth: -1,
     noRefs: true,
-    sortKeys: false
+    sortKeys: false,
   }).trim()}\n---\n\n${body.trim()}\n`;
 }
 
-function attr(node, name) {
-  return node.attrs?.find((item) => item.name === name)?.value;
+function attr(node: any, name: any): any {
+  return node.attrs?.find((item: any): any => item.name === name)?.value;
 }
 
-function textContent(node) {
+function textContent(node: any): any {
   if (node.nodeName === "#text") {
     return node.value;
   }
   return (node.childNodes ?? []).map(textContent).join("");
 }
 
-function escapeInlineText(value) {
+function escapeInlineText(value: any): any {
   return decodeHtml(value)
     .replace(/\\/g, "\\\\")
     .replace(/</g, "&lt;")
@@ -93,12 +107,16 @@ function escapeInlineText(value) {
     .replace(/\]/g, "\\]");
 }
 
-function markdownUrl(value) {
+function markdownUrl(value: any): any {
   return value.replace(/\s/g, "%20").replace(/\)/g, "%29");
 }
 
-function escapeCodeSpan(value) {
-  const backticks = value.match(/`+/g)?.reduce((max, item) => Math.max(max, item.length), 0) ?? 0;
+function escapeCodeSpan(value: any): any {
+  const backticks =
+    value
+      .match(/`+/g)
+      ?.reduce((max: any, item: any): any => Math.max(max, item.length), 0) ??
+    0;
   const fence = "`".repeat(backticks + 1);
   const padding = value.startsWith(" ") || value.endsWith(" ") ? " " : "";
   return `${fence}${padding}${value}${padding}${fence}`;
@@ -134,18 +152,18 @@ const blockTags = new Set([
   "pre",
   "section",
   "table",
-  "ul"
+  "ul",
 ]);
 
-function isBlockNode(node) {
+function isBlockNode(node: any): any {
   return node.tagName && blockTags.has(node.tagName);
 }
 
-function isBlank(value) {
+function isBlank(value: any): any {
   return !value || !value.replace(/\s+/g, "");
 }
 
-function normalizeMarkdown(value) {
+function normalizeMarkdown(value: any): any {
   return value
     .replace(/\r\n?/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
@@ -153,16 +171,16 @@ function normalizeMarkdown(value) {
     .trim();
 }
 
-function inlineChildren(nodes) {
+function inlineChildren(nodes: any): any {
   return normalizeInline(nodes.map(inlineMarkdown).join(""));
 }
 
-function iframeMarkdown(node) {
+function iframeMarkdown(node: any): any {
   const src = attr(node, "src");
   return src ? `[Embedded content](${markdownUrl(src)})` : "";
 }
 
-function normalizeInline(value) {
+function normalizeInline(value: any): any {
   return value
     .replace(/[ \t\n]+/g, " ")
     .replace(/([\p{L}\p{N})])(\[)/gu, "$1 $2")
@@ -174,7 +192,7 @@ function normalizeInline(value) {
     .trim();
 }
 
-function inlineMarkdown(node) {
+function inlineMarkdown(node: any): any {
   if (node.nodeName === "#comment") {
     return "";
   }
@@ -221,11 +239,11 @@ function inlineMarkdown(node) {
   return inlineChildren(children);
 }
 
-function childrenToMarkdown(nodes) {
+function childrenToMarkdown(nodes: any): any {
   const blocks = [];
-  let inlineNodes = [];
+  let inlineNodes: any[] = [];
 
-  function flushInline() {
+  function flushInline(): any {
     const value = inlineChildren(inlineNodes);
     inlineNodes = [];
     if (!isBlank(value)) {
@@ -251,41 +269,51 @@ function childrenToMarkdown(nodes) {
   return blocks.join("\n\n");
 }
 
-function listMarkdown(node, ordered) {
+function listMarkdown(node: any, ordered: any): any {
   let index = Number.parseInt(attr(node, "start") ?? "1", 10);
   if (!Number.isFinite(index)) {
     index = 1;
   }
   return (node.childNodes ?? [])
-    .filter((child) => child.tagName === "li")
-    .map((child) => {
+    .filter((child: any): any => child.tagName === "li")
+    .map((child: any): any => {
       const marker = ordered ? `${index++}. ` : "- ";
-      const item = normalizeMarkdown(childrenToMarkdown(child.childNodes ?? []));
+      const item = normalizeMarkdown(
+        childrenToMarkdown(child.childNodes ?? []),
+      );
       if (!item) {
         return "";
       }
       const [first, ...rest] = item.split("\n");
-      return `${marker}${first}${rest.length ? `\n${rest.map((line) => `  ${line}`).join("\n")}` : ""}`;
+      return `${marker}${first}${rest.length ? `\n${rest.map((line: any): any => `  ${line}`).join("\n")}` : ""}`;
     })
     .filter(Boolean)
     .join("\n");
 }
 
-function codeLanguage(node) {
-  const codeNode = (node.childNodes ?? []).find((child) => child.tagName === "code");
+function codeLanguage(node: any): any {
+  const codeNode = (node.childNodes ?? []).find(
+    (child: any): any => child.tagName === "code",
+  );
   const className = attr(codeNode ?? node, "class") ?? "";
-  const match = className.match(/language-([a-z0-9_+-]+)/i)
-    ?? className.match(/brush:\s*([a-z0-9_+-]+)/i);
+  const match =
+    className.match(/language-([a-z0-9_+-]+)/i) ??
+    className.match(/brush:\s*([a-z0-9_+-]+)/i);
   return match?.[1] ?? "";
 }
 
-function tableMarkdown(node) {
-  const rows = [];
-  function visit(current) {
+function tableMarkdown(node: any): any {
+  const rows: string[][] = [];
+  function visit(current: any): any {
     if (current.tagName === "tr") {
-      rows.push((current.childNodes ?? [])
-        .filter((child) => child.tagName === "th" || child.tagName === "td")
-        .map((cell) => inlineChildren(cell.childNodes ?? [])));
+      rows.push(
+        (current.childNodes ?? [])
+          .filter(
+            (child: any): any =>
+              child.tagName === "th" || child.tagName === "td",
+          )
+          .map((cell: any): any => inlineChildren(cell.childNodes ?? [])),
+      );
     }
     for (const child of current.childNodes ?? []) {
       visit(child);
@@ -295,25 +323,33 @@ function tableMarkdown(node) {
   if (!rows.length) {
     return "";
   }
-  const width = Math.max(...rows.map((row) => row.length));
-  const normalizedRows = rows.map((row) => Array.from({ length: width }, (_item, index) => row[index] ?? ""));
+  const width = Math.max(...rows.map((row: any): any => row.length));
+  const normalizedRows = rows.map((row: any): any =>
+    Array.from(
+      { length: width },
+      (_item: any, index: any): any => row[index] ?? "",
+    ),
+  );
   const header = normalizedRows[0];
-  const divider = header.map(() => "---");
+  const divider = header.map((): any => "---");
   const body = normalizedRows.slice(1);
   return [header, divider, ...body]
-    .map((row) => `| ${row.map((cell) => cell.replace(/\|/g, "\\|")).join(" | ")} |`)
+    .map(
+      (row: any): any =>
+        `| ${row.map((cell: any): any => cell.replace(/\|/g, "\\|")).join(" | ")} |`,
+    )
     .join("\n");
 }
 
-function blockquoteMarkdown(node) {
+function blockquoteMarkdown(node: any): any {
   const value = normalizeMarkdown(childrenToMarkdown(node.childNodes ?? []));
   return value
     .split("\n")
-    .map((line) => line ? `> ${line}` : ">")
+    .map((line: any): any => (line ? `> ${line}` : ">"))
     .join("\n");
 }
 
-function blockMarkdown(node) {
+function blockMarkdown(node: any): any {
   if (node.nodeName === "#comment") {
     return "";
   }
@@ -359,28 +395,30 @@ function blockMarkdown(node) {
   return childrenToMarkdown(children);
 }
 
-function htmlToMarkdown(html) {
+function htmlToMarkdown(html: any): any {
   const fragment = parse5.parseFragment(html);
   return normalizeMarkdown(childrenToMarkdown(fragment.childNodes ?? []));
 }
 
-async function listMarkdownFiles(dir) {
+async function listMarkdownFiles(dir: any): Promise<any> {
   const entries = await readdir(dir, { withFileTypes: true });
-  const files = await Promise.all(entries.map(async (entry) => {
-    const file = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      return listMarkdownFiles(file);
-    }
-    return entry.isFile() && entry.name.endsWith(".md") ? [file] : [];
-  }));
+  const files = await Promise.all(
+    entries.map(async (entry: any): Promise<any> => {
+      const file = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return listMarkdownFiles(file);
+      }
+      return entry.isFile() && entry.name.endsWith(".md") ? [file] : [];
+    }),
+  );
   return files.flat().sort();
 }
 
-async function fetchText(url) {
+async function fetchText(url: any): Promise<any> {
   const response = await fetch(url, {
     headers: {
-      "user-agent": "micronaut-web-content-sync/1.0"
-    }
+      "user-agent": "micronaut-web-content-sync/1.0",
+    },
   });
   if (!response.ok) {
     throw new Error(`${response.status} ${response.statusText}: ${url}`);
@@ -388,11 +426,11 @@ async function fetchText(url) {
   return response.text();
 }
 
-async function fetchJson(url) {
+async function fetchJson(url: any): Promise<any> {
   const response = await fetch(url, {
     headers: {
-      "user-agent": "micronaut-web-content-sync/1.0"
-    }
+      "user-agent": "micronaut-web-content-sync/1.0",
+    },
   });
   if (!response.ok) {
     throw new Error(`${response.status} ${response.statusText}: ${url}`);
@@ -400,9 +438,10 @@ async function fetchJson(url) {
   return response.json();
 }
 
-function extractMainHtml(html) {
-  const match = html.match(/<main\b[^>]*id=["']main["'][^>]*>([\s\S]*?)<\/main>/i)
-    ?? html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i);
+function extractMainHtml(html: any): any {
+  const match =
+    html.match(/<main\b[^>]*id=["']main["'][^>]*>([\s\S]*?)<\/main>/i) ??
+    html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i);
   if (!match) {
     throw new Error("Could not find <main> content");
   }
@@ -413,33 +452,38 @@ function extractMainHtml(html) {
     .trim();
 }
 
-function extractFirstHeading(html) {
+function extractFirstHeading(html: any): any {
   const match = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
   return match ? htmlToText(match[1]) : undefined;
 }
 
-function extractMetaDescription(html) {
-  const meta = html.match(/<meta\s+[^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']*)["'][^>]*>/i)
-    ?? html.match(/<meta\s+[^>]*content=["']([^"']*)["'][^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*>/i);
+function extractMetaDescription(html: any): any {
+  const meta =
+    html.match(
+      /<meta\s+[^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']*)["'][^>]*>/i,
+    ) ??
+    html.match(
+      /<meta\s+[^>]*content=["']([^"']*)["'][^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*>/i,
+    );
   return meta ? decodeHtml(meta[1]).trim() : undefined;
 }
 
-function canonicalPath(url) {
+function canonicalPath(url: any): any {
   return new URL(url).pathname.replace(/^\/+|\/+$/g, "");
 }
 
-function fileForBlogRoute(route) {
+function fileForBlogRoute(route: any): any {
   return join(blogDir, `${route}.md`);
 }
 
-async function fetchAllWordPressPosts() {
+async function fetchAllWordPressPosts(): Promise<any> {
   const posts = [];
   for (let page = 1; ; page += 1) {
     const url = `${micronautOrigin}/wp-json/wp/v2/posts?per_page=100&page=${page}&_embed=wp:term`;
     const response = await fetch(url, {
       headers: {
-        "user-agent": "micronaut-web-content-sync/1.0"
-      }
+        "user-agent": "micronaut-web-content-sync/1.0",
+      },
     });
     if (response.status === 400 && page > 1) {
       break;
@@ -457,20 +501,20 @@ async function fetchAllWordPressPosts() {
   return posts;
 }
 
-function termsByTaxonomy(post, taxonomy) {
+function termsByTaxonomy(post: any, taxonomy: any): any {
   return (post._embedded?.["wp:term"] ?? [])
     .flat()
-    .filter((term) => term.taxonomy === taxonomy)
-    .map((term) => term.slug)
+    .filter((term: any): any => term.taxonomy === taxonomy)
+    .map((term: any): any => term.slug)
     .filter(Boolean);
 }
 
-async function syncMainSitePages() {
+async function syncMainSitePages(): Promise<any> {
   const files = await listMarkdownFiles(pageDir);
   const report = {
     synced: 0,
     validated: 0,
-    failed: [] as string[]
+    failed: [] as string[],
   };
   for (const file of files) {
     const current = splitFrontmatter(await readFile(file, "utf8"), file);
@@ -482,13 +526,14 @@ async function syncMainSitePages() {
       const bodyHtml = extractMainHtml(html);
       const body = htmlToMarkdown(bodyHtml);
       const title = extractFirstHeading(bodyHtml) ?? current.data.title;
-      const description = extractMetaDescription(html) ?? current.data.description;
+      const description =
+        extractMetaDescription(html) ?? current.data.description;
       const data = {
         ...current.data,
         title,
         description,
         sourceUrl: current.data.sourceUrl,
-        contentSource: "micronaut-public-markdown"
+        contentSource: "micronaut-public-markdown",
       };
       await writeFile(file, stringifyMarkdown(data, body));
       report.synced += 1;
@@ -497,14 +542,16 @@ async function syncMainSitePages() {
       } else {
         report.failed.push(relative(rootDir, file));
       }
-    } catch (error) {
-      report.failed.push(`${relative(rootDir, file)}: ${(error as Error).message}`);
+    } catch (error: any) {
+      report.failed.push(
+        `${relative(rootDir, file)}: ${(error as Error).message}`,
+      );
     }
   }
   return report;
 }
 
-function postFrontmatter(post) {
+function postFrontmatter(post: any): any {
   const route = canonicalPath(post.link);
   const categories = termsByTaxonomy(post, "category");
   return {
@@ -519,22 +566,28 @@ function postFrontmatter(post) {
     category: categories[0] ?? "blog",
     categories,
     tags: termsByTaxonomy(post, "post_tag"),
-    href: `/${route}/`
+    href: `/${route}/`,
   };
 }
 
-async function syncWordPressPosts() {
+async function syncWordPressPosts(): Promise<any> {
   const posts = await fetchAllWordPressPosts();
   for (const post of posts) {
     const route = canonicalPath(post.link);
     const file = fileForBlogRoute(route);
     await mkdir(dirname(file), { recursive: true });
-    await writeFile(file, stringifyMarkdown(postFrontmatter(post), htmlToMarkdown(post.content.rendered)));
+    await writeFile(
+      file,
+      stringifyMarkdown(
+        postFrontmatter(post),
+        htmlToMarkdown(post.content.rendered),
+      ),
+    );
   }
   return posts.length;
 }
 
-async function syncSuccessStoryPostsFromPages() {
+async function syncSuccessStoryPostsFromPages(): Promise<any> {
   const files = await listMarkdownFiles(blogDir);
   let synced = 0;
   for (const file of files) {
@@ -546,32 +599,45 @@ async function syncSuccessStoryPostsFromPages() {
     const bodyHtml = extractMainHtml(html);
     const body = htmlToMarkdown(bodyHtml);
     const title = extractFirstHeading(bodyHtml) ?? current.data.title;
-    await writeFile(file, stringifyMarkdown({
-      ...current.data,
-      title,
-      description: extractMetaDescription(html) ?? current.data.description,
-      contentSource: "micronaut-public-markdown",
-      categories: Array.from(new Set([...(current.data.categories ?? []), "case-studies"]))
-    }, body));
+    await writeFile(
+      file,
+      stringifyMarkdown(
+        {
+          ...current.data,
+          title,
+          description: extractMetaDescription(html) ?? current.data.description,
+          contentSource: "micronaut-public-markdown",
+          categories: Array.from(
+            new Set([...(current.data.categories ?? []), "case-studies"]),
+          ),
+        },
+        body,
+      ),
+    );
     synced += 1;
   }
   return synced;
 }
 
-async function validateGeneratedMarkdown() {
+async function validateGeneratedMarkdown(): Promise<any> {
   const files = [
-    ...await listMarkdownFiles(pageDir),
-    ...await listMarkdownFiles(blogDir)
+    ...(await listMarkdownFiles(pageDir)),
+    ...(await listMarkdownFiles(blogDir)),
   ];
   const failures: string[] = [];
   for (const file of files) {
     const { data, body } = splitFrontmatter(await readFile(file, "utf8"), file);
-    if (!String(data.contentSource ?? "").startsWith("micronaut-public") && data.contentSource !== "wordpress-post") {
+    if (
+      !String(data.contentSource ?? "").startsWith("micronaut-public") &&
+      data.contentSource !== "wordpress-post"
+    ) {
       continue;
     }
     const tags = rawHtmlTags(body);
     if (tags.length > 0) {
-      failures.push(`${relative(rootDir, file)}: ${tags.slice(0, 3).join(", ")}`);
+      failures.push(
+        `${relative(rootDir, file)}: ${tags.slice(0, 3).join(", ")}`,
+      );
     }
   }
   return failures;
@@ -582,14 +648,23 @@ const postCount = await syncWordPressPosts();
 const successStoryCount = await syncSuccessStoryPostsFromPages();
 const markdownValidationFailures = await validateGeneratedMarkdown();
 
-console.log(JSON.stringify({
-  syncedAt: now,
-  pages: syncPagesReport,
-  wordpressPosts: postCount,
-  successStoryPagesAsPosts: successStoryCount,
-  markdownValidationFailures
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      syncedAt: now,
+      pages: syncPagesReport,
+      wordpressPosts: postCount,
+      successStoryPagesAsPosts: successStoryCount,
+      markdownValidationFailures,
+    },
+    null,
+    2,
+  ),
+);
 
-if (syncPagesReport.failed.length > 0 || markdownValidationFailures.length > 0) {
+if (
+  syncPagesReport.failed.length > 0 ||
+  markdownValidationFailures.length > 0
+) {
   process.exitCode = 1;
 }

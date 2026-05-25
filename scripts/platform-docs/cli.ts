@@ -2,11 +2,20 @@ export type ParsedArgs = {
   _: string[];
 } & Record<string, string | string[] | boolean | undefined>;
 
-export function splitList(value: string | string[] | boolean | undefined): string[] {
-  return value ? String(value).split(",").map((item) => item.trim()).filter(Boolean) : [];
+export function splitList(
+  value: string | string[] | boolean | undefined,
+): string[] {
+  return value
+    ? String(value)
+        .split(",")
+        .map((item: any): any => item.trim())
+        .filter(Boolean)
+    : [];
 }
 
-export function stringArg(value: string | string[] | boolean | undefined): string | undefined {
+export function stringArg(
+  value: string | string[] | boolean | undefined,
+): string | undefined {
   if (typeof value === "string") {
     return value;
   }
@@ -23,7 +32,9 @@ export function parseArgs(args: string[]): ParsedArgs {
     }
     const withoutPrefix = arg.slice(2);
     const separator = withoutPrefix.indexOf("=");
-    const key = camelCase(separator >= 0 ? withoutPrefix.slice(0, separator) : withoutPrefix);
+    const key = camelCase(
+      separator >= 0 ? withoutPrefix.slice(0, separator) : withoutPrefix,
+    );
     if (separator >= 0) {
       parsed[key] = withoutPrefix.slice(separator + 1);
     } else if (args[index + 1] && !args[index + 1].startsWith("--")) {
@@ -37,5 +48,7 @@ export function parseArgs(args: string[]): ParsedArgs {
 }
 
 function camelCase(value: string): string {
-  return value.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+  return value.replace(/-([a-z])/g, (_: any, char: any): any =>
+    char.toUpperCase(),
+  );
 }

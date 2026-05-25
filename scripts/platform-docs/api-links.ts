@@ -1,6 +1,6 @@
 import { macroAttribute, macroText } from "./listing.ts";
 
-export function apiLink(context, kind, target, attrs) {
+export function apiLink(context: any, kind: any, target: any, attrs: any): any {
   const parsed = parseApiTarget(target);
   const library = apiLibrary(context, kind, attrs);
   let baseUri = apiBaseUri(context, library.attributeKey, library);
@@ -14,22 +14,26 @@ export function apiLink(context, kind, target, attrs) {
     label = `@${label}`;
   }
 
-  const href = `${baseUri}/${targetPathUrl(parsed.classTarget, library.packagePrefix)}.html${parsed.methodRef}${parsed.propRef}`.replaceAll("$", ".");
+  const href =
+    `${baseUri}/${targetPathUrl(parsed.classTarget, library.packagePrefix)}.html${parsed.methodRef}${parsed.propRef}`.replaceAll(
+      "$",
+      ".",
+    );
   return { href, label };
 }
 
-export function packageLink(context, target, attrs) {
+export function packageLink(context: any, target: any, attrs: any): any {
   let packageName = target;
   if (!packageName.startsWith("io.micronaut.")) {
     packageName = `io.micronaut.${packageName}`;
   }
   return {
     href: `assets/${context.project.slug}/docs/api/${packageName.replaceAll(".", "/")}/package-summary.html`,
-    label: macroText(attrs) || packageName
+    label: macroText(attrs) || packageName,
   };
 }
 
-function parseApiTarget(target) {
+function parseApiTarget(target: any): any {
   const methodIndex = target.lastIndexOf("(");
   const propIndex = target.lastIndexOf("#");
   let classTarget = target;
@@ -60,17 +64,57 @@ function parseApiTarget(target) {
   return { classTarget, methodRef, propRef, shortName };
 }
 
-function apiLibrary(context, kind, attrs) {
+function apiLibrary(context: any, kind: any, attrs: any): any {
   const localApi = `assets/${context.project.slug}/docs/api`;
-  const libraries = {
-    api: { defaultUri: localApi, packagePrefix: "io.micronaut.", attributeKey: null },
-    ann: { defaultUri: localApi, packagePrefix: "io.micronaut.", attributeKey: null },
-    mnapi: { defaultUri: "https://docs.micronaut.io/latest/api", packagePrefix: "io.micronaut.", attributeKey: "micronautApi" },
-    jdk: { defaultUri: "https://docs.oracle.com/en/java/javase/21/docs/api", packagePrefix: null, attributeKey: "jdkapi" },
-    jee: { defaultUri: "https://docs.oracle.com/javaee/6/api", packagePrefix: null, attributeKey: "jeeapi" },
-    rs: { defaultUri: "https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc", packagePrefix: "org.reactivestreams.", attributeKey: "rsapi" },
-    rx: { defaultUri: "http://reactivex.io/RxJava/2.x/javadoc", packagePrefix: "io.reactivex.", attributeKey: "rxapi" },
-    reactor: { defaultUri: "https://projectreactor.io/docs/core/release/api", packagePrefix: "reactor.core.publisher.", attributeKey: "reactorapi" }
+  const libraries: Record<
+    string,
+    {
+      defaultUri: string;
+      packagePrefix: string | null;
+      attributeKey: string | null;
+    }
+  > = {
+    api: {
+      defaultUri: localApi,
+      packagePrefix: "io.micronaut.",
+      attributeKey: null,
+    },
+    ann: {
+      defaultUri: localApi,
+      packagePrefix: "io.micronaut.",
+      attributeKey: null,
+    },
+    mnapi: {
+      defaultUri: "https://docs.micronaut.io/latest/api",
+      packagePrefix: "io.micronaut.",
+      attributeKey: "micronautApi",
+    },
+    jdk: {
+      defaultUri: "https://docs.oracle.com/en/java/javase/21/docs/api",
+      packagePrefix: null,
+      attributeKey: "jdkapi",
+    },
+    jee: {
+      defaultUri: "https://docs.oracle.com/javaee/6/api",
+      packagePrefix: null,
+      attributeKey: "jeeapi",
+    },
+    rs: {
+      defaultUri:
+        "https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc",
+      packagePrefix: "org.reactivestreams.",
+      attributeKey: "rsapi",
+    },
+    rx: {
+      defaultUri: "http://reactivex.io/RxJava/2.x/javadoc",
+      packagePrefix: "io.reactivex.",
+      attributeKey: "rxapi",
+    },
+    reactor: {
+      defaultUri: "https://projectreactor.io/docs/core/release/api",
+      packagePrefix: "reactor.core.publisher.",
+      attributeKey: "reactorapi",
+    },
   };
   const library = { ...libraries[kind] };
   const defaultUri = macroAttribute(attrs, "defaultUri");
@@ -84,9 +128,11 @@ function apiLibrary(context, kind, attrs) {
   return library;
 }
 
-function apiBaseUri(context, attributeKey, library) {
+function apiBaseUri(context: any, attributeKey: any, library: any): any {
   if (attributeKey) {
-    const configured = context.attributes[attributeKey] || context.attributes[attributeKey.toLowerCase()];
+    const configured =
+      context.attributes[attributeKey] ||
+      context.attributes[attributeKey.toLowerCase()];
     if (configured) {
       return configured;
     }
@@ -94,7 +140,7 @@ function apiBaseUri(context, attributeKey, library) {
   return library.defaultUri;
 }
 
-function apiModule(classTarget, attrs) {
+function apiModule(classTarget: any, attrs: any): any {
   const configured = macroAttribute(attrs, "module");
   if (configured !== undefined) {
     return configured;
@@ -102,7 +148,7 @@ function apiModule(classTarget, attrs) {
   return classTarget.startsWith("java") ? "java.base" : "";
 }
 
-function targetPathUrl(target, packagePrefix) {
+function targetPathUrl(target: any, packagePrefix: any): any {
   let result = target;
   if (packagePrefix && !target.startsWith(packagePrefix)) {
     result = `${packagePrefix}${target}`;
@@ -110,7 +156,7 @@ function targetPathUrl(target, packagePrefix) {
   return scapeDots(result);
 }
 
-function scapeDots(value) {
+function scapeDots(value: any): any {
   const tokens = value.split(".");
   let result = "";
   for (let index = 0; index < tokens.length; index += 1) {
@@ -130,6 +176,6 @@ function scapeDots(value) {
   return result;
 }
 
-function simpleName(className) {
+function simpleName(className: any): any {
   return className.split(".").filter(Boolean).at(-1) || className;
 }
