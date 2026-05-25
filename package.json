@@ -4,9 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate:snippet-css": "node scripts/generate-docs-snippet-css.mjs",
-    "protocol": "npm run generate:snippet-css && npm run test:platform-docs && npm run test:guides && npm run test:main-site && node scripts/validate-protocol.mjs && node scripts/validate-docs-snippet-style-sharing.mjs",
-    "snippet-styles": "npm run generate:snippet-css && node scripts/validate-docs-snippet-style-sharing.mjs",
+    "protocol": "npm run test:platform-docs && npm run test:guides && npm run test:main-site && node scripts/validate-protocol.mjs && node scripts/validate-docs-snippet-style-sharing.mjs",
+    "snippet-styles": "node scripts/validate-docs-snippet-style-sharing.mjs",
     "sync:platform-projects": "node scripts/sync-platform-docs-fixture.mjs",
     "sync:main-site-content": "node scripts/sync-main-site-content.mjs && npm run normalize:main-site-markdown",
     "normalize:main-site-markdown": "node scripts/normalize-main-site-markdown.mjs",

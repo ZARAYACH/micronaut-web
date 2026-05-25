@@ -205,6 +205,107 @@ test("platform docs renderer writes generated HTML and page-relative docs asset 
   );
 });
 
+test("platform docs renderer turns code, dependency, configuration, and properties snippets into shared cards", async (t) => {
+  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-snippets-"));
+  t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
+  const platformDocsDirectory = path.join(temporaryDirectory, "platform-docs");
+  const outputDirectory = path.join(temporaryDirectory, "generated-docs");
+  const submoduleDirectory = path.join(platformDocsDirectory, "repos", "micronaut-fixture");
+  const snippetSourceDirectory = path.join(submoduleDirectory, "test-suite", "src", "test", "java", "example");
+
+  await fs.mkdir(path.join(platformDocsDirectory, "gradle"), { recursive: true });
+  await fs.mkdir(snippetSourceDirectory, { recursive: true });
+  await fs.writeFile(
+    path.join(platformDocsDirectory, "gradle", "platform-doc-projects.properties"),
+    [
+      "project.count=1",
+      "project.0.slug=fixture",
+      "project.0.displayName=Micronaut Fixture",
+      "project.0.submodulePath=repos/micronaut-fixture",
+      "project.0.repositoryUrl=https://github.com/micronaut-projects/micronaut-fixture.git",
+      "project.0.branch=master",
+      "project.0.platformVersionKey=micronaut"
+    ].join("\n"),
+    "utf8"
+  );
+  await fs.writeFile(
+    path.join(snippetSourceDirectory, "FixtureSnippet.java"),
+    [
+      "package example;",
+      "",
+      "// tag::body[]",
+      "class FixtureSnippet {",
+      "    void run() { // <1>",
+      "    }",
+      "}",
+      "// end::body[]"
+    ].join("\n"),
+    "utf8"
+  );
+  await writeGuide(
+    platformDocsDirectory,
+    "micronaut-fixture",
+    "Fixture Docs",
+    [
+      "snippet::example.FixtureSnippet[tags=body,title=Fixture Snippet,description=Rendered from snippet macro]",
+      "",
+      "<1> Snippet callout follows the generated card.",
+      "",
+      "dependency:micronaut-http-client[groupId=io.micronaut,title=HTTP Client dependency,description=Rendered from dependency macro]",
+      "",
+      "[configuration,title=Configuration snippet]",
+      "----",
+      "micronaut:",
+      "  server:",
+      "    port: 8080",
+      "----",
+      "",
+      ".Configuration Properties",
+      "|===",
+      "|Property |Type |Description",
+      "|micronaut.server.port |Integer |Server port",
+      "|==="
+    ].join("\n")
+  );
+
+  await execFile(
+    process.execPath,
+    [
+      "scripts/render-platform-docs.mjs",
+      "--platform-docs-dir",
+      platformDocsDirectory,
+      "--output",
+      outputDirectory,
+      "--slugs",
+      "fixture",
+      "--strict"
+    ],
+    {
+      cwd: projectDirectory
+    }
+  );
+
+  const generatedHtml = await fs.readFile(path.join(outputDirectory, "fixture.html"), "utf8");
+  const generatedText = textOnly(generatedHtml);
+
+  assert.doesNotMatch(generatedHtml, /<micronaut-snippet/i);
+  assert.match(generatedHtml, /docs-code-snippet-template/);
+  assert.match(generatedHtml, /docs-dependency-template/);
+  assert.match(generatedHtml, /docs-properties-template/);
+  assert.match(generatedHtml, /docs-code-callouts/);
+  assert.match(generatedHtml, /<i class="conum" data-value="1"><\/i>/);
+  assert.match(generatedText, /Fixture Snippet/);
+  assert.match(generatedText, /Rendered from snippet macro/);
+  assert.match(generatedText, /Snippet callout follows the generated card/);
+  assert.match(generatedText, /HTTP Client dependency/);
+  assert.match(generatedText, /Rendered from dependency macro/);
+  assert.match(generatedText, /io\.micronaut:micronaut-http-client/);
+  assert.match(generatedText, /Configuration snippet/);
+  assert.match(generatedText, /micronaut\.server\.port=8080/);
+  assert.match(generatedText, /Configuration Properties/);
+  assert.match(generatedText, /2 properties/);
+});
+
 test("platform docs renderer can render every project in a manifest", async (t) => {
   const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "micronaut-web-generated-docs-"));
   t.after(() => fs.rm(temporaryDirectory, { force: true, recursive: true }));
@@ -355,4 +456,8 @@ function lines(value) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function textOnly(value) {
+  return value.replace(/<[^>]*>/g, "");
 }

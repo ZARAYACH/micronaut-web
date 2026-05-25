@@ -62,8 +62,14 @@ test("guide renderer defaults to the small guide subset and expands guide macros
   assert.match(html, /Kubernetes include callout/);
   assert.match(html, /Unmarked source callout/);
   assert.match(html, /Missing source marker becomes manual/);
+  assert.match(html, /Gapped first real callout/);
+  assert.match(html, /Gapped second real callout/);
+  assert.match(html, /Gapped third real callout/);
+  assert.match(html, /Gapped fourth real callout/);
+  assert.match(html, /Gapped missing marker becomes manual/);
   assert.match(html, /guide-manual-callouts/);
   assert.match(html, /<i class="conum" data-value="1"><\/i>/);
+  assert.match(html, /<i class="conum" data-value="4"><\/i>/);
   assert.doesNotMatch(html, /__MICRONAUT_CALLOUT_|\uE000|\uE001/);
   assert.match(html, /https:\/\/micronaut\.io\/launch\?/);
   assert.match(html, /href="\.\.\/another-guide\.html"/);
@@ -262,6 +268,12 @@ async function writeGuideFixture(guidesDirectory, slug, title) {
       "source:PartiallyMarkedController[]",
       "callout:generated-one[]",
       "<2> Missing source marker becomes manual.",
+      "source:GappedController[]",
+      "<1> Gapped first real callout.",
+      "<2> Gapped missing marker becomes manual.",
+      "<3> Gapped second real callout.",
+      "<4> Gapped third real callout.",
+      "<5> Gapped fourth real callout.",
       "",
       "[source,java]",
       "----",
@@ -338,6 +350,27 @@ async function writeGuideFixture(guidesDirectory, slug, title) {
       "",
       "final class PartiallyMarkedController {",
       "    void generated() { // <1>",
+      "    }",
+      "}"
+    ].join("\n"),
+    "utf8"
+  );
+  await fs.writeFile(
+    path.join(guideDirectory, "java", "src", "main", "java", "example", "micronaut", "GappedController.java"),
+    [
+      "package example.micronaut;",
+      "",
+      "final class GappedController {",
+      "    void first() { // <1>",
+      "    }",
+      "",
+      "    void second() { // <3>",
+      "    }",
+      "",
+      "    void third() { // <4>",
+      "    }",
+      "",
+      "    void fourth() { // <5>",
       "    }",
       "}"
     ].join("\n"),

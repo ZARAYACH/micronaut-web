@@ -55,9 +55,10 @@ Tailwind class ownership for snippet cards is centralized in
 browser enhancement classes, and test/gallery snippet classes aligned there
 instead of duplicating class strings in the renderer.
 
-Runtime CSS starts in `src/styles/docs-snippet-runtime.source.css` and is
-generated into `src/styles/generated/docs-snippet-runtime.css`. Do not edit the
-generated CSS file directly.
+Runtime snippet styling for Shiki spans, callout badges, callout footers, and
+configuration-property table internals also lives in `docs-snippet-styles.ts`.
+Astro/Tailwind emits the actual CSS from those shared class strings during the
+normal site build; there is no copied snippet runtime stylesheet.
 
 ## Useful Commands
 
@@ -67,7 +68,7 @@ Render selected platform docs fragments:
 npm run render:platform-docs -- --slugs core,serde
 ```
 
-Regenerate and validate snippet runtime style sharing:
+Validate snippet style sharing:
 
 ```bash
 npm run snippet-styles

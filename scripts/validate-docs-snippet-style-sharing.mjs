@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 
 const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sharedStylesPath = "src/components/web/docs-snippet-styles.ts";
-const runtimeCssSourcePath = "src/styles/docs-snippet-runtime.source.css";
-const runtimeCssGeneratedPath = "src/styles/generated/docs-snippet-runtime.css";
-const generatedCssBanner = "/* Generated from src/styles/docs-snippet-runtime.source.css by scripts/generate-docs-snippet-css.mjs. Do not edit directly. */\n";
+const removedRuntimeCssPaths = [
+  "scripts/generate-docs-snippet-css.mjs",
+  "src/styles/docs-snippet-runtime.source.css",
+  "src/styles/generated/docs-snippet-runtime.css"
+];
 
 const requiredSharedKeys = [
   "card",
@@ -149,10 +151,17 @@ const guardedClassFragments = [
   "text-[0.95rem] leading-[1.45] font-bold"
 ];
 
+const requiredRuntimeClassFragments = [
+  "dark:[&_span[style]]:![color:var(--shiki-dark,var(--shiki-light,currentColor))]",
+  "[&_.conum::before]:content-[attr(data-value)]",
+  "[&_ol]:[counter-reset:docs-code-callout]",
+  "[&_li::before]:content-[counter(docs-code-callout)]",
+  "[&_table.tableblock]:border-collapse",
+  "[&_table.tableblock_:where(th,td)]:border"
+];
+
 const failures = [];
 const sharedStyles = await readProjectFile(sharedStylesPath);
-const runtimeCssSource = await readProjectFile(runtimeCssSourcePath);
-const runtimeCssGenerated = await readProjectFile(runtimeCssGeneratedPath);
 const globalsCss = await readProjectFile("src/styles/globals.css");
 const webLayout = await readProjectFile("src/layouts/WebLayout.astro");
 
@@ -181,12 +190,20 @@ for (const consumer of consumers) {
   }
 }
 
-if (runtimeCssGenerated !== `${generatedCssBanner}${runtimeCssSource}`) {
-  failures.push(`${runtimeCssGeneratedPath}: run npm run generate:snippet-css after editing ${runtimeCssSourcePath}.`);
+for (const fragment of requiredRuntimeClassFragments) {
+  if (!sharedStyles.includes(fragment)) {
+    failures.push(`${sharedStylesPath}: expected Tailwind runtime snippet styling fragment "${fragment}".`);
+  }
 }
 
-if (!webLayout.includes("@/styles/generated/docs-snippet-runtime.css")) {
-  failures.push("src/layouts/WebLayout.astro: expected generated snippet runtime CSS to be imported.");
+for (const removedPath of removedRuntimeCssPaths) {
+  if (await projectFileExists(removedPath)) {
+    failures.push(`${removedPath}: snippet runtime styling should be owned by Tailwind classes in ${sharedStylesPath}.`);
+  }
+}
+
+if (webLayout.includes("@/styles/generated/docs-snippet-runtime.css")) {
+  failures.push("src/layouts/WebLayout.astro: remove the copied snippet runtime CSS import.");
 }
 
 for (const fragment of [
@@ -195,7 +212,7 @@ for (const fragment of [
   ".docs-properties-template table.tableblock"
 ]) {
   if (globalsCss.includes(fragment)) {
-    failures.push(`src/styles/globals.css: move "${fragment}" rules to ${runtimeCssSourcePath}.`);
+    failures.push(`src/styles/globals.css: move "${fragment}" rules to Tailwind classes in ${sharedStylesPath}.`);
   }
 }
 
@@ -207,6 +224,18 @@ console.log(`Validated docs snippet style sharing across ${consumers.length} con
 
 async function readProjectFile(relativePath) {
   return fs.readFile(path.join(projectDirectory, relativePath), "utf8");
+}
+
+async function projectFileExists(relativePath) {
+  try {
+    await fs.access(path.join(projectDirectory, relativePath));
+    return true;
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
 }
 
 function matchingLineNumbers(source, fragment) {
