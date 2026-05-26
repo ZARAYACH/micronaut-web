@@ -180,6 +180,26 @@ Docs and guides surface pruning hoists generated docs/guides content assets out 
 
 Legacy route behavior, production host mapping, canonical URL rules, PageSpeed baselines, and the manual QA checklist are documented in [`docs/website-ux-and-compatibility.md`](docs/website-ux-and-compatibility.md). Route aliases and redirects should be added through `src/lib/route-compatibility.ts` so compatibility remains centralized.
 
+## Astro Publishing Best Practices
+
+Keep published content canonical. A content page should have one source route, and compatibility URLs such as legacy blog paths should redirect to that route instead of rendering duplicate page bodies. When adding a compatibility route, prefer the centralized redirect and alias helpers so redirects remain `noindex` and easy to audit.
+
+Route internal links through `src/lib/base-path.ts` or `src/lib/deployment-config.ts`. Do not hard-code `/docs`, `/guides`, `/latest`, or GitHub Pages repository prefixes in components or generated HTML; the deployment helpers keep links valid across all-in-one preview, standalone docs, standalone guides, and the main site.
+
+Use Astro islands deliberately. Hydrate only UI that must run in the browser, and prefer static Astro markup for shared layout such as headers, navigation structure, and content shells wherever possible. Reserve `client:load` for controls that must be interactive immediately; use `client:idle` or `client:visible` for lower-priority UI.
+
+Avoid broad browser-side dynamic imports. Syntax highlighting, especially Shiki, should run at build time where possible or use a constrained language/theme bundle. Do not ship full highlighter language catalogs to the browser for small preview panes or generated content.
+
+Use `is:inline` only for intentional critical scripts, such as the early theme script that prevents a visible color-mode flash. Non-critical scripts should be processed by Astro so they can be bundled, deduplicated, and cached.
+
+Keep shared CSS focused. Global design tokens and cross-surface primitives belong in `src/styles/globals.css`, but route-specific styling should stay close to the route or component that needs it. Avoid adding one-off page styles to the global baseline.
+
+Deduplicate public assets before publishing. Prefer canonical asset paths for shared logos, brand files, PDFs, and generated content assets, and keep legacy copies only when external compatibility requires them.
+
+Prune published artifacts. Surface publication should remove unreferenced `_astro` chunks and unrelated surface output so Pages branches do not accumulate stale JavaScript, CSS, docs, guides, or template artifacts.
+
+Pin npm dependencies. Avoid `latest` ranges in `package.json`; use exact or caret-bounded versions so local builds, CI, and Pages publishes resolve the same Astro, React, Vite, and tooling behavior.
+
 ## Template Artifacts
 
 The static build prepares plain HTML templates with exact `{{placeholder}}` slots,
