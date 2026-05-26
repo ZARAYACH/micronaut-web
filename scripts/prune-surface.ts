@@ -73,8 +73,9 @@ async function pruneMain(
   customDomain?: string,
 ): Promise<void> {
   await Promise.all(
-    ["docs", "guides", "latest", "micronaut-web"].map((entry) =>
-      fs.rm(path.join(directory, entry), { force: true, recursive: true }),
+    ["docs", "guides", "latest", "micronaut-web", "versions.json"].map(
+      (entry) =>
+        fs.rm(path.join(directory, entry), { force: true, recursive: true }),
     ),
   );
   await writeNoJekyll(directory);
@@ -96,6 +97,10 @@ async function pruneDocs(
     await copyIfExists(
       path.join(directory, "_astro"),
       path.join(temporaryDirectory, "_astro"),
+    );
+    await copyIfExists(
+      path.join(directory, "versions.json"),
+      path.join(temporaryDirectory, "versions.json"),
     );
     const sourceDocsDirectory = path.join(directory, "docs");
     await copyChildren(

@@ -217,6 +217,7 @@ test("docs pruning publishes docs at the repository root", async (t) => {
 
   assert.equal(await exists(path.join(dist, "index.html")), true);
   assert.equal(await exists(path.join(dist, ".nojekyll")), true);
+  assert.equal(await exists(path.join(dist, "versions.json")), true);
   assert.equal(
     await exists(path.join(dist, "latest", "core", "index.html")),
     true,
@@ -330,6 +331,7 @@ test("main pruning drops docs, guides, latest, and template artifacts", async (t
   assert.equal(await exists(path.join(dist, "guides")), false);
   assert.equal(await exists(path.join(dist, "latest")), false);
   assert.equal(await exists(path.join(dist, "micronaut-web")), false);
+  assert.equal(await exists(path.join(dist, "versions.json")), false);
 });
 
 test("web workflow publishes the main surface to the gh-pages branch", async () => {
@@ -676,6 +678,7 @@ async function fakeDist(t: TestContext) {
   const files = [
     "_astro/app.js",
     "index.html",
+    "versions.json",
     "launch/index.html",
     "docs/index.html",
     "docs/core/index.html",

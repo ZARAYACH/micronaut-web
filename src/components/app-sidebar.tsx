@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { Collapsible } from "radix-ui";
 
 import { IconGlyph } from "@/components/web/icon-glyph";
-import { VersionSelector } from "@/components/web/version-selector";
+import { DocsVersionSwitcher } from "@/components/web/docs-version-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +21,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { type DocsProjectCatalog, type ProtocolCategory } from "@/lib/protocol";
 import docsVersions from "@/data/docs-versions.json";
@@ -64,26 +63,15 @@ export function AppSidebar({
       className={cn("top-0 h-svh", className)}
       {...props}
     >
-      <SidebarHeader className="h-11 border-b border-sidebar-border px-2 py-1">
-        <div className="flex h-full items-center justify-between gap-2">
-          <span className="min-w-0 px-2 text-sm font-medium text-sidebar-foreground group-data-[collapsible=icon]:sr-only">
-            Docs
-          </span>
-          <SidebarTrigger className="size-8 shrink-0" />
-        </div>
+      <SidebarHeader className="border-b border-sidebar-border p-2">
+        <DocsVersionSwitcher
+          label="Docs"
+          options={docsVersions.versions}
+          versionManifestHref="/versions.json"
+          surface="docs"
+        />
       </SidebarHeader>
       <SidebarContent className="gap-2 px-2 pb-2 pt-2">
-        <div className="group-data-[collapsible=icon]:hidden">
-          <VersionSelector
-            label="Docs"
-            options={docsVersions.versions}
-            versionManifestHref="/versions.json"
-            surface="docs"
-            showLabel={false}
-            formatOptionLabel={docsVersionLabel}
-            className="rounded-md border border-sidebar-border bg-sidebar-accent/35 p-2"
-          />
-        </div>
         {projectCatalog.categories.map((category) => {
           const projects = docsCatalogProjectsByCategory(
             projectCatalog,
@@ -236,12 +224,6 @@ export function AppSidebar({
       <SidebarRail />
     </Sidebar>
   );
-}
-
-function docsVersionLabel(option: { label: string }) {
-  return option.label.startsWith("Docs ")
-    ? option.label
-    : `Docs ${option.label}`;
 }
 
 function docsCatalogProjectsByCategory(
