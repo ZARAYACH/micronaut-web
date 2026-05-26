@@ -10,8 +10,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import type { DocsProjectCatalog } from "@/lib/protocol";
 
 type DocsShellProps = {
+  projectCatalog: DocsProjectCatalog;
   activeSlug?: string;
   activeSections?: Array<{
     id: string;
@@ -20,7 +22,12 @@ type DocsShellProps = {
   children: React.ReactNode;
 };
 
-export function DocsShell({ activeSlug, activeSections = [], children }: DocsShellProps) {
+export function DocsShell({
+  projectCatalog,
+  activeSlug,
+  activeSections = [],
+  children,
+}: DocsShellProps) {
   useDocsScrollSpy();
 
   return (
@@ -36,6 +43,7 @@ export function DocsShell({ activeSlug, activeSections = [], children }: DocsShe
       <SiteHeader surface="docs" />
       <div className="flex min-h-0 flex-1">
         <AppSidebar
+          projectCatalog={projectCatalog}
           activeSlug={activeSlug}
           activeSections={activeSections}
           className="top-14 bottom-auto h-[calc(100svh-3.5rem)]"
@@ -57,7 +65,9 @@ function useDocsScrollSpy() {
     let animationFrame = 0;
 
     const readScrollOffset = () => {
-      const value = window.getComputedStyle(document.documentElement).scrollPaddingTop;
+      const value = window.getComputedStyle(
+        document.documentElement,
+      ).scrollPaddingTop;
       const parsed = Number.parseFloat(value);
       return Number.isFinite(parsed) ? parsed + 8 : 88;
     };
@@ -75,8 +85,12 @@ function useDocsScrollSpy() {
     };
 
     const update = () => {
-      const links = Array.from(document.querySelectorAll<HTMLElement>("[data-docs-scroll-link]"));
-      const ids = new Set(links.map(targetIdForLink).filter(Boolean) as string[]);
+      const links = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-docs-scroll-link]"),
+      );
+      const ids = new Set(
+        links.map(targetIdForLink).filter(Boolean) as string[],
+      );
       const targets = Array.from(ids)
         .map((id) => document.getElementById(id))
         .filter(Boolean) as HTMLElement[];
@@ -86,11 +100,16 @@ function useDocsScrollSpy() {
       }
 
       const offset = readScrollOffset();
-      const sortedTargets = targets.sort((left, right) => left.offsetTop - right.offsetTop);
-      const activeTarget = sortedTargets.reduce<HTMLElement | undefined>((current, target) => {
-        const top = target.getBoundingClientRect().top;
-        return top <= offset ? target : current;
-      }, sortedTargets[0]);
+      const sortedTargets = targets.sort(
+        (left, right) => left.offsetTop - right.offsetTop,
+      );
+      const activeTarget = sortedTargets.reduce<HTMLElement | undefined>(
+        (current, target) => {
+          const top = target.getBoundingClientRect().top;
+          return top <= offset ? target : current;
+        },
+        sortedTargets[0],
+      );
       const activeId = activeTarget?.id;
 
       let currentAssigned = false;

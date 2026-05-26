@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import { withBasePath, withSurfacePath } from "@/lib/base-path";
+import {
+  withBasePath,
+  withBasePathForBase,
+  withSurfacePath,
+} from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
 export type VersionOption = {
@@ -16,26 +20,67 @@ type VersionSelectorProps = {
   options: VersionOption[];
   surface?: "main" | "docs" | "guides" | "launch";
   className?: string;
+  versionManifestHref?: string;
 };
 
-export function VersionSelector({ label, options, surface, className }: VersionSelectorProps) {
-  const current = options.find((option) => option.current) || options[0];
+export function VersionSelector({
+  label,
+  options,
+  surface,
+  className,
+  versionManifestHref,
+}: VersionSelectorProps) {
+  const [resolvedOptions, setResolvedOptions] = useState(options);
+  const current =
+    resolvedOptions.find((option) => option.current) || resolvedOptions[0];
   const [selectedHref, setSelectedHref] = useState(current?.href || "");
-  const route = (href: string) => surface ? withSurfacePath(surface, href) : withBasePath(href);
+  const route = (href: string) =>
+    surface ? withSurfacePath(surface, href) : withBasePath(href);
 
   useEffect(() => {
-    const match = options.find((option) => pathMatchesCurrentLocation(route(option.href)));
-    if (match) {
-      setSelectedHref(match.href);
-    }
-  }, [options, surface]);
+    setResolvedOptions(options);
+  }, [options]);
 
-  if (!current || options.length < 2) {
+  useEffect(() => {
+    if (!versionManifestHref) {
+      return;
+    }
+    let cancelled = false;
+    fetch(
+      withBasePathForBase(versionManifestHref, import.meta.env.BASE_URL || "/"),
+    )
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload) => {
+        if (!cancelled && Array.isArray(payload?.versions)) {
+          setResolvedOptions(payload.versions);
+        }
+      })
+      .catch(() => {
+        // The checked-in options keep the selector usable before publication.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [versionManifestHref]);
+
+  useEffect(() => {
+    const match = resolvedOptions.find((option) =>
+      pathMatchesCurrentLocation(route(option.href)),
+    );
+    setSelectedHref((match || current)?.href || "");
+  }, [current, resolvedOptions, surface]);
+
+  if (!current || resolvedOptions.length < 2) {
     return null;
   }
 
   return (
-    <label className={cn("grid min-w-0 gap-1 text-xs text-muted-foreground", className)}>
+    <label
+      className={cn(
+        "grid min-w-0 gap-1 text-xs text-muted-foreground",
+        className,
+      )}
+    >
       <span className="font-medium text-foreground">{label}</span>
       <select
         className="h-8 min-w-0 rounded-md border bg-background px-2 text-xs text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -49,7 +94,7 @@ export function VersionSelector({ label, options, surface, className }: VersionS
           }
         }}
       >
-        {options.map((option) => (
+        {resolvedOptions.map((option) => (
           <option key={option.href} value={option.href}>
             {option.label}
           </option>
@@ -62,9 +107,15 @@ export function VersionSelector({ label, options, surface, className }: VersionS
 function pathMatchesCurrentLocation(href: string) {
   const destination = normalizedPathname(href);
   const current = normalizedPathname(window.location.href);
-  return current === destination || current.startsWith(`${destination.replace(/\/$/, "")}/`);
+  return (
+    current === destination ||
+    current.startsWith(`${destination.replace(/\/$/, "")}/`)
+  );
 }
 
 function normalizedPathname(href: string) {
-  return new URL(href, window.location.href).pathname.replace(/\/index\.html$/, "/");
+  return new URL(href, window.location.href).pathname.replace(
+    /\/index\.html$/,
+    "/",
+  );
 }

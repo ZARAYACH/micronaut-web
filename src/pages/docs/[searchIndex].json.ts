@@ -3,7 +3,11 @@ import { readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 import { buildDocsSearchIndex } from "../../../scripts/docs/search-index.ts";
-import { docsProjectCatalog, projectBySlug } from "@/lib/protocol";
+import {
+  docsCatalogProject,
+  loadDocsProjectCatalog,
+} from "@/lib/docs-project-catalog";
+import type { ProtocolProject } from "@/lib/protocol";
 import { shouldBuildDocsRoutes } from "@/lib/surface-routes";
 
 const generatedDocsDirectory = join(
@@ -23,21 +27,11 @@ export const getStaticPaths: GetStaticPaths = () => {
 };
 
 export async function GET() {
+  const docsProjectCatalog = await loadDocsProjectCatalog();
   const generatedHtmlBySlug = await readGeneratedDocsHtml();
-  const projects = docsProjectCatalog.projects.map((project) => {
-    const protocolProject = projectBySlug(project.slug);
-    return {
-      ...protocolProject,
-      ...project,
-      href: protocolProject?.href || `/docs/${project.slug}/`,
-      sections: protocolProject?.sections || [],
-      references: protocolProject?.references || [
-        { label: "Guide", href: project.publishedGuideUrl },
-        { label: "Repository", href: project.repositoryUrl },
-      ],
-      searchTerms: protocolProject?.searchTerms || [],
-    };
-  });
+  const projects = docsProjectCatalog.projects
+    .map((project) => docsCatalogProject(docsProjectCatalog, project.slug))
+    .filter((project): project is ProtocolProject => Boolean(project));
 
   return new Response(
     JSON.stringify({

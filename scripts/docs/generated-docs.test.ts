@@ -50,6 +50,7 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
 test("generated docs fragments and assets are ignored and not tracked source", async (): Promise<any> => {
   const ignoredPaths = [
     "src/content/generated-docs/generated-docs-test.html",
+    "src/content/generated-docs/project-catalog.json",
     "src/content/generated-docs/assets/generated-docs-test/docs/img/example.png",
   ];
   const { stdout: ignoredOutput } = await execFile(
@@ -220,6 +221,68 @@ test("docs renderer defaults to a small project subset", async (t: any): Promise
     ["core", "data", "serde"],
   );
   assert.deepEqual(await fs.readdir(outputDirectory), []);
+});
+
+test("docs renderer writes project catalog from active platform versions", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-platform-docs-catalog-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
+  const docsDirectory = path.join(temporaryDirectory, "docs");
+  const outputDirectory = path.join(temporaryDirectory, "generated-docs");
+  const platformCatalogFile = path.join(
+    docsDirectory,
+    "repos",
+    "micronaut-platform",
+    "gradle",
+    "libs.versions.toml",
+  );
+
+  await fs.mkdir(path.dirname(platformCatalogFile), { recursive: true });
+  await fs.writeFile(
+    platformCatalogFile,
+    [
+      "[versions]",
+      'managed-micronaut-core = "4.10.22"',
+      'managed-micronaut-data = "4.14.3"',
+      "",
+      "[libraries]",
+      'boms-micronaut-core = { module = "io.micronaut:micronaut-core-bom", version.ref = "managed-micronaut-core" }',
+      'boms-micronaut-data = { module = "io.micronaut.data:micronaut-data-bom", version.ref = "managed-micronaut-data" }',
+    ].join("\n"),
+    "utf8",
+  );
+
+  await execFile(
+    process.execPath,
+    [
+      "scripts/render-docs.ts",
+      "--docs-dir",
+      docsDirectory,
+      "--output",
+      outputDirectory,
+      "--slugs",
+      "core",
+    ],
+    {
+      cwd: projectDirectory,
+      env: nonStrictEnv(),
+    },
+  );
+
+  const catalog = JSON.parse(
+    await fs.readFile(
+      path.join(outputDirectory, "project-catalog.json"),
+      "utf8",
+    ),
+  );
+  const projectsBySlug = new Map<string, any>(
+    catalog.projects.map((project: any): any => [project.slug, project]),
+  );
+  assert.equal(projectsBySlug.get("core")?.version, "4.10.22");
+  assert.equal(projectsBySlug.get("data")?.version, "4.14.3");
 });
 
 test("docs renderer writes generated HTML and page-relative docs asset links", async (t: any): Promise<any> => {
@@ -766,7 +829,7 @@ test("docs project manifest can be derived from Micronaut Platform libraries", a
     [
       "[versions]",
       'managed-micronaut-core = "5.0.0-RC2"',
-      'managed-micronaut-data = "5.0.0-RC1"',
+      'managed-micronaut-data = "4.10.22"',
       'managed-micronaut-guides = "0.3.0"',
       "",
       "[libraries]",
@@ -809,6 +872,7 @@ test("docs project manifest can be derived from Micronaut Platform libraries", a
     submodulePath: "repos/micronaut-core",
     platformVersionKey: "managed-micronaut-core",
   });
+  assert.equal(projects[1].branch, "4.10.x");
 });
 
 test("docs commandline source blocks use shell highlighting", (): any => {
@@ -889,6 +953,14 @@ test("docs routes render generated fragments and serve generated assets", async 
     ),
     "utf8",
   );
+  const docsIndexSource = await fs.readFile(
+    path.join(projectDirectory, "src", "pages", "docs", "index.astro"),
+    "utf8",
+  );
+  const appSidebarSource = await fs.readFile(
+    path.join(projectDirectory, "src", "components", "app-sidebar.tsx"),
+    "utf8",
+  );
 
   assert.match(
     docsPageSource,
@@ -906,6 +978,10 @@ test("docs routes render generated fragments and serve generated assets", async 
   );
   assert.match(searchIndexRouteSource, /buildDocsSearchIndex/);
   assert.match(searchIndexRouteSource, /"generated-docs"/);
+  assert.match(docsIndexSource, /loadDocsProjectCatalog/);
+  assert.match(docsPageSource, /loadDocsProjectCatalog/);
+  assert.match(searchIndexRouteSource, /loadDocsProjectCatalog/);
+  assert.match(appSidebarSource, /versionManifestHref="\/versions\.json"/);
 });
 
 function assertScriptOrder(script: any, producer: any, consumer: any): any {

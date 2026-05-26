@@ -13,6 +13,7 @@ dist/
 
 # Generated docs output
 src/content/generated-docs/*.html
+src/content/generated-docs/project-catalog.json
 src/content/generated-docs/assets/
 src/content/generated-guides/manifest.json
 src/content/generated-guides/fragments/

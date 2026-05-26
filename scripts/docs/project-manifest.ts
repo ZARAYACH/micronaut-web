@@ -241,10 +241,9 @@ function projectFromPlatformCatalog(
     cachedMetadata.submodulePath,
     `repos/${repositoryName}`,
   );
-  const branch = choose(
-    cachedMetadata.branch,
-    branchFor(platformProject.version),
-  );
+  const branch =
+    branchFor(platformProject.version) ||
+    choose(cachedMetadata.branch, "master");
   const displayName = choose(
     cachedMetadata.displayName,
     displayNameFor(repositoryName),
@@ -323,9 +322,9 @@ function publishedGuideUrlFor(repositoryName: string): string {
   return `https://micronaut-projects.github.io/${repositoryName}/latest/guide/`;
 }
 
-function branchFor(version: string): string {
+function branchFor(version: string): string | undefined {
   const match = /^(\d+)\.(\d+)\..*$/.exec(version);
-  return match ? `${match[1]}.${match[2]}.x` : "master";
+  return match ? `${match[1]}.${match[2]}.x` : undefined;
 }
 
 function slugFromSubmodulePath(submodulePath: string): string {

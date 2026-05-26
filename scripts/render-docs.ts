@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import { copyProjectImageAssets } from "./docs/assets.ts";
+import { buildDocsProjectCatalog } from "./docs/project-catalog.ts";
 import {
   type DocsProject,
   readIndexed,
@@ -82,6 +83,22 @@ const checkedInProjectManifestFile = path.join(
   checkedInDocsDataDirectory,
   "docs-projects.properties",
 );
+const checkedInProjectCatalogFile = path.join(
+  projectDirectory,
+  "src",
+  "data",
+  "docs-projects.fixture.json",
+);
+const protocolFile = path.join(
+  projectDirectory,
+  "src",
+  "data",
+  "protocol.json",
+);
+const generatedProjectCatalogFile = path.join(
+  outputDirectory,
+  "project-catalog.json",
+);
 const metadataProperties = await readProperties(
   checkedInProjectManifestFile,
   false,
@@ -114,6 +131,9 @@ await cleanGeneratedDocsOutput(
   outputDirectory,
   explicitSlugs.length ? selectedSlugs : [],
 );
+if (await isRegularFile(platformVersionCatalogFile)) {
+  await writeGeneratedProjectCatalog(allProjects, platformVersions);
+}
 if (syncSources) {
   await syncProjectSources(projects, platformVersions);
 }
@@ -177,15 +197,16 @@ async function cleanGeneratedDocsOutput(
 ): Promise<any> {
   await fs.mkdir(directory, { recursive: true });
   if (slugs.length) {
-    await Promise.all(
-      slugs.flatMap((slug: any): any => [
+    await Promise.all([
+      fs.rm(path.join(directory, "project-catalog.json"), { force: true }),
+      ...slugs.flatMap((slug: any): any => [
         fs.rm(path.join(directory, `${slug}.html`), { force: true }),
         fs.rm(path.join(directory, "assets", slug), {
           force: true,
           recursive: true,
         }),
       ]),
-    );
+    ]);
     return;
   }
 
@@ -193,6 +214,9 @@ async function cleanGeneratedDocsOutput(
   await Promise.all(
     entries.map((entry: any): any => {
       if (entry.isFile() && entry.name.endsWith(".html")) {
+        return fs.rm(path.join(directory, entry.name), { force: true });
+      }
+      if (entry.isFile() && entry.name === "project-catalog.json") {
         return fs.rm(path.join(directory, entry.name), { force: true });
       }
       if (entry.isDirectory() && entry.name === "assets") {
@@ -204,6 +228,43 @@ async function cleanGeneratedDocsOutput(
       return undefined;
     }),
   );
+}
+
+async function writeGeneratedProjectCatalog(
+  projects: DocsProject[],
+  platformVersions: Record<string, string>,
+): Promise<void> {
+  const [existingCatalog, protocol] = await Promise.all([
+    readJson(checkedInProjectCatalogFile),
+    readJson(protocolFile),
+  ]);
+  const catalog = buildDocsProjectCatalog({
+    projects,
+    platformVersions,
+    existingCatalog,
+    protocol,
+    source: `${path.relative(projectDirectory, platformVersionCatalogFile)} plus checked-in docs metadata`,
+    publishedSource:
+      typeof existingCatalog.publishedSource === "string"
+        ? existingCatalog.publishedSource
+        : "",
+  });
+  await fs.writeFile(
+    generatedProjectCatalogFile,
+    `${JSON.stringify(catalog, null, 2)}\n`,
+    "utf8",
+  );
+}
+
+async function readJson(file: string): Promise<Record<string, any>> {
+  try {
+    return JSON.parse(await fs.readFile(file, "utf8"));
+  } catch (error: any) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
 }
 
 async function syncProjectSources(

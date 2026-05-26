@@ -23,15 +23,13 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import {
-  docsCatalogProjectsByCategory,
-  docsProjectCatalog,
-} from "@/lib/protocol";
+import { type DocsProjectCatalog, type ProtocolCategory } from "@/lib/protocol";
 import docsVersions from "@/data/docs-versions.json";
 import { withBasePath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  projectCatalog: DocsProjectCatalog;
   activeSlug?: string;
   activeSections?: Array<{
     id: string;
@@ -40,21 +38,22 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 };
 
 export function AppSidebar({
+  projectCatalog,
   activeSlug,
   activeSections = [],
   className,
   ...props
 }: AppSidebarProps) {
   const activeProject = activeSlug
-    ? docsProjectCatalog.projects.find((project) => project.slug === activeSlug)
+    ? projectCatalog.projects.find((project) => project.slug === activeSlug)
     : undefined;
   const activeCategorySlug = activeSlug
-    ? docsProjectCatalog.categories.find(
+    ? projectCatalog.categories.find(
         (category) =>
           category.slug === activeProject?.primaryCategory &&
           category.projectSlugs?.includes(activeSlug),
       )?.slug ||
-      docsProjectCatalog.categories.find((category) =>
+      projectCatalog.categories.find((category) =>
         category.projectSlugs?.includes(activeSlug),
       )?.slug
     : undefined;
@@ -78,12 +77,16 @@ export function AppSidebar({
           <VersionSelector
             label="Docs version"
             options={docsVersions.versions}
+            versionManifestHref="/versions.json"
             surface="docs"
             className="rounded-md border border-sidebar-border bg-sidebar-accent/35 p-2"
           />
         </div>
-        {docsProjectCatalog.categories.map((category) => {
-          const projects = docsCatalogProjectsByCategory(category);
+        {projectCatalog.categories.map((category) => {
+          const projects = docsCatalogProjectsByCategory(
+            projectCatalog,
+            category,
+          );
           if (!projects.length) {
             return null;
           }
@@ -231,4 +234,17 @@ export function AppSidebar({
       <SidebarRail />
     </Sidebar>
   );
+}
+
+function docsCatalogProjectsByCategory(
+  projectCatalog: DocsProjectCatalog,
+  category: ProtocolCategory,
+) {
+  const selected = new Set(category.projectSlugs || []);
+  return projectCatalog.projects
+    .filter((project) => selected.has(project.slug))
+    .map((project) => ({
+      ...project,
+      href: `/docs/${project.slug}/`,
+    }));
 }

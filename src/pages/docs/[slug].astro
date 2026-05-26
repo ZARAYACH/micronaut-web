@@ -18,20 +18,28 @@ import GeneratedDocsEnhancer from "@/components/web/generated-docs-enhancer.astr
 import { IconBadge } from "@/components/web/icon-badge";
 import { ProjectReferenceLinks } from "@/components/web/project-reference-links";
 import { withBasePath } from "@/lib/base-path";
-import { enhanceGeneratedContentHtml, generatedHtmlLabel } from "@/lib/generated-docs-html";
-import { micronautProtocol, projectBySlug } from "@/lib/protocol";
+import {
+  docsCatalogProject,
+  loadDocsProjectCatalog,
+} from "@/lib/docs-project-catalog";
+import {
+  enhanceGeneratedContentHtml,
+  generatedHtmlLabel,
+} from "@/lib/generated-docs-html";
 import { shouldBuildDocsRoutes } from "@/lib/surface-routes";
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
   if (!shouldBuildDocsRoutes()) {
     return [];
   }
-  return micronautProtocol.docs.projects.map((project) => ({
+  const docsProjectCatalog = await loadDocsProjectCatalog();
+  return docsProjectCatalog.projects.map((project) => ({
     params: { slug: project.slug }
   }));
 }
 
-const project = projectBySlug(Astro.params.slug!);
+const docsProjectCatalog = await loadDocsProjectCatalog();
+const project = docsCatalogProject(docsProjectCatalog, Astro.params.slug!);
 if (!project) {
   return Astro.redirect(withBasePath("/docs/"));
 }
@@ -80,7 +88,12 @@ function extractGeneratedDocSections(html: string) {
 ---
 
 <WebLayout title={`${project.displayName} Docs`} surface="docs" hideHeader>
-  <DocsShell activeSlug={project.slug} activeSections={sidebarSections} client:idle>
+  <DocsShell
+    projectCatalog={docsProjectCatalog}
+    activeSlug={project.slug}
+    activeSections={sidebarSections}
+    client:idle
+  >
     <article class:list={[
       "grid w-full grid-cols-1 py-6",
       generatedDocHtml ? "px-4 md:px-12 xl:grid-cols-[minmax(0,1fr)_260px] xl:gap-8" : "px-4 md:px-5 xl:grid-cols-[minmax(0,1fr)_240px] xl:px-0"
