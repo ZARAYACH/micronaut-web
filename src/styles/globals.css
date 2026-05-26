@@ -6,8 +6,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", "IBM Plex Mono", "Droid Sans Mono", "DejaVu Sans Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-mono:
+    "JetBrains Mono", "IBM Plex Mono", "Droid Sans Mono", "DejaVu Sans Mono",
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -73,7 +77,6 @@
   --radius-card: var(--mn-radius-card);
   --shadow-glow: var(--mn-shadow-glow);
   --shadow-console: var(--mn-shadow-console);
-  --animate-glow-drift: glow-drift 16s ease-in-out infinite;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -89,9 +92,9 @@
   --section-y: clamp(72px, 8vw, 112px);
   --section-y-tight: clamp(48px, 6vw, 80px);
   --hero-y: clamp(88px, 10vw, 136px);
-  --runtime-hero-y: clamp(64px, 7vw, 104px);
-
-  --shell-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --shell-font:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
   --radius: 0.625rem;
 
   --brand: #2f73b9;
@@ -277,155 +280,6 @@
   --sidebar-ring: #78b4ee;
 }
 
-:root[data-experience-theme="runtime"] {
-  --brand: var(--mn-red);
-  --brand-foreground: var(--mn-bg);
-  --brand-hover: color-mix(in oklab, var(--mn-red) 84%, var(--mn-text));
-  --brand-soft: color-mix(in oklab, var(--mn-red) 13%, var(--mn-bg));
-  --brand-border: color-mix(in oklab, var(--mn-red) 35%, var(--mn-border));
-  --brand-muted: color-mix(in oklab, var(--mn-red) 68%, var(--mn-muted));
-
-  --micronaut-blue: var(--mn-cyan);
-  --micronaut-blue-hover: color-mix(in oklab, var(--mn-cyan) 82%, var(--mn-text));
-  --micronaut-blue-soft: color-mix(in oklab, var(--mn-cyan) 12%, var(--mn-bg));
-  --micronaut-blue-border: color-mix(in oklab, var(--mn-cyan) 32%, var(--mn-border));
-
-  --surface: var(--mn-bg);
-  --surface-raised: var(--mn-surface);
-  --surface-subtle: var(--mn-surface-raised);
-
-  --code: #0b1220;
-  --code-foreground: #e5edf5;
-  --code-muted: #a8b3c7;
-  --code-border: #2a3950;
-  --code-tab: #111827;
-  --code-token-base: #e5edf5;
-  --code-token-muted: #a8b3c7;
-  --code-token-keyword: #f36b5b;
-  --code-token-string: #38bdf8;
-  --code-token-function: #c4b5fd;
-  --code-token-type: #fbbf24;
-  --code-token-name: #72d9a5;
-  --code-token-constant: #67e8f9;
-
-  --hero: var(--mn-bg);
-  --hero-foreground: var(--mn-text);
-  --blue-band: var(--mn-surface-raised);
-  --blue-band-foreground: var(--mn-text);
-
-  --background: var(--mn-bg);
-  --foreground: var(--mn-text);
-
-  --card: var(--mn-surface);
-  --card-foreground: var(--mn-text);
-
-  --popover: var(--mn-surface);
-  --popover-foreground: var(--mn-text);
-
-  --primary: var(--mn-text);
-  --primary-foreground: var(--mn-bg);
-
-  --secondary: var(--mn-surface-raised);
-  --secondary-foreground: var(--mn-text);
-
-  --muted: color-mix(in oklab, var(--mn-surface-raised) 72%, var(--mn-bg));
-  --muted-foreground: var(--mn-muted);
-
-  --accent: color-mix(in oklab, var(--mn-cyan) 12%, var(--mn-surface));
-  --accent-foreground: var(--mn-text);
-
-  --destructive: var(--mn-red);
-
-  --border: var(--mn-border);
-  --input: var(--mn-border);
-  --ring: var(--mn-cyan);
-
-  --sidebar: var(--mn-surface);
-  --sidebar-foreground: var(--mn-text);
-  --sidebar-primary: var(--mn-text);
-  --sidebar-primary-foreground: var(--mn-bg);
-  --sidebar-accent: var(--mn-surface-raised);
-  --sidebar-accent-foreground: var(--mn-text);
-  --sidebar-border: var(--mn-border);
-  --sidebar-ring: var(--mn-cyan);
-}
-
-.dark[data-experience-theme="runtime"] {
-  --code: #08111b;
-  --code-foreground: #e5edf5;
-  --code-muted: #a8b3c7;
-  --code-border: #2a3950;
-  --code-tab: #111827;
-}
-
-:root[data-experience-theme="runtime"] .shiki {
-  background-color: var(--code) !important;
-  color: var(--code-token-base) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki code,
-:root[data-experience-theme="runtime"] .shiki .line {
-  color: var(--code-token-base) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style] {
-  --shiki-light: var(--code-token-base) !important;
-  --shiki-dark: var(--code-token-base) !important;
-  color: var(--code-token-base) !important;
-  font-style: var(--shiki-dark-font-style, var(--shiki-light-font-style, inherit));
-  font-weight: var(--shiki-dark-font-weight, var(--shiki-light-font-weight, inherit));
-  text-decoration: var(--shiki-dark-text-decoration, var(--shiki-light-text-decoration, inherit));
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style*="#6E7781"],
-:root[data-experience-theme="runtime"] .shiki span[style*="#8B949E"] {
-  --shiki-light: var(--code-token-muted) !important;
-  --shiki-dark: var(--code-token-muted) !important;
-  color: var(--code-token-muted) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style*="#CF222E"],
-:root[data-experience-theme="runtime"] .shiki span[style*="#FF7B72"] {
-  --shiki-light: var(--code-token-keyword) !important;
-  --shiki-dark: var(--code-token-keyword) !important;
-  color: var(--code-token-keyword) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style*="#0A3069"],
-:root[data-experience-theme="runtime"] .shiki span[style*="#A5D6FF"] {
-  --shiki-light: var(--code-token-string) !important;
-  --shiki-dark: var(--code-token-string) !important;
-  color: var(--code-token-string) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style*="#8250DF"],
-:root[data-experience-theme="runtime"] .shiki span[style*="#D2A8FF"] {
-  --shiki-light: var(--code-token-function) !important;
-  --shiki-dark: var(--code-token-function) !important;
-  color: var(--code-token-function) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style*="#953800"],
-:root[data-experience-theme="runtime"] .shiki span[style*="#FFA657"] {
-  --shiki-light: var(--code-token-type) !important;
-  --shiki-dark: var(--code-token-type) !important;
-  color: var(--code-token-type) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style*="#116329"],
-:root[data-experience-theme="runtime"] .shiki span[style*="#7EE787"] {
-  --shiki-light: var(--code-token-name) !important;
-  --shiki-dark: var(--code-token-name) !important;
-  color: var(--code-token-name) !important;
-}
-
-:root[data-experience-theme="runtime"] .shiki span[style*="#0550AE"],
-:root[data-experience-theme="runtime"] .shiki span[style*="#79C0FF"] {
-  --shiki-light: var(--code-token-constant) !important;
-  --shiki-dark: var(--code-token-constant) !important;
-  color: var(--code-token-constant) !important;
-}
-
 @layer base {
   * {
     border-color: var(--border);
@@ -442,13 +296,6 @@
     font-family: var(--shell-font);
     font-size: 16px;
     text-rendering: optimizeLegibility;
-  }
-
-  :root[data-experience-theme="runtime"] body {
-    background:
-      radial-gradient(circle at top right, color-mix(in oklab, var(--mn-cyan) 18%, transparent), transparent 30rem),
-      radial-gradient(circle at 12% 18%, color-mix(in oklab, var(--mn-red) 10%, transparent), transparent 24rem),
-      var(--mn-bg);
   }
 
   ::selection {
@@ -474,40 +321,4 @@
       transition-duration: 0.01ms !important;
     }
   }
-}
-
-@keyframes glow-drift {
-  0%,
-  100% {
-    opacity: 0.74;
-    transform: translate3d(0, 0, 0);
-  }
-
-  50% {
-    opacity: 1;
-    transform: translate3d(0, -10px, 0);
-  }
-}
-
-.main-code-showcase-runtime .shiki-code {
-  counter-reset: code-line;
-}
-
-.main-code-showcase-runtime .shiki-code .line {
-  counter-increment: code-line;
-  display: block;
-  min-width: max-content;
-  padding-left: 3rem;
-  position: relative;
-}
-
-.main-code-showcase-runtime .shiki-code .line::before {
-  color: var(--code-muted);
-  content: counter(code-line);
-  font-variant-numeric: tabular-nums;
-  left: 0;
-  position: absolute;
-  text-align: right;
-  user-select: none;
-  width: 2rem;
 }

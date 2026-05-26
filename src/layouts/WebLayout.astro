@@ -1,11 +1,7 @@
 ---
 import "@/styles/globals.css";
 import { SiteHeader } from "@/components/web/site-header";
-import {
-  LEGACY_THEME_STORAGE_KEY,
-  THEME_MODE_STORAGE_KEY
-} from "@/lib/experience-theme";
-import type { ExperienceTheme } from "@/lib/experience-theme";
+import { LEGACY_THEME_STORAGE_KEY, THEME_MODE_STORAGE_KEY } from "@/lib/experience-theme";
 import { getMainSitePageSummaries } from "@/lib/main-site-content";
 import { withBasePath } from "@/lib/base-path";
 
@@ -15,19 +11,20 @@ interface Props {
   canonicalUrl?: string;
   surface?: "main" | "docs" | "guides" | "launch";
   hideHeader?: boolean;
-  theme?: ExperienceTheme;
 }
 
-const { title, description = "Micronaut web experience", canonicalUrl, surface = "main", hideHeader = false, theme = "default" } = Astro.props;
+const {
+  title,
+  description = "Micronaut web experience",
+  canonicalUrl,
+  surface = "main",
+  hideHeader = false
+} = Astro.props;
 const mainSitePages = await getMainSitePageSummaries();
 ---
 
 <!doctype html>
-<html
-  lang="en"
-  data-page-experience-theme={theme}
-  data-experience-theme={theme}
->
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
@@ -44,15 +41,16 @@ const mainSitePages = await getMainSitePageSummaries();
       (() => {
         const root = document.documentElement;
         const colorPreference = window.matchMedia("(prefers-color-scheme: dark)");
-        const isThemeMode = (value) => value === "system" || value === "light" || value === "dark";
-        const resolveDark = (mode) => mode === "dark" || (mode === "system" && colorPreference.matches);
+        const preferredThemeMode = colorPreference.matches ? "dark" : "light";
+        const isThemeMode = (value) => value === "light" || value === "dark";
+        const resolveDark = (mode) => mode === "dark";
         const applyThemeMode = (mode) => {
           const dark = resolveDark(mode);
           root.dataset.themeMode = mode;
           root.classList.toggle("dark", dark);
           root.style.colorScheme = dark ? "dark" : "light";
         };
-        let themeMode = "system";
+        let themeMode = preferredThemeMode;
         try {
           const storedMode = localStorage.getItem(themeModeStorageKey);
           const legacyMode = localStorage.getItem(legacyThemeStorageKey);
@@ -63,14 +61,9 @@ const mainSitePages = await getMainSitePageSummaries();
             localStorage.setItem(themeModeStorageKey, legacyMode);
           }
         } catch {
-          themeMode = "system";
+          themeMode = preferredThemeMode;
         }
         applyThemeMode(themeMode);
-        colorPreference.addEventListener("change", () => {
-          if (root.dataset.themeMode === "system") {
-            applyThemeMode("system");
-          }
-        });
       })();
     </script>
     <link rel="icon" href={withBasePath("/micronaut-assets/icons/micronaut-sally.svg")} />
@@ -79,12 +72,7 @@ const mainSitePages = await getMainSitePageSummaries();
   <body>
     <div class="min-h-screen bg-background text-foreground">
       {!hideHeader && (
-        <SiteHeader
-          surface={surface}
-          mainSitePages={mainSitePages}
-          theme={theme}
-          client:idle
-        />
+        <SiteHeader surface={surface} mainSitePages={mainSitePages} client:idle />
       )}
       <slot />
     </div>
