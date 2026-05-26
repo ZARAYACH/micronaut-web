@@ -376,6 +376,17 @@ test("branch deployment workflows do not use the GitHub Pages artifact token", a
   assert.match(workflows[2], /TARGET_REPOSITORY_TOKEN/);
 });
 
+test("PostCSS disables Tailwind production optimization reparsing", async () => {
+  const configModule = await import(
+    `${pathToFileURL(path.join(projectDirectory, "postcss.config.mjs")).href}?test=postcss`
+  );
+
+  assert.equal(
+    configModule.default.plugins["@tailwindcss/postcss"].optimize,
+    false,
+  );
+});
+
 test("external source checkouts stay inside the GitHub workspace", async () => {
   const docsWorkflow = await fs.readFile(
     path.join(projectDirectory, ".github", "workflows", "deploy-docs.yml"),
