@@ -388,7 +388,7 @@ test("external source checkouts stay inside the GitHub workspace", async () => {
 
   assert.match(
     docsWorkflow,
-    /path:\s*external\/docs\/repos\/micronaut-platform/,
+    /target="external\/docs\/repos\/micronaut-platform"/,
   );
   assert.match(
     docsWorkflow,
@@ -401,6 +401,37 @@ test("external source checkouts stay inside the GitHub workspace", async () => {
   );
   assert.doesNotMatch(docsWorkflow, /runner\.temp/);
   assert.doesNotMatch(guidesWorkflow, /runner\.temp/);
+});
+
+test("docs workflow resolves platform refs as branches or tags", async () => {
+  const workflow = await fs.readFile(
+    path.join(projectDirectory, ".github", "workflows", "deploy-docs.yml"),
+    "utf8",
+  );
+
+  assert.match(workflow, /PLATFORM_REF:\s*\$\{\{ inputs\.platform_ref \}\}/);
+  assert.match(
+    workflow,
+    /ls-remote --exit-code --heads origin "\$PLATFORM_REF"/,
+  );
+  assert.match(
+    workflow,
+    /refs\/heads\/\$\{PLATFORM_REF\}:refs\/remotes\/origin\/\$\{PLATFORM_REF\}/,
+  );
+  assert.match(
+    workflow,
+    /ls-remote --exit-code --tags origin "\$resolved_tag"/,
+  );
+  assert.match(workflow, /resolved_tag="v\$PLATFORM_REF"/);
+  assert.match(
+    workflow,
+    /refs\/tags\/\$\{resolved_tag\}:refs\/tags\/\$\{resolved_tag\}/,
+  );
+  assert.match(
+    workflow,
+    /git -C "\$target" fetch --depth=1 origin "\$PLATFORM_REF"/,
+  );
+  assert.doesNotMatch(workflow, /ref:\s*\$\{\{ inputs\.platform_ref \}\}/);
 });
 
 test("docs version manifest is rebuilt from the published docs branch", async (t) => {

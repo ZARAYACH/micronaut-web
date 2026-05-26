@@ -65,11 +65,38 @@ jobs:
           token: ${{ secrets.TARGET_REPOSITORY_TOKEN || github.token }}
 
       - name: Check out platform project
-        uses: actions/checkout@v6
-        with:
-          repository: ${{ inputs.platform_repository }}
-          ref: ${{ inputs.platform_ref }}
-          path: external/docs/repos/micronaut-platform
+        env:
+          PLATFORM_REPOSITORY: ${{ inputs.platform_repository }}
+          PLATFORM_REF: ${{ inputs.platform_ref }}
+        run: |
+          set -euo pipefail
+          target="external/docs/repos/micronaut-platform"
+          repo_url="https://github.com/${PLATFORM_REPOSITORY}.git"
+          mkdir -p "$(dirname "$target")"
+          git init "$target"
+          git -C "$target" remote add origin "$repo_url"
+
+          if git -C "$target" ls-remote --exit-code --heads origin "$PLATFORM_REF" >/dev/null; then
+            git -C "$target" fetch --depth=1 origin "refs/heads/${PLATFORM_REF}:refs/remotes/origin/${PLATFORM_REF}"
+            git -C "$target" checkout --detach "refs/remotes/origin/${PLATFORM_REF}"
+          else
+            resolved_tag="$PLATFORM_REF"
+            if ! git -C "$target" ls-remote --exit-code --tags origin "$resolved_tag" >/dev/null; then
+              if [ "${PLATFORM_REF#v}" = "$PLATFORM_REF" ] && git -C "$target" ls-remote --exit-code --tags origin "v$PLATFORM_REF" >/dev/null; then
+                resolved_tag="v$PLATFORM_REF"
+              fi
+            fi
+
+            if git -C "$target" ls-remote --exit-code --tags origin "$resolved_tag" >/dev/null; then
+              git -C "$target" fetch --depth=1 origin "refs/tags/${resolved_tag}:refs/tags/${resolved_tag}"
+              git -C "$target" checkout --detach "refs/tags/${resolved_tag}"
+            else
+              git -C "$target" fetch --depth=1 origin "$PLATFORM_REF"
+              git -C "$target" checkout --detach FETCH_HEAD
+            fi
+          fi
+
+          git -C "$target" rev-parse --short HEAD
 
       - name: Set up Node
         uses: actions/setup-node@v6

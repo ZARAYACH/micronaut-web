@@ -103,6 +103,8 @@ Branch-based Pages deployment does not use a dedicated Pages deployment secret. 
 
 External source repositories checked out by the manual docs and guides workflows are placed under `external/` in the GitHub workspace. `actions/checkout` paths must stay inside the workspace; do not use `${{ runner.temp }}` for those checkouts.
 
+The docs workflow resolves `platform_ref` explicitly as a branch first, then as an exact tag, then as a `v`-prefixed tag such as `v4.10.14`, and finally as a raw Git ref or SHA.
+
 ### Routing Inputs
 
 The build reads these deployment inputs:
