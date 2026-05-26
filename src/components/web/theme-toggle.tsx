@@ -10,19 +10,9 @@ import {
 } from "@/lib/experience-theme";
 import { cn } from "@/lib/utils";
 
-type ThemeToggleProps = {
+type ThemeModeSwitchProps = {
   className?: string;
-  showLabels?: boolean;
 };
-
-const themeModes: Array<{
-  mode: ThemeMode;
-  label: string;
-  icon: typeof Sun;
-}> = [
-  { mode: "light", label: "Light", icon: Sun },
-  { mode: "dark", label: "Dark", icon: Moon },
-];
 
 function isThemeMode(value: string | undefined): value is ThemeMode {
   return value === "light" || value === "dark";
@@ -54,23 +44,13 @@ function applyThemeMode(mode: ThemeMode, persist = true) {
   return dark;
 }
 
-export function ThemeToggle({
-  className,
-  showLabels = false,
-}: ThemeToggleProps) {
-  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
+export function ThemeModeSwitch({ className }: ThemeModeSwitchProps) {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    const rootMode = document.documentElement.dataset.themeMode;
-    const initialMode = isThemeMode(rootMode) ? rootMode : "light";
-    setThemeMode(initialMode);
     setDark(document.documentElement.classList.contains("dark"));
 
     function syncFromRoot() {
-      const rootMode = document.documentElement.dataset.themeMode;
-      const nextMode = isThemeMode(rootMode) ? rootMode : "light";
-      setThemeMode(nextMode);
       setDark(document.documentElement.classList.contains("dark"));
     }
 
@@ -79,11 +59,9 @@ export function ThemeToggle({
         mode?: ThemeMode;
         dark?: boolean;
       }>;
-      const nextMode = isThemeMode(customEvent.detail?.mode)
-        ? customEvent.detail.mode
-        : "light";
-      setThemeMode(nextMode);
-      setDark(Boolean(customEvent.detail?.dark));
+      if (isThemeMode(customEvent.detail?.mode)) {
+        setDark(Boolean(customEvent.detail?.dark));
+      }
     }
 
     syncFromRoot();
@@ -101,47 +79,30 @@ export function ThemeToggle({
   }, []);
 
   function setMode(nextMode: ThemeMode) {
-    setThemeMode(nextMode);
     setDark(applyThemeMode(nextMode));
   }
 
+  function toggleMode() {
+    setMode(dark ? "light" : "dark");
+  }
+
+  const Icon = dark ? Moon : Sun;
+
   return (
-    <div
+    <button
+      type="button"
+      role="switch"
+      aria-checked={dark}
+      aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
+      title={`Switch to ${dark ? "light" : "dark"} theme`}
+      onClick={toggleMode}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border p-1",
-        "border-border bg-background text-muted-foreground shadow-xs",
+        "inline-flex h-9 w-9 items-center justify-center rounded-md border shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground",
         className,
       )}
-      role="radiogroup"
-      aria-label={`Color theme, ${dark ? "dark" : "light"} active`}
     >
-      {themeModes.map((option) => {
-        const Icon = option.icon;
-        const active = themeMode === option.mode;
-
-        return (
-          <button
-            key={option.mode}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            aria-label={`${option.label} theme`}
-            title={`${option.label} theme`}
-            onClick={() => setMode(option.mode)}
-            className={cn(
-              "inline-flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-full px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-              active
-                ? "bg-foreground text-background"
-                : "hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            <Icon className="size-4" />
-            <span className={showLabels ? "inline" : "sr-only"}>
-              {option.label}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+      <Icon className="size-4" aria-hidden="true" />
+    </button>
   );
 }

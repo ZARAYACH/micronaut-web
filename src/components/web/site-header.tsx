@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sheet";
 import { MicronautLogo } from "@/components/web/micronaut-logo";
 import { SearchDialog } from "@/components/web/search-dialog";
+import { ThemeModeSwitch } from "@/components/web/theme-toggle";
 import { withBasePath, withSurfacePath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
@@ -203,6 +204,17 @@ const mobileGroups = [
   },
 ];
 
+function MobileColorModeSwitch() {
+  return (
+    <div className="flex items-center justify-between px-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Color mode
+      </p>
+      <ThemeModeSwitch />
+    </div>
+  );
+}
+
 export function SiteHeader({
   surface = "main",
   hideBrand = false,
@@ -297,6 +309,7 @@ export function SiteHeader({
           >
             <a href={withSurfacePath("launch", "/launch/")}>Launch</a>
           </Button>
+          <ThemeModeSwitch className="hidden sm:inline-flex" />
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -345,6 +358,7 @@ export function SiteHeader({
                     ))}
                   </div>
                 ))}
+                <MobileColorModeSwitch />
               </nav>
             </SheetContent>
           </Sheet>
