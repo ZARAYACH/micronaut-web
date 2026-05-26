@@ -1,5 +1,5 @@
 import docsProjectCatalogFixture from "@/data/docs-projects.fixture.json";
-import generatedGuidesManifest from "@/content/generated-guides/manifest.json";
+import generatedGuidesManifest from "@/data/generated-guides.fixture.json";
 export type CatalogCategory = {
   slug: string;
   name: string;

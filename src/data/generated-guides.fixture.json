@@ -1,0 +1,272 @@
+{
+  "generatedAt": "2026-05-26T10:12:09.077Z",
+  "guideCount": 3,
+  "guides": [
+    {
+      "slug": "micronaut-data-jdbc-repository",
+      "title": "Access a database with Micronaut Data JDBC",
+      "intro": "Learn how to access a database with Micronaut JDBC repositories.",
+      "authors": [
+        "Sergio del Amo",
+        "John Shingler"
+      ],
+      "tags": [
+        "database",
+        "micronaut-data",
+        "jdbc"
+      ],
+      "categories": [
+        "Data JDBC"
+      ],
+      "publicationDate": "2021-05-28",
+      "estimatedMinutes": 25,
+      "overviewFile": "micronaut-data-jdbc-repository.html",
+      "defaultOptionFile": "micronaut-data-jdbc-repository-gradle-java.html",
+      "options": [
+        {
+          "id": "micronaut-data-jdbc-repository-gradle-java",
+          "label": "Java / Gradle",
+          "language": "java",
+          "languageLabel": "Java",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "micronaut-data-jdbc-repository-gradle-java.html",
+          "fragment": "fragments/micronaut-data-jdbc-repository-gradle-java.html",
+          "zipUrl": "micronaut-data-jdbc-repository-gradle-java.zip"
+        },
+        {
+          "id": "micronaut-data-jdbc-repository-gradle-kotlin",
+          "label": "Kotlin / Gradle",
+          "language": "kotlin",
+          "languageLabel": "Kotlin",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "micronaut-data-jdbc-repository-gradle-kotlin.html",
+          "fragment": "fragments/micronaut-data-jdbc-repository-gradle-kotlin.html",
+          "zipUrl": "micronaut-data-jdbc-repository-gradle-kotlin.zip"
+        },
+        {
+          "id": "micronaut-data-jdbc-repository-gradle-groovy",
+          "label": "Groovy / Gradle",
+          "language": "groovy",
+          "languageLabel": "Groovy",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "micronaut-data-jdbc-repository-gradle-groovy.html",
+          "fragment": "fragments/micronaut-data-jdbc-repository-gradle-groovy.html",
+          "zipUrl": "micronaut-data-jdbc-repository-gradle-groovy.zip"
+        },
+        {
+          "id": "micronaut-data-jdbc-repository-maven-java",
+          "label": "Java / Maven",
+          "language": "java",
+          "languageLabel": "Java",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "micronaut-data-jdbc-repository-maven-java.html",
+          "fragment": "fragments/micronaut-data-jdbc-repository-maven-java.html",
+          "zipUrl": "micronaut-data-jdbc-repository-maven-java.zip"
+        },
+        {
+          "id": "micronaut-data-jdbc-repository-maven-kotlin",
+          "label": "Kotlin / Maven",
+          "language": "kotlin",
+          "languageLabel": "Kotlin",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "micronaut-data-jdbc-repository-maven-kotlin.html",
+          "fragment": "fragments/micronaut-data-jdbc-repository-maven-kotlin.html",
+          "zipUrl": "micronaut-data-jdbc-repository-maven-kotlin.zip"
+        },
+        {
+          "id": "micronaut-data-jdbc-repository-maven-groovy",
+          "label": "Groovy / Maven",
+          "language": "groovy",
+          "languageLabel": "Groovy",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "micronaut-data-jdbc-repository-maven-groovy.html",
+          "fragment": "fragments/micronaut-data-jdbc-repository-maven-groovy.html",
+          "zipUrl": "micronaut-data-jdbc-repository-maven-groovy.zip"
+        }
+      ]
+    },
+    {
+      "slug": "micronaut-http-client",
+      "title": "Micronaut HTTP Client",
+      "intro": "Learn how to use Micronaut low-level HTTP Client. Simplify your code with the declarative HTTP client.",
+      "authors": [
+        "Sergio del Amo",
+        "Iván López"
+      ],
+      "tags": [
+        "client",
+        "rx",
+        "flowable",
+        "json-streams"
+      ],
+      "categories": [
+        "HTTP Client"
+      ],
+      "publicationDate": "2018-07-02",
+      "estimatedMinutes": 30,
+      "overviewFile": "micronaut-http-client.html",
+      "defaultOptionFile": "micronaut-http-client-gradle-java.html",
+      "options": [
+        {
+          "id": "micronaut-http-client-gradle-java",
+          "label": "Java / Gradle",
+          "language": "java",
+          "languageLabel": "Java",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "micronaut-http-client-gradle-java.html",
+          "fragment": "fragments/micronaut-http-client-gradle-java.html",
+          "zipUrl": "micronaut-http-client-gradle-java.zip"
+        },
+        {
+          "id": "micronaut-http-client-gradle-kotlin",
+          "label": "Kotlin / Gradle",
+          "language": "kotlin",
+          "languageLabel": "Kotlin",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "micronaut-http-client-gradle-kotlin.html",
+          "fragment": "fragments/micronaut-http-client-gradle-kotlin.html",
+          "zipUrl": "micronaut-http-client-gradle-kotlin.zip"
+        },
+        {
+          "id": "micronaut-http-client-gradle-groovy",
+          "label": "Groovy / Gradle",
+          "language": "groovy",
+          "languageLabel": "Groovy",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "micronaut-http-client-gradle-groovy.html",
+          "fragment": "fragments/micronaut-http-client-gradle-groovy.html",
+          "zipUrl": "micronaut-http-client-gradle-groovy.zip"
+        },
+        {
+          "id": "micronaut-http-client-maven-java",
+          "label": "Java / Maven",
+          "language": "java",
+          "languageLabel": "Java",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "micronaut-http-client-maven-java.html",
+          "fragment": "fragments/micronaut-http-client-maven-java.html",
+          "zipUrl": "micronaut-http-client-maven-java.zip"
+        },
+        {
+          "id": "micronaut-http-client-maven-kotlin",
+          "label": "Kotlin / Maven",
+          "language": "kotlin",
+          "languageLabel": "Kotlin",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "micronaut-http-client-maven-kotlin.html",
+          "fragment": "fragments/micronaut-http-client-maven-kotlin.html",
+          "zipUrl": "micronaut-http-client-maven-kotlin.zip"
+        },
+        {
+          "id": "micronaut-http-client-maven-groovy",
+          "label": "Groovy / Maven",
+          "language": "groovy",
+          "languageLabel": "Groovy",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "micronaut-http-client-maven-groovy.html",
+          "fragment": "fragments/micronaut-http-client-maven-groovy.html",
+          "zipUrl": "micronaut-http-client-maven-groovy.zip"
+        }
+      ]
+    },
+    {
+      "slug": "creating-your-first-micronaut-app",
+      "title": "Creating your first Micronaut application",
+      "intro": "Learn how to create a Hello World Micronaut application with a controller and a functional test.",
+      "authors": [
+        "Iván López",
+        "Sergio del Amo"
+      ],
+      "tags": [
+        "junit"
+      ],
+      "categories": [
+        "Getting Started"
+      ],
+      "publicationDate": "2018-05-23",
+      "estimatedMinutes": 35,
+      "overviewFile": "creating-your-first-micronaut-app.html",
+      "defaultOptionFile": "creating-your-first-micronaut-app-gradle-java.html",
+      "options": [
+        {
+          "id": "creating-your-first-micronaut-app-gradle-java",
+          "label": "Java / Gradle",
+          "language": "java",
+          "languageLabel": "Java",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "creating-your-first-micronaut-app-gradle-java.html",
+          "fragment": "fragments/creating-your-first-micronaut-app-gradle-java.html",
+          "zipUrl": "creating-your-first-micronaut-app-gradle-java.zip"
+        },
+        {
+          "id": "creating-your-first-micronaut-app-gradle-kotlin",
+          "label": "Kotlin / Gradle",
+          "language": "kotlin",
+          "languageLabel": "Kotlin",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "creating-your-first-micronaut-app-gradle-kotlin.html",
+          "fragment": "fragments/creating-your-first-micronaut-app-gradle-kotlin.html",
+          "zipUrl": "creating-your-first-micronaut-app-gradle-kotlin.zip"
+        },
+        {
+          "id": "creating-your-first-micronaut-app-gradle-groovy",
+          "label": "Groovy / Gradle",
+          "language": "groovy",
+          "languageLabel": "Groovy",
+          "buildTool": "gradle",
+          "buildToolLabel": "Gradle",
+          "file": "creating-your-first-micronaut-app-gradle-groovy.html",
+          "fragment": "fragments/creating-your-first-micronaut-app-gradle-groovy.html",
+          "zipUrl": "creating-your-first-micronaut-app-gradle-groovy.zip"
+        },
+        {
+          "id": "creating-your-first-micronaut-app-maven-java",
+          "label": "Java / Maven",
+          "language": "java",
+          "languageLabel": "Java",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "creating-your-first-micronaut-app-maven-java.html",
+          "fragment": "fragments/creating-your-first-micronaut-app-maven-java.html",
+          "zipUrl": "creating-your-first-micronaut-app-maven-java.zip"
+        },
+        {
+          "id": "creating-your-first-micronaut-app-maven-kotlin",
+          "label": "Kotlin / Maven",
+          "language": "kotlin",
+          "languageLabel": "Kotlin",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "creating-your-first-micronaut-app-maven-kotlin.html",
+          "fragment": "fragments/creating-your-first-micronaut-app-maven-kotlin.html",
+          "zipUrl": "creating-your-first-micronaut-app-maven-kotlin.zip"
+        },
+        {
+          "id": "creating-your-first-micronaut-app-maven-groovy",
+          "label": "Groovy / Maven",
+          "language": "groovy",
+          "languageLabel": "Groovy",
+          "buildTool": "maven",
+          "buildToolLabel": "Maven",
+          "file": "creating-your-first-micronaut-app-maven-groovy.html",
+          "fragment": "fragments/creating-your-first-micronaut-app-maven-groovy.html",
+          "zipUrl": "creating-your-first-micronaut-app-maven-groovy.zip"
+        }
+      ]
+    }
+  ]
+}

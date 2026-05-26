@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import fallbackGeneratedGuidesManifest from "@/content/generated-guides/manifest.json";
+import fallbackGeneratedGuidesManifest from "@/data/generated-guides.fixture.json";
 import { enhanceGeneratedContentHtml } from "@/lib/generated-docs-html";
 
 export type GeneratedGuideOption = {
@@ -45,7 +45,7 @@ export async function readGeneratedGuidesManifest(): Promise<GeneratedGuidesMani
       return manifest as GeneratedGuidesManifest;
     }
   } catch {
-    // Fall back to the checked-in manifest generated for local builds.
+    // Fall back to the checked-in guide subset when generated content is unavailable.
   }
   return fallbackGeneratedGuidesManifest as GeneratedGuidesManifest;
 }

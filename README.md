@@ -59,7 +59,7 @@ Tailwind can access the extra Micronaut-specific variables through the `@theme i
 
 `src/data/docs-projects.fixture.json` contains the checked-in docs project catalog, categories, descriptions, repository links, and platform versions used when generated docs output is unavailable.
 
-`src/content/generated-guides/manifest.json` contains the checked-in guide catalog produced by `npm run render:guides`, including tags, authors, dates, and language/build variants.
+`src/data/generated-guides.fixture.json` contains the checked-in guide catalog subset used when generated guide output is unavailable. `src/content/generated-guides/manifest.json` is produced by `npm run render:guides` and ignored as generated content.
 
 ## Deployment and Compatibility
 
