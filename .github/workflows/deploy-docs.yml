@@ -69,7 +69,7 @@ jobs:
         with:
           repository: ${{ inputs.platform_repository }}
           ref: ${{ inputs.platform_ref }}
-          path: ${{ runner.temp }}/docs/repos/micronaut-platform
+          path: external/docs/repos/micronaut-platform
 
       - name: Set up Node
         uses: actions/setup-node@v6
@@ -100,7 +100,7 @@ jobs:
           MICRONAUT_DEPLOY_SURFACE: docs
           MICRONAUT_DOCS_ROOT: /${{ inputs.docs_version }}
           MICRONAUT_DOCS_LATEST_ROOT: /latest
-          DOCS_DIR: ${{ runner.temp }}/docs
+          DOCS_DIR: ${{ github.workspace }}/external/docs
           DOCS_RENDER_ALL: "true"
           DOCS_RENDER_STRICT: "true"
           DOCS_SYNC_SOURCES: "true"

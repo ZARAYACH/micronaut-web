@@ -376,6 +376,33 @@ test("branch deployment workflows do not use the GitHub Pages artifact token", a
   assert.match(workflows[2], /TARGET_REPOSITORY_TOKEN/);
 });
 
+test("external source checkouts stay inside the GitHub workspace", async () => {
+  const docsWorkflow = await fs.readFile(
+    path.join(projectDirectory, ".github", "workflows", "deploy-docs.yml"),
+    "utf8",
+  );
+  const guidesWorkflow = await fs.readFile(
+    path.join(projectDirectory, ".github", "workflows", "deploy-guides.yml"),
+    "utf8",
+  );
+
+  assert.match(
+    docsWorkflow,
+    /path:\s*external\/docs\/repos\/micronaut-platform/,
+  );
+  assert.match(
+    docsWorkflow,
+    /DOCS_DIR:\s*\$\{\{ github\.workspace \}\}\/external\/docs/,
+  );
+  assert.match(guidesWorkflow, /path:\s*external\/micronaut-guides/);
+  assert.match(
+    guidesWorkflow,
+    /MICRONAUT_GUIDES_DIR:\s*\$\{\{ github\.workspace \}\}\/external\/micronaut-guides/,
+  );
+  assert.doesNotMatch(docsWorkflow, /runner\.temp/);
+  assert.doesNotMatch(guidesWorkflow, /runner\.temp/);
+});
+
 test("docs version manifest is rebuilt from the published docs branch", async (t) => {
   const published = await temporaryDirectory(t);
   const manifest = path.join(await temporaryDirectory(t), "docs-versions.json");

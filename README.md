@@ -101,6 +101,8 @@ The main workflow, `.github/workflows/deploy-web.yml`, runs on pushes to `main`,
 
 Branch-based Pages deployment does not use a dedicated Pages deployment secret. The web workflow publishes to this repository's `gh-pages` branch with the default `github.token`. Docs and guides also use `github.token` when the workflow runs in the target repository; if a workflow in `micronaut-web` pushes to a different repository, set `TARGET_REPOSITORY_TOKEN` with `contents:write` access to that target repository.
 
+External source repositories checked out by the manual docs and guides workflows are placed under `external/` in the GitHub workspace. `actions/checkout` paths must stay inside the workspace; do not use `${{ runner.temp }}` for those checkouts.
+
 ### Routing Inputs
 
 The build reads these deployment inputs:
