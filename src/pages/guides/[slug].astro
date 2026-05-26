@@ -128,6 +128,10 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
     };
   });
 }
+
+function variantAnchor(option: GeneratedGuideOption) {
+  return `variant-${option.id.replace(/[^a-zA-Z0-9_-]+/g, "-")}`;
+}
 ---
 
 {props.kind === "tag" && (
@@ -138,7 +142,7 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
 
 {props.kind === "overview" && (
   <WebLayout title={`${props.guide.title} | Micronaut Guides`} surface="guides">
-    <main class="mx-auto grid max-w-[1180px] gap-8 px-4 py-8 md:px-6 xl:grid-cols-[minmax(0,1fr)_260px]">
+    <main class="mx-auto grid max-w-[1180px] gap-8 px-4 py-8 md:px-6 lg:grid-cols-[minmax(0,1fr)_260px]">
       <article class="min-w-0">
         <header class="mb-8">
           <Badge variant="secondary">{props.guide.categories[0] || "Guide"}</Badge>
@@ -152,6 +156,20 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
             ))}
           </div>
         </header>
+
+        <nav class="mb-6 grid gap-1 rounded-lg border bg-card p-3 text-[0.86rem] lg:hidden" aria-label="In this guide">
+          <h2 class="px-2 pb-1 text-sm font-medium">In this guide</h2>
+          <a href="#variants" class="rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground">Read This Guide</a>
+          {props.guide.options.map((option) => (
+            <a
+              href={`#${variantAnchor(option)}`}
+              class="rounded-md px-4 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground"
+            >
+              {option.label}
+            </a>
+          ))}
+          <a href={withBasePath("/guides/")} class="rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground">All guides</a>
+        </nav>
 
         <Card id="variants">
           <CardHeader>
@@ -170,7 +188,7 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
                 </thead>
                 <tbody>
                   {props.guide.options.map((option) => (
-                    <tr class="border-t">
+                    <tr id={variantAnchor(option)} class="scroll-mt-24 border-t">
                       <td class="px-4 py-3">{option.languageLabel}</td>
                       <td class="px-4 py-3">{option.buildToolLabel}</td>
                       <td class="px-4 py-3">
@@ -186,11 +204,19 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
           </CardContent>
         </Card>
       </article>
-      <aside class="hidden xl:block">
+      <aside class="hidden lg:block">
         <div class="sticky top-24 grid gap-1.5 text-[0.82rem]">
-          <h2 class="font-medium">In this section</h2>
+          <h2 class="font-medium">In this guide</h2>
           <Separator className="opacity-70" />
-          <a href="#variants" class="rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground">Variants</a>
+          <a href="#variants" class="rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground">Read This Guide</a>
+          {props.guide.options.map((option) => (
+            <a
+              href={`#${variantAnchor(option)}`}
+              class="rounded-md px-4 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground"
+            >
+              {option.label}
+            </a>
+          ))}
           <Separator className="opacity-70" />
           <span class="rounded-md px-2 py-1.5 leading-5 text-muted-foreground">{props.guide.estimatedMinutes} min</span>
           <span class="rounded-md px-2 py-1.5 leading-5 text-muted-foreground">{props.guide.publicationDate}</span>
@@ -205,7 +231,7 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
   <WebLayout title={`${props.guide.title} | ${props.option.label}`} surface="guides">
     <main class:list={[
       "mx-auto grid max-w-[1320px] gap-8 px-4 py-8 md:px-6",
-      pageIndexSections.length > 0 && "min-[1400px]:grid-cols-[minmax(0,1fr)_240px]"
+      pageIndexSections.length > 0 && "lg:grid-cols-[minmax(0,1fr)_260px]"
     ]}>
       <article class="min-w-0">
         <header class="mb-8">
@@ -220,6 +246,28 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
             <a href={withBasePath(guideOverviewPath(props.guide, guidesRoot))} class="text-brand no-underline hover:underline">All variants</a>
           </div>
         </header>
+
+        {pageIndexSections.length > 0 && (
+          <details class="mb-6 rounded-lg border bg-card p-3 lg:hidden" data-guide-mobile-index>
+            <summary class="cursor-pointer text-sm font-medium">In this section</summary>
+            <nav class="mt-3 grid gap-px border-l border-border pl-2.5" aria-label="Current guide sections">
+              {pageIndexSections.map((section) => (
+                <a
+                  href={`#${section.id}`}
+                  class:list={[
+                    "relative block min-w-0 rounded-md py-1 pr-2 text-[0.82rem] leading-[1.4] break-words text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground",
+                    section.level === 0 && "pl-2",
+                    section.level === 1 && "pl-3.5",
+                    section.level === 2 && "pl-5",
+                    section.level >= 3 && "pl-[1.625rem]"
+                  ]}
+                >
+                  {section.label}
+                </a>
+              ))}
+            </nav>
+          </details>
+        )}
 
         {fragmentHtml ? (
           <>
@@ -236,7 +284,7 @@ function buildGuidePageIndexSections(sections: Array<{ id: string; label: string
         )}
       </article>
       {pageIndexSections.length > 0 && (
-        <aside class="hidden min-w-0 min-[1400px]:block" aria-label="In this section" data-guide-page-index>
+        <aside class="hidden min-w-0 lg:block" aria-label="In this section" data-guide-page-index>
           <div
             class="sticky top-[calc(var(--topbar-height)+24px)] max-h-[calc(100vh-var(--topbar-height)-48px)] overflow-y-auto pb-7 pr-6 font-[var(--shell-font)] [scrollbar-width:thin]"
             data-guide-page-index-inner

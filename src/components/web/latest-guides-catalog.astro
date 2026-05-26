@@ -76,8 +76,6 @@ for (const guide of visibleGuides) {
 }
 const hasFilters = Boolean(query || selectedCategory || selectedTag || sortMode !== "latest");
 const recentGuides = hasFilters ? [] : latestGuides(visibleGuides, 6);
-const categoryLabel = categories.find((category) => categorySlug(category) === selectedCategory) || selectedCategory;
-const tagLabel = selectedTag;
 
 function categorySlug(category: string) {
   return category
@@ -185,7 +183,7 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
 ---
 
 <main class="mx-auto grid w-full max-w-[1320px] gap-8 px-4 py-8 md:px-6 lg:py-10" data-guides-catalog data-active-tag={activeTag || ""}>
-  <header class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
+  <header class="max-w-3xl">
     <div class="max-w-3xl">
       <Badge variant="secondary">{activeTag ? "Tag" : "Guides"}</Badge>
       <h1 class="mt-5 text-4xl font-bold tracking-tight md:text-5xl">
@@ -195,26 +193,6 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
         Learn how to build Micronaut applications with focused tutorials, runnable examples, and language/build variants.
       </p>
     </div>
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Catalog</CardTitle>
-        <CardDescription>Published guide replacement for the legacy latest guide index.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid grid-cols-3 gap-3">
-        <div class="rounded-lg bg-muted p-3">
-          <div class="text-xl font-semibold">{visibleGuides.length}</div>
-          <div class="text-xs text-muted-foreground">Guides</div>
-        </div>
-        <div class="rounded-lg bg-muted p-3">
-          <div class="text-xl font-semibold">{categoryGroups.size}</div>
-          <div class="text-xs text-muted-foreground">Topics</div>
-        </div>
-        <div class="rounded-lg bg-muted p-3">
-          <div class="text-xl font-semibold">{tags.length}</div>
-          <div class="text-xs text-muted-foreground">Tags</div>
-        </div>
-      </CardContent>
-    </Card>
   </header>
 
   {!activeTag && (
@@ -231,7 +209,7 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
           </h2>
           <p class="mt-2 text-sm leading-6 text-muted-foreground">{guideContentSummary}</p>
         </div>
-        <a href="#guide-filters" class={buttonVariants({ variant: "outline" })}>Browse all guides</a>
+        <a href="#guides-list" class={buttonVariants({ variant: "outline" })}>Browse all guides</a>
       </div>
       <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {contentStats.map((stat) => (
@@ -258,76 +236,6 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
     </section>
   )}
 
-  <Card id="guide-filters">
-    <CardHeader>
-      <CardTitle>Find Guides</CardTitle>
-      <CardDescription data-guides-summary data-total={guides.length}>
-        {visibleGuides.length} of {guides.length} guides{query ? ` matching "${query}"` : ""}{categoryLabel ? ` in ${categoryLabel}` : ""}{tagLabel ? ` tagged ${tagLabel}` : ""}.
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <form action={withBasePath(rootPath)} method="get" class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_220px_180px_auto] lg:items-end" data-guides-filter-form>
-        <div class="grid gap-2">
-          <label for="guide-search" class="text-sm font-medium">Search</label>
-          <input
-            id="guide-search"
-            type="search"
-            name="q"
-            value={query}
-            placeholder="HTTP client, security, AWS..."
-            class="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          />
-        </div>
-        <div class="grid gap-2">
-          <label for="guide-category" class="text-sm font-medium">Topic</label>
-          <select
-            id="guide-category"
-            name="category"
-            class="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            <option value="">All topics</option>
-            {categories.map((category) => (
-              <option value={categorySlug(category)} selected={selectedCategory === categorySlug(category) || selectedCategory === category}>{category}</option>
-            ))}
-          </select>
-        </div>
-        <div class="grid gap-2">
-          <label for="guide-tag" class="text-sm font-medium">Tag</label>
-          <select
-            id="guide-tag"
-            name="tag"
-            class="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            <option value="">All tags</option>
-            {tags.map((tag) => (
-              <option value={tag} selected={selectedTag === tag}>{tag}</option>
-            ))}
-          </select>
-        </div>
-        <div class="grid gap-2">
-          <label for="guide-sort" class="text-sm font-medium">Sort</label>
-          <select
-            id="guide-sort"
-            name="sort"
-            class="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            <option value="latest" selected={sortMode === "latest"}>Latest</option>
-            <option value="title" selected={sortMode === "title"}>Title</option>
-            <option value="duration" selected={sortMode === "duration"}>Duration</option>
-          </select>
-        </div>
-        <div class="flex gap-2">
-          <Button type="submit">Apply</Button>
-          {hasFilters && (
-            <Button asChild variant="outline">
-              <a href={withBasePath(rootPath)}>Reset</a>
-            </Button>
-          )}
-        </div>
-      </form>
-    </CardContent>
-  </Card>
-
   {!activeTag && recentGuides.length > 0 && (
     <section class="grid gap-4" data-guides-latest-section>
       <div class="flex items-center justify-between gap-4">
@@ -349,7 +257,7 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
     </section>
   )}
 
-  <section class="grid gap-7">
+  <section id="guides-list" class="grid gap-7">
     {Array.from(categoryGroups.entries()).map(([category, categoryGuides]) => (
       <div class="grid gap-4" data-guide-category-group>
         <h2 class="text-2xl font-semibold tracking-tight">{category}</h2>
@@ -386,129 +294,3 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
     </Card>
   </div>
 </main>
-
-<script is:inline>
-  (() => {
-    const catalog = document.querySelector("[data-guides-catalog]");
-    const form = catalog?.querySelector("[data-guides-filter-form]");
-    const summary = catalog?.querySelector("[data-guides-summary]");
-    const latestSection = catalog?.querySelector("[data-guides-latest-section]");
-    const emptyState = catalog?.querySelector("[data-guides-empty]");
-    const cards = Array.from(catalog?.querySelectorAll("[data-guide-card]") || []);
-    const groups = Array.from(catalog?.querySelectorAll("[data-guide-category-group]") || []);
-    if (!catalog || !form || !summary || cards.length === 0) {
-      return;
-    }
-
-    const readState = () => {
-      const params = new URLSearchParams(window.location.search);
-      return {
-        q: (params.get("q") || "").trim(),
-        category: (params.get("category") || "").trim(),
-        tag: (params.get("tag") || catalog.dataset.activeTag || "").trim(),
-        sort: ["latest", "title", "duration"].includes(params.get("sort") || "") ? params.get("sort") : "latest"
-      };
-    };
-
-    const formState = () => ({
-      q: form.querySelector("[name='q']")?.value.trim() || "",
-      category: form.querySelector("[name='category']")?.value.trim() || "",
-      tag: form.querySelector("[name='tag']")?.value.trim() || "",
-      sort: form.querySelector("[name='sort']")?.value || "latest"
-    });
-
-    const writeForm = (state) => {
-      const q = form.querySelector("[name='q']");
-      const category = form.querySelector("[name='category']");
-      const tag = form.querySelector("[name='tag']");
-      const sort = form.querySelector("[name='sort']");
-      if (q) q.value = state.q;
-      if (category) category.value = state.category;
-      if (tag) tag.value = state.tag;
-      if (sort) sort.value = state.sort;
-    };
-
-    const updateUrl = (state) => {
-      const url = new URL(window.location.href);
-      url.search = "";
-      if (state.q) url.searchParams.set("q", state.q);
-      if (state.category) url.searchParams.set("category", state.category);
-      if (state.tag) url.searchParams.set("tag", state.tag);
-      if (state.sort && state.sort !== "latest") url.searchParams.set("sort", state.sort);
-      window.history.pushState(null, "", url);
-    };
-
-    const matches = (card, state) => {
-      const search = card.dataset.search || "";
-      const categories = (card.dataset.categories || "").split("|").filter(Boolean);
-      const tags = (card.dataset.tags || "").split("|").filter(Boolean);
-      return (!state.q || search.includes(state.q.toLowerCase())) &&
-        (!state.category || categories.includes(state.category)) &&
-        (!state.tag || tags.includes(state.tag));
-    };
-
-    const sortCards = (items, state) => {
-      return [...items].sort((left, right) => {
-        if (state.sort === "title") {
-          return (left.dataset.title || "").localeCompare(right.dataset.title || "");
-        }
-        if (state.sort === "duration") {
-          return Number(left.dataset.minutes || 0) - Number(right.dataset.minutes || 0) ||
-            (left.dataset.title || "").localeCompare(right.dataset.title || "");
-        }
-        return (right.dataset.date || "").localeCompare(left.dataset.date || "") ||
-          (left.dataset.title || "").localeCompare(right.dataset.title || "");
-      });
-    };
-
-    const summaryText = (visibleCount, state) => {
-      const total = summary.dataset.total || cards.length;
-      const parts = [`${visibleCount} of ${total} guides`];
-      if (state.q) parts.push(`matching "${state.q}"`);
-      if (state.category) {
-        const categoryLabel = form.querySelector(`[name='category'] option[value="${CSS.escape(state.category)}"]`)?.textContent?.trim();
-        if (categoryLabel) parts.push(`in ${categoryLabel}`);
-      }
-      if (state.tag) parts.push(`tagged ${state.tag}`);
-      return `${parts.join(" ")}.`;
-    };
-
-    const apply = (state = readState()) => {
-      writeForm(state);
-      let visibleCount = 0;
-      for (const card of cards) {
-        const visible = matches(card, state);
-        card.hidden = !visible;
-        if (visible) visibleCount += 1;
-      }
-      for (const group of groups) {
-        const grid = group.querySelector("[data-guide-card-grid]");
-        const groupCards = cards.filter((card) => card.closest("[data-guide-category-group]") === group);
-        for (const card of sortCards(groupCards, state)) {
-          grid?.append(card);
-        }
-        group.hidden = groupCards.every((card) => card.hidden);
-      }
-      const hasFilters = Boolean(state.q || state.category || state.tag || state.sort !== "latest");
-      if (latestSection) latestSection.hidden = hasFilters;
-      if (emptyState) emptyState.hidden = visibleCount > 0;
-      summary.textContent = summaryText(visibleCount, state);
-    };
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const state = formState();
-      updateUrl(state);
-      apply(state);
-    });
-    form.querySelectorAll("select").forEach((select) => {
-      select.addEventListener("change", () => {
-        const state = formState();
-        updateUrl(state);
-        apply(state);
-      });
-    });
-    window.addEventListener("popstate", () => apply());
-    apply();
-  })();
-</script>
