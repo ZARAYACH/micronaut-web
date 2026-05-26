@@ -76,6 +76,28 @@ test("generated docs fragments and assets are ignored and not tracked source", a
   assert.deepEqual(trackedGeneratedOutput, []);
 });
 
+test("Tailwind does not scan generated docs and guides fragments", async (): Promise<any> => {
+  const globalsCss = await fs.readFile(
+    path.join(projectDirectory, "src", "styles", "globals.css"),
+    "utf8",
+  );
+  const generatedDocsExclusion =
+    '@source not "../content/generated-docs/**/*";';
+  const generatedGuidesExclusion =
+    '@source not "../content/generated-guides/**/*";';
+
+  assertScriptOrder(
+    globalsCss,
+    '@import "tailwindcss";',
+    generatedDocsExclusion,
+  );
+  assertScriptOrder(
+    globalsCss,
+    generatedDocsExclusion,
+    generatedGuidesExclusion,
+  );
+});
+
 test("generated docs tooling uses Micronaut Platform catalog instead of the old aggregate docs project", async (): Promise<any> => {
   const checkedFiles = [
     ".github/workflows/deploy-docs.yml",

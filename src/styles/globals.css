@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+@source not "../content/generated-docs/**/*";
+@source not "../content/generated-guides/**/*";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
