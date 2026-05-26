@@ -166,7 +166,7 @@ Guide ZIP downloads stay as redirects to the production guide ZIP URLs instead o
 
 There are three asset groups:
 
-- `_astro`: Astro-generated JavaScript and CSS. Surface pruning preserves this folder and writes `.nojekyll` so GitHub Pages serves underscore-prefixed paths.
+- `_astro`: Astro-generated JavaScript and CSS. Surface pruning preserves reachable files in this folder, removes unreferenced chunks, and writes `.nojekyll` so GitHub Pages serves underscore-prefixed paths.
 - `public/micronaut-assets`: source-controlled brand, icon, and main-site assets used mainly by the main surface.
 - Generated docs/guides content assets: images and copied resources produced under generated `assets` folders before pruning.
 

@@ -362,6 +362,15 @@ test("main pruning drops docs, guides, latest, and template artifacts", async (t
     await exists(path.join(dist, "micronaut-assets", "logo.svg")),
     true,
   );
+  assert.equal(await exists(path.join(dist, "_astro", "app.js")), true);
+  assert.equal(await exists(path.join(dist, "_astro", "app.css")), true);
+  assert.equal(await exists(path.join(dist, "_astro", "chunk.js")), true);
+  assert.equal(
+    await exists(path.join(dist, "_astro", "fonts", "code.woff2")),
+    true,
+  );
+  assert.equal(await exists(path.join(dist, "_astro", "unused.js")), false);
+  assert.equal(await exists(path.join(dist, "_astro", "unused.css")), false);
   assert.equal(await exists(path.join(dist, "docs")), false);
   assert.equal(await exists(path.join(dist, "guides")), false);
   assert.equal(await exists(path.join(dist, "latest")), false);
@@ -417,6 +426,24 @@ test("PostCSS disables Tailwind production optimization reparsing", async () => 
     configModule.default.plugins["@tailwindcss/postcss"].optimize,
     false,
   );
+});
+
+test("npm dependencies do not rely on latest dist-tags", async () => {
+  const manifest = JSON.parse(
+    await fs.readFile(path.join(projectDirectory, "package.json"), "utf8"),
+  ) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+
+  for (const [section, dependencies] of Object.entries({
+    dependencies: manifest.dependencies ?? {},
+    devDependencies: manifest.devDependencies ?? {},
+  })) {
+    for (const [name, version] of Object.entries(dependencies)) {
+      assert.notEqual(version, "latest", `${section}.${name}`);
+    }
+  }
 });
 
 test("external source checkouts stay inside the GitHub workspace", async () => {
@@ -721,6 +748,11 @@ async function fakeDist(t: TestContext) {
     "_astro/inline/script.generated-docs-enhancer.js",
     "_astro/inline/script.properties-fallback.js",
     "_astro/inline/script.snippet-validation.js",
+    "_astro/app.css",
+    "_astro/chunk.js",
+    "_astro/fonts/code.woff2",
+    "_astro/unused.css",
+    "_astro/unused.js",
     "index.html",
     "versions.json",
     "launch/index.html",
@@ -737,6 +769,31 @@ async function fakeDist(t: TestContext) {
     "micronaut-web/templates/docs/docs-page.html",
   ];
   await writeFiles(dist, files);
+  await writeTextFile(
+    dist,
+    "_astro/app.js",
+    'import "./chunk.js";\nconsole.log("app");',
+  );
+  await writeTextFile(
+    dist,
+    "_astro/app.css",
+    '@font-face { font-family: "Code"; src: url("./fonts/code.woff2"); }',
+  );
+  await writeTextFile(
+    dist,
+    "index.html",
+    '<link rel="stylesheet" href="/_astro/app.css"><script type="module" src="/_astro/app.js"></script>',
+  );
+  await writeTextFile(
+    dist,
+    "docs/index.html",
+    '<link rel="stylesheet" href="/micronaut-docs/_astro/app.css"><script type="module" src="/micronaut-docs/_astro/app.js"></script>docs/index.html',
+  );
+  await writeTextFile(
+    dist,
+    "latest/index.html",
+    '<link rel="stylesheet" href="/micronaut-guides/_astro/app.css"><script type="module" src="/micronaut-guides/_astro/app.js"></script>',
+  );
   await writeTextFile(
     dist,
     "docs/core/index.html",

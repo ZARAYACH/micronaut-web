@@ -79,7 +79,7 @@ contentSource: micronaut-public-markdown
 
   Use of Micronaut logos is prohibited without the prior written consent and express license of the Micronaut brand team. Complete and submit [this form](https://micronaut.io/brand-guidelines/micronaut-trademark-policy/#request) to request a license to use the Micronaut logo(s) or mark(s).
 
-  If you are authorized to use a Micronaut logo, you must comply with the requirements set forth in the [Micronaut Brand Guidelines](/micronaut-assets/main-site/objectcomputing/download-file/5087-Micronaut_Brand_Guidelines.pdf).
+  If you are authorized to use a Micronaut logo, you must comply with the requirements set forth in the [Micronaut Brand Guidelines](/micronaut-assets/main-site/wp-content/uploads/2023/06/Micronaut_Brand_Guidelines.pdf).
 - ### [What is the Export Control Classification Number (ECCN) for the Micronaut framework?](#what-is-the-export-control-classification-number-eccn-for-micronaut)
 
   The Micronaut framework is an open source technology that is not on the Commerce Control List; it is classified with the general purpose classification of EAR 99.

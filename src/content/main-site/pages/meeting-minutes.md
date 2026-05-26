@@ -2,7 +2,7 @@
 order: 21
 title: Technology Advisory Board Meeting Minutes
 eyebrow: Foundation
-description: Board Members In Attendance Yuriy Artamonov – JetBrains, Microservices Fellow Sergio del Amo – Unity Foundation, Micronaut Development Lead Neal Ford – ThoughtWorks, Director, Cloud Architect James Kleeh – Amazon, Software Development Engineer Matthew Moss – Unity Foundation, Lead Security and Support Analyst Mark Sailes – Amazon, Specialist Solution Architect for Serverless at AWS Cloud...
+description: Public Technology Advisory Board meeting minutes for the Micronaut project.
 sourceUrl: https://micronaut.io/meeting-minutes/
 intro: Meeting minutes provide public foundation governance and project communication records.
 sections:
@@ -20,92 +20,15 @@ contentSource: micronaut-public-markdown
 
 # Technology Advisory Board Meeting Minutes
 
-# Technology Advisory Board Meeting Minutes - April 24, 2024
+Meeting minutes provide public records for Technology Advisory Board and foundation activity. Use this index to open each published record at its canonical route.
 
-## Board Members In Attendance
+## Minutes
 
-- **Yuriy Artamonov** – JetBrains, Microservices Fellow
-- **Sergio del Amo** – Unity Foundation, Micronaut Development Lead
-- **Neal Ford** – ThoughtWorks, Director, Cloud Architect
-- **James Kleeh** – Amazon, Software Development Engineer
-- **Matthew Moss** – Unity Foundation, Lead Security and Support Analyst
-- **Mark Sailes** – Amazon, Specialist Solution Architect for Serverless at AWS Cloud
-- **Jen Wiese** – Micronaut Foundation, Community Engagement Manager
-
-## Board Members Not In Attendance
-
-- **Bruno Borges** – Microsoft, Principal Product Manager for Java
-- **Zhamak Dehghani –** ThoughtWorks, Principal Consultant
-- **Guillaume LaForge** – Google, Developer Advocate for Google Cloud Platform
-- **Graeme Rocher** – Micronaut Foundation, co-founder and Director; Oracle, Architect
-- **Ken Sipe** – Edward Jones, Department Leader – Application and Technology Architecture
-- **Venkat Subramaniam** – Agile Developer Inc., Founder
-
-## Others In Attendance
-
-- **Reza Garrow** – Unity Foundation – Senior Manager, Strategic Delivery and Governance
-
-## Meeting led by
-
-- Jen Wiese
-
-## Agenda
-
-- Welcome
-- Releases
-- 4.4.0 Top Features
-- Guides
-- Advocacy
-- Open Discussion
-- Close Meeting
-
-## Recent Micronaut Framework Releases:
-
-- 4.4.1 April 23
-- 4.4.0 April 17
-- 4.3.8 April 10
-- 4.3.7 March 22
-- 4.3.6 March 15
-- 4.3.5 March 9
-- 4.3.4 Feb 26
-- 4.3.3 Feb 23
-- 4.3.2 Feb 15
-- 4.3.1 Feb 9
-- 4.3.0 Feb 6
-
-## Upcoming Releases:
-
-- 2024-05-29 Micronaut 4.5.0
-- 2024-10-21 Micronaut 5.0.0
-
-## Top Features in Micronaut 4.4.0:
-
-- Micronaut Views HTMX
-- Micronaut OpenSearch
-- JSON Schema generation at compilation
-- Multi-tenancy Discriminator Column
-
-## Guides:
-
-- 2024-02-01 Serving Static Resources in a Micronaut Framework application
-
-  - More guides in the pipeline
-
-## Public Speaking:
-
-- JDevSummitIL
-- Devoxx France
-- Community Over Code
-
-## Advocacy:
-
-- Increase YouTube channel presence
-- Micronaut comparisons
-- Increase marketing efforts
-- Private tech talks to advocate adoption of the Micronaut framework
-
-## Foundation Sponsorship:
-
-[Current Sponsor List](https://micronaut.io/foundation/sponsors/)
-
-## Close Meeting
+- [April 24, 2024](/meeting-minutes/4_24_2024/)
+- [November 15, 2022](/meeting-minutes/2022_11_15/)
+- [March 25, 2022](/meeting-minutes/2022-03-25/)
+- [June 18, 2021](/meeting-minutes/2021-06-18/)
+- [March 12, 2021](/meeting-minutes/2021-03-12/)
+- [October 9, 2020](/meeting-minutes/2020-10-09/)
+- [Technology Advisory Board Meeting Minutes](/meeting-minutes/technology-advisory-board-meeting-minutes/)
+- [Technology Advisory Board Minutes](/meeting-minutes/technology-advisory-board-minutes/)

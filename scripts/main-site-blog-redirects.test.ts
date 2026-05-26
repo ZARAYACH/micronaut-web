@@ -122,6 +122,109 @@ test("base path helper does not double-prefix already-prefixed paths", async ():
   );
 });
 
+test("main route redirects to the canonical homepage", async (): Promise<any> => {
+  const source = await fs.readFile(
+    path.join(projectDirectory, "src", "pages", "main", "index.astro"),
+    "utf8",
+  );
+
+  assert.match(source, /import \{ withBasePath \} from "@\/lib\/base-path";/);
+  assert.match(source, /Astro\.redirect\(withBasePath\("\/"\), 301\)/);
+  assert.doesNotMatch(source, /import MainPage/);
+});
+
+test("meeting minutes index does not duplicate dated minutes", async (): Promise<any> => {
+  const index = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "content",
+      "main-site",
+      "pages",
+      "meeting-minutes.md",
+    ),
+    "utf8",
+  );
+  const aprilMinutes = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "content",
+      "main-site",
+      "pages",
+      "meeting-minutes",
+      "4_24_2024.md",
+    ),
+    "utf8",
+  );
+
+  assert.match(index, /\[April 24, 2024\]\(\/meeting-minutes\/4_24_2024\/\)/);
+  assert.doesNotMatch(index, /## Board Members In Attendance/);
+  assert.match(aprilMinutes, /## Board Members In Attendance/);
+});
+
+test("runtime code block uses a constrained client highlighter", async (): Promise<any> => {
+  const codeBlock = await fs.readFile(
+    path.join(projectDirectory, "src", "components", "ui", "code-block.tsx"),
+    "utf8",
+  );
+  const clientHighlighter = await fs.readFile(
+    path.join(projectDirectory, "src", "lib", "client-shiki.ts"),
+    "utf8",
+  );
+
+  assert.doesNotMatch(codeBlock, /import\("shiki"\)/);
+  assert.match(codeBlock, /import\("@\/lib\/client-shiki"\)/);
+  assert.match(clientHighlighter, /from "@shikijs\/langs\/java"/);
+  assert.doesNotMatch(clientHighlighter, /from "shiki"/);
+});
+
+test("brand content prefers canonical shared asset paths", async (): Promise<any> => {
+  const logoContent = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "content",
+      "main-site",
+      "pages",
+      "brand-guidelines",
+      "micronaut-logos.md",
+    ),
+    "utf8",
+  );
+  const faqContent = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "content",
+      "main-site",
+      "pages",
+      "faq.md",
+    ),
+    "utf8",
+  );
+  const normalizer = await fs.readFile(
+    path.join(projectDirectory, "scripts", "normalize-main-site-markdown.ts"),
+    "utf8",
+  );
+
+  assert.match(
+    logoContent,
+    /\/micronaut-assets\/logos\/micronaut-horizontal-black\.svg/,
+  );
+  assert.match(
+    logoContent,
+    /\/micronaut-assets\/logos\/micronaut-horizontal-white\.svg/,
+  );
+  assert.match(logoContent, /\/micronaut-assets\/icons\/micronaut-sally\.svg/);
+  assert.doesNotMatch(logoContent, /521[014]-/);
+  assert.doesNotMatch(faqContent, /5087-Micronaut_Brand_Guidelines\.pdf/);
+  assert.match(
+    normalizer,
+    /5210: "\/micronaut-assets\/logos\/micronaut-horizontal-black\.svg"/,
+  );
+});
+
 test("FAQ accordion items are extracted from rendered markdown HTML", async (): Promise<any> => {
   const { extractFaqItemsFromHtml } = await importFaqParser();
   const items = extractFaqItemsFromHtml(`

@@ -58,6 +58,7 @@ export async function pruneSurface({
   }
 
   await extractInlineAssets({ directory: distDirectory });
+  await pruneUnreferencedAstroAssets(distDirectory);
 
   const bytes = await directorySize(distDirectory);
   const mib = bytes / 1024 / 1024;
@@ -183,6 +184,64 @@ async function pruneGuides(
   }
 }
 
+async function pruneUnreferencedAstroAssets(directory: string): Promise<void> {
+  const astroDirectory = path.join(directory, "_astro");
+  if (!(await existsDirectory(astroDirectory))) {
+    return;
+  }
+
+  const astroFiles = await listFiles(astroDirectory);
+  const knownAssets = new Set(
+    astroFiles.map((file) => toPosixPath(path.relative(astroDirectory, file))),
+  );
+  const reachableAssets = new Set<string>();
+  const pendingAssets: string[] = [];
+  const addReachableAsset = (asset: string | undefined) => {
+    const normalized = normalizeAstroAsset(asset);
+    if (
+      !normalized ||
+      !knownAssets.has(normalized) ||
+      reachableAssets.has(normalized)
+    ) {
+      return;
+    }
+    reachableAssets.add(normalized);
+    pendingAssets.push(normalized);
+  };
+
+  const files = await listFiles(directory);
+  for (const file of files) {
+    if (path.extname(file) !== ".html") {
+      continue;
+    }
+    addAstroReferences(await fs.readFile(file, "utf8"), addReachableAsset);
+  }
+
+  for (let index = 0; index < pendingAssets.length; index += 1) {
+    const asset = pendingAssets[index];
+    if (!isTextAsset(asset)) {
+      continue;
+    }
+    const content = await fs.readFile(
+      path.join(astroDirectory, ...asset.split("/")),
+      "utf8",
+    );
+    addAstroReferences(content, addReachableAsset);
+    addRelativeReferences(content, asset, addReachableAsset);
+  }
+
+  await Promise.all(
+    [...knownAssets]
+      .filter((asset) => !reachableAssets.has(asset))
+      .map((asset) =>
+        fs.rm(path.join(astroDirectory, ...asset.split("/")), {
+          force: true,
+        }),
+      ),
+  );
+  await removeEmptyDirectories(astroDirectory, astroDirectory);
+}
+
 async function copyChildren(source: string, target: string): Promise<void> {
   const entries = await fs.readdir(source, { withFileTypes: true });
   await fs.mkdir(target, { recursive: true });
@@ -204,6 +263,31 @@ async function copyIfExists(source: string, target: string): Promise<void> {
     }
     throw error;
   }
+}
+
+async function existsDirectory(directory: string): Promise<boolean> {
+  try {
+    return (await fs.stat(directory)).isDirectory();
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+}
+
+async function listFiles(directory: string): Promise<string[]> {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const fullPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        return listFiles(fullPath);
+      }
+      return entry.isFile() ? [fullPath] : [];
+    }),
+  );
+  return files.flat();
 }
 
 async function replaceDirectory(
@@ -286,6 +370,26 @@ async function directorySize(directory: string): Promise<number> {
   return total;
 }
 
+async function removeEmptyDirectories(
+  directory: string,
+  root: string,
+): Promise<void> {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) =>
+        removeEmptyDirectories(path.join(directory, entry.name), root),
+      ),
+  );
+  if (directory === root) {
+    return;
+  }
+  if ((await fs.readdir(directory)).length === 0) {
+    await fs.rmdir(directory);
+  }
+}
+
 function withBase(base: string, target: string) {
   const normalizedBase = base.endsWith("/") ? base : `${base}/`;
   const normalizedTarget = target.replace(/^\/+/, "");
@@ -316,6 +420,80 @@ function normalizedRootPath(value: string) {
     return "/";
   }
   return `/${value}`.replace(/\/{2,}/g, "/");
+}
+
+function addAstroReferences(
+  content: string,
+  addReachableAsset: (asset: string | undefined) => void,
+) {
+  const references = /_astro\/([^"'`<>\s?#)]+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = references.exec(content))) {
+    addReachableAsset(match[1]);
+  }
+}
+
+function addRelativeReferences(
+  content: string,
+  fromAsset: string,
+  addReachableAsset: (asset: string | undefined) => void,
+) {
+  const quotedReferences = /["'`]([^"'`]+)["'`]/g;
+  let match: RegExpExecArray | null;
+  while ((match = quotedReferences.exec(content))) {
+    addReachableAsset(resolveRelativeAsset(fromAsset, match[1]));
+  }
+
+  const cssUrls = /url\(\s*["']?([^"')]+)["']?\s*\)/g;
+  while ((match = cssUrls.exec(content))) {
+    addReachableAsset(resolveRelativeAsset(fromAsset, match[1]));
+  }
+}
+
+function resolveRelativeAsset(fromAsset: string, reference: string) {
+  if (!reference.startsWith("./") && !reference.startsWith("../")) {
+    return undefined;
+  }
+  return path.posix.normalize(
+    path.posix.join(path.posix.dirname(fromAsset), reference),
+  );
+}
+
+function normalizeAstroAsset(asset: string | undefined) {
+  if (!asset) {
+    return undefined;
+  }
+  const withoutHash = asset.split(/[?#]/, 1)[0];
+  const decoded = decodeUrlPath(withoutHash).replace(/\\/g, "/");
+  const astroIndex = decoded.indexOf("_astro/");
+  const relative =
+    astroIndex >= 0 ? decoded.slice(astroIndex + "_astro/".length) : decoded;
+  const normalized = path.posix.normalize(relative.replace(/^\/+/, ""));
+  if (
+    !normalized ||
+    normalized === "." ||
+    normalized.startsWith("../") ||
+    path.posix.isAbsolute(normalized)
+  ) {
+    return undefined;
+  }
+  return normalized;
+}
+
+function decodeUrlPath(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function isTextAsset(asset: string) {
+  return /\.(?:css|html|js|json|mjs|svg|txt)$/i.test(asset);
+}
+
+function toPosixPath(value: string) {
+  return value.split(path.sep).join("/");
 }
 
 function parseSurface(value: string | undefined): Surface {

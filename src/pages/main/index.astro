@@ -1,5 +1,5 @@
 ---
-import MainPage from "../index.astro";
----
+import { withBasePath } from "@/lib/base-path";
 
-<MainPage />
+return Astro.redirect(withBasePath("/"), 301);
+---

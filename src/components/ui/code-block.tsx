@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import type { BundledLanguage, SpecialLanguage } from "shiki";
 
 import { cn } from "@/lib/utils";
+import type { ClientShikiLanguage, ClientShikiTheme } from "@/lib/client-shiki";
 
 type ShikiToken = {
   content: string;
@@ -18,8 +18,6 @@ type ShikiTokensResult = {
   bg?: string;
 };
 
-type ShikiThemeName = "github-light-default" | "github-dark-default";
-
 type CodeBlockProps = {
   code: string;
   language?: string;
@@ -28,15 +26,31 @@ type CodeBlockProps = {
   className?: string;
 };
 
-function shikiLanguage(language: string): BundledLanguage | SpecialLanguage {
-  if (["bash", "groovy", "java", "json", "kotlin", "markdown", "properties", "toml", "xml", "yaml"].includes(language)) {
-    return language as BundledLanguage;
+function shikiLanguage(language: string): ClientShikiLanguage {
+  if (
+    [
+      "bash",
+      "groovy",
+      "java",
+      "json",
+      "kotlin",
+      "markdown",
+      "properties",
+      "toml",
+      "xml",
+      "yaml",
+    ].includes(language)
+  ) {
+    return language as ClientShikiLanguage;
   }
   return "text";
 }
 
-function currentShikiTheme(): ShikiThemeName {
-  if (typeof document !== "undefined" && document.documentElement.classList.contains("dark")) {
+function currentShikiTheme(): ClientShikiTheme {
+  if (
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark")
+  ) {
     return "github-dark-default";
   }
   return "github-light-default";
@@ -45,7 +59,7 @@ function currentShikiTheme(): ShikiThemeName {
 function tokenStyle(token: ShikiToken): CSSProperties {
   const style: CSSProperties = {
     ...token.htmlStyle,
-    color: token.color
+    color: token.color,
   };
   if (token.fontStyle) {
     if (token.fontStyle & 1) {
@@ -66,15 +80,20 @@ export function CodeBlock({
   language = "text",
   filename,
   showLineNumbers = true,
-  className
+  className,
 }: CodeBlockProps) {
   const plainLines = useMemo(() => code.split("\n"), [code]);
-  const [theme, setTheme] = useState<ShikiThemeName>(currentShikiTheme);
-  const [highlighted, setHighlighted] = useState<ShikiTokensResult | null>(null);
+  const [theme, setTheme] = useState<ClientShikiTheme>(currentShikiTheme);
+  const [highlighted, setHighlighted] = useState<ShikiTokensResult | null>(
+    null,
+  );
 
   useEffect(() => {
     const observer = new MutationObserver(() => setTheme(currentShikiTheme()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
     return () => observer.disconnect();
   }, []);
 
@@ -82,11 +101,13 @@ export function CodeBlock({
     let active = true;
     setHighlighted(null);
 
-    import("shiki")
-      .then(({ codeToTokens }) => codeToTokens(code, {
-        lang: shikiLanguage(language),
-        theme
-      }))
+    import("@/lib/client-shiki")
+      .then(({ codeToTokens }) =>
+        codeToTokens(code, {
+          lang: shikiLanguage(language),
+          theme,
+        }),
+      )
       .then((result) => {
         if (active) {
           setHighlighted(result);
@@ -95,7 +116,7 @@ export function CodeBlock({
       .catch(() => {
         if (active) {
           setHighlighted({
-            tokens: plainLines.map((line) => [{ content: line || " " }])
+            tokens: plainLines.map((line) => [{ content: line || " " }]),
           });
         }
       });
@@ -105,16 +126,22 @@ export function CodeBlock({
     };
   }, [code, language, plainLines, theme]);
 
-  const tokenLines = highlighted?.tokens ?? plainLines.map((line) => [{ content: line || " " }]);
+  const tokenLines =
+    highlighted?.tokens ?? plainLines.map((line) => [{ content: line || " " }]);
 
   return (
-    <div className={cn("h-full overflow-auto bg-code font-mono text-[13px] leading-6 text-code-foreground", className)}>
+    <div
+      className={cn(
+        "h-full overflow-auto bg-code font-mono text-[13px] leading-6 text-code-foreground",
+        className,
+      )}
+    >
       {filename && <div className="sr-only">Previewing {filename}</div>}
       <pre
         className="min-w-max py-2"
         style={{
           backgroundColor: highlighted?.bg,
-          color: highlighted?.fg
+          color: highlighted?.fg,
         }}
         tabIndex={0}
       >
@@ -124,7 +151,9 @@ export function CodeBlock({
               key={`${filename ?? language}-${index}`}
               className={cn(
                 "grid min-h-6 hover:bg-muted/40",
-                showLineNumbers ? "grid-cols-[3.5rem_max-content]" : "grid-cols-[max-content]"
+                showLineNumbers
+                  ? "grid-cols-[3.5rem_max-content]"
+                  : "grid-cols-[max-content]",
               )}
             >
               {showLineNumbers && (
@@ -135,10 +164,13 @@ export function CodeBlock({
               <span className="whitespace-pre px-4">
                 {line.length > 0
                   ? line.map((token, tokenIndex) => (
-                    <span key={`${filename ?? language}-${index}-${tokenIndex}`} style={tokenStyle(token)}>
-                      {token.content || " "}
-                    </span>
-                  ))
+                      <span
+                        key={`${filename ?? language}-${index}-${tokenIndex}`}
+                        style={tokenStyle(token)}
+                      >
+                        {token.content || " "}
+                      </span>
+                    ))
                   : " "}
               </span>
             </span>

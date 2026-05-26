@@ -11,17 +11,17 @@ const contentDirs = [
 ];
 
 const objectComputingDownloadFiles: Record<string, string> = {
-  5087: "/micronaut-assets/main-site/objectcomputing/download-file/5087-Micronaut_Brand_Guidelines.pdf",
+  5087: "/micronaut-assets/main-site/wp-content/uploads/2023/06/Micronaut_Brand_Guidelines.pdf",
   5205: "/micronaut-assets/main-site/objectcomputing/download-file/5205-sally_micronaut_mascot.png",
   5206: "/micronaut-assets/main-site/objectcomputing/download-file/5206-micronaut_horizontal_black.png",
   5207: "/micronaut-assets/main-site/objectcomputing/download-file/5207-micronaut_horizontal_white.png",
   5208: "/micronaut-assets/main-site/objectcomputing/download-file/5208-micronaut_stacked_black.png",
   5209: "/micronaut-assets/main-site/objectcomputing/download-file/5209-micronaut_stacked_white.png",
-  5210: "/micronaut-assets/main-site/objectcomputing/download-file/5210-micronaut_horizontal_black.svg",
-  5211: "/micronaut-assets/main-site/objectcomputing/download-file/5211-micronaut_horizontal_white.svg",
+  5210: "/micronaut-assets/logos/micronaut-horizontal-black.svg",
+  5211: "/micronaut-assets/logos/micronaut-horizontal-white.svg",
   5212: "/micronaut-assets/main-site/objectcomputing/download-file/5212-micronaut_stacked_black.svg",
   5213: "/micronaut-assets/main-site/objectcomputing/download-file/5213-micronaut_stacked_white.svg",
-  5214: "/micronaut-assets/main-site/objectcomputing/download-file/5214-sally_micronaut_mascot.svg",
+  5214: "/micronaut-assets/icons/micronaut-sally.svg",
   5451: "/micronaut-assets/main-site/objectcomputing/download-file/5451-Slide_Deck_2022_Q1_2GM_Town_Hall.pdf",
 };
 
