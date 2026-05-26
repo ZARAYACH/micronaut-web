@@ -131,7 +131,7 @@ export const docsSnippetStyles = {
   copyButton: `${copyButtonMarker} ${buttonGhostIconXs} text-code-muted hover:bg-code-border hover:text-code-foreground dark:hover:bg-code-border`,
   buttonGhostXs,
   buttonGhostIconXs,
-  languageButton: "docs-code-language language-option inline-flex h-6 items-center gap-1 align-middle leading-none",
+  languageButton: "docs-code-language language-option inline-flex h-6 items-center gap-1 align-middle leading-none text-code-muted aria-selected:font-semibold aria-selected:text-code-foreground",
   languageButtonActive: "selected font-semibold text-code-foreground",
   languageButtonInactive: "text-code-muted",
   staticLanguage: "docs-code-language docs-code-language-static inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-md px-2 text-xs leading-none font-medium whitespace-nowrap text-code-muted",

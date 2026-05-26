@@ -64,6 +64,7 @@ export type SuccessStory = {
   href: string;
   sourceUrl?: string;
   logo?: string;
+  logoDark?: string;
   logoClass?: string;
   logoInvertOnDark: boolean;
 };
@@ -276,6 +277,7 @@ export async function getSuccessStories(): Promise<SuccessStory[]> {
       href: `/${slug}/`,
       sourceUrl: entry.data.sourceUrl,
       logo: entry.data.logo,
+      logoDark: entry.data.logoDark,
       logoClass: entry.data.logoClass,
       logoInvertOnDark: entry.data.logoInvertOnDark
     }));

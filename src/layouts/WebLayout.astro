@@ -2,9 +2,7 @@
 import "@/styles/globals.css";
 import { SiteHeader } from "@/components/web/site-header";
 import {
-  EXPERIENCE_THEME_STORAGE_KEY,
   LEGACY_THEME_STORAGE_KEY,
-  RUNTIME_EXPERIENCE_ENABLED,
   THEME_MODE_STORAGE_KEY
 } from "@/lib/experience-theme";
 import type { ExperienceTheme } from "@/lib/experience-theme";
@@ -22,7 +20,6 @@ interface Props {
 
 const { title, description = "Micronaut web experience", canonicalUrl, surface = "main", hideHeader = false, theme = "default" } = Astro.props;
 const mainSitePages = await getMainSitePageSummaries();
-const showExperienceThemeSwitch = RUNTIME_EXPERIENCE_ENABLED;
 ---
 
 <!doctype html>
@@ -30,7 +27,6 @@ const showExperienceThemeSwitch = RUNTIME_EXPERIENCE_ENABLED;
   lang="en"
   data-page-experience-theme={theme}
   data-experience-theme={theme}
-  data-runtime-experience-enabled={RUNTIME_EXPERIENCE_ENABLED ? "true" : "false"}
 >
   <head>
     <meta charset="UTF-8" />
@@ -41,7 +37,6 @@ const showExperienceThemeSwitch = RUNTIME_EXPERIENCE_ENABLED;
     <script
       is:inline
       define:vars={{
-        experienceStorageKey: EXPERIENCE_THEME_STORAGE_KEY,
         legacyThemeStorageKey: LEGACY_THEME_STORAGE_KEY,
         themeModeStorageKey: THEME_MODE_STORAGE_KEY
       }}
@@ -49,8 +44,6 @@ const showExperienceThemeSwitch = RUNTIME_EXPERIENCE_ENABLED;
       (() => {
         const root = document.documentElement;
         const colorPreference = window.matchMedia("(prefers-color-scheme: dark)");
-        const runtimeExperienceEnabled = root.dataset.runtimeExperienceEnabled !== "false";
-        const pageExperienceTheme = root.dataset.pageExperienceTheme === "runtime" ? "runtime" : "default";
         const isThemeMode = (value) => value === "system" || value === "light" || value === "dark";
         const resolveDark = (mode) => mode === "dark" || (mode === "system" && colorPreference.matches);
         const applyThemeMode = (mode) => {
@@ -59,18 +52,6 @@ const showExperienceThemeSwitch = RUNTIME_EXPERIENCE_ENABLED;
           root.classList.toggle("dark", dark);
           root.style.colorScheme = dark ? "dark" : "light";
         };
-        let experienceTheme = pageExperienceTheme;
-        if (runtimeExperienceEnabled && pageExperienceTheme !== "runtime") {
-          try {
-            const storedExperienceTheme = localStorage.getItem(experienceStorageKey);
-            if (storedExperienceTheme === "runtime" || storedExperienceTheme === "default") {
-              experienceTheme = storedExperienceTheme;
-            }
-          } catch {
-            experienceTheme = pageExperienceTheme;
-          }
-        }
-        root.dataset.experienceTheme = experienceTheme;
         let themeMode = "system";
         try {
           const storedMode = localStorage.getItem(themeModeStorageKey);
@@ -102,7 +83,6 @@ const showExperienceThemeSwitch = RUNTIME_EXPERIENCE_ENABLED;
           surface={surface}
           mainSitePages={mainSitePages}
           theme={theme}
-          showExperienceThemeSwitch={showExperienceThemeSwitch}
           client:idle
         />
       )}

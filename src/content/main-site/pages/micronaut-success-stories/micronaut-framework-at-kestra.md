@@ -40,8 +40,8 @@ technologies:
   - Kubernetes
   - SSE
 logo: /micronaut-assets/main-site/wp-content/uploads/2025/01/Kestra.full_.logo_.dark_.svg
+logoDark: /micronaut-assets/main-site/wp-content/uploads/2025/01/Kestra.full_.logo_.light-text.svg
 logoClass: h-8 w-auto
-logoInvertOnDark: true
 ---
 
 # Micronaut framework at Kestra

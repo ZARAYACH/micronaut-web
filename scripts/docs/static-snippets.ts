@@ -156,11 +156,7 @@ function renderLanguageOption({
   styles,
   tabId,
 }: any): any {
-  const className = [
-    styles.buttonGhostXs,
-    styles.languageButton,
-    active ? styles.languageButtonActive : styles.languageButtonInactive,
-  ].join(" ");
+  const className = [styles.buttonGhostXs, styles.languageButton].join(" ");
   return `<button data-slot="button" data-variant="ghost" data-size="xs" class="${attribute(className)}" type="button" id="${attribute(tabId)}" role="tab" aria-controls="${attribute(panelId)}" aria-selected="${active}" data-lang="${attribute(language)}" tabindex="${active ? "0" : "-1"}">${languageIconHtml(language, styles)}<span class="${attribute(styles.languageText)}">${html(label)}</span></button>`;
 }
 

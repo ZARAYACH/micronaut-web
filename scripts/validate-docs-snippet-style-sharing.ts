@@ -123,17 +123,6 @@ const consumers = [
     ],
   },
   {
-    file: "src/components/web/generated-docs-static-enhancer.astro",
-    requiredUses: [
-      "define:vars={{ docsSnippetStyles }}",
-      "docsSnippetStyles.buttonGhostXs",
-      "docsSnippetStyles.copyButton",
-      "docsSnippetStyles.codePre",
-      "docsSnippetStyles.codeElement",
-      "docsSnippetStyles.languageButton",
-    ],
-  },
-  {
     file: "src/components/web/generated-docs-properties-fallback.astro",
     requiredUses: [
       "renderDocsSnippetTemplates",

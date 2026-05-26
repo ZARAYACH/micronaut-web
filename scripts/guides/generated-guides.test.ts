@@ -377,6 +377,10 @@ test("latest guide replacement routes and parallel generated-content preparation
     "generated guides static enhancer",
     generatedDocsStaticEnhancer,
   );
+  assert.doesNotMatch(
+    generatedDocsStaticEnhancer,
+    /docsSnippetStyles|define:vars/,
+  );
   assert.match(guideCatalog, /root = "\/latest"/);
   assert.match(guideCard, /guideOverviewPath\(guide, root\)/);
 });

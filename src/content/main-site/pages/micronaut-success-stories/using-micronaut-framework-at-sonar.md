@@ -39,9 +39,9 @@ technologies:
   - SnapStart
   - CRaC
   - SonarQube
-logo: /micronaut-assets/home/sonar-black-and-grey.svg
+logo: /micronaut-assets/main-site/wp-content/uploads/2025/02/Sonar_Logo_Light-Backgrounds.svg
+logoDark: /micronaut-assets/main-site/wp-content/uploads/2025/02/Sonar_Logo_Dark-Backgrounds.svg
 logoClass: h-10 w-auto
-logoInvertOnDark: true
 redirectFrom:
   - /using-micronaut-framework-at-sonar/
 ---

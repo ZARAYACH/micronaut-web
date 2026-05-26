@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { parseArgs, stringArg } from "./shared/cli.ts";
+import { extractInlineAssets } from "./shared/inline-assets.ts";
 import { hoistVersionedSurfaceAssets } from "./shared/surface-assets.ts";
 
 export type Surface = "main" | "docs" | "guides";
@@ -55,6 +56,8 @@ export async function pruneSurface({
   } else {
     await pruneGuides(distDirectory, base, customDomain);
   }
+
+  await extractInlineAssets({ directory: distDirectory });
 
   const bytes = await directorySize(distDirectory);
   const mib = bytes / 1024 / 1024;

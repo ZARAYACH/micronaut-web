@@ -38,6 +38,7 @@ technologies:
   - Serverless
   - Micronaut Libraries
 logo: /micronaut-assets/main-site/wp-content/uploads/2025/01/Agorapulse-logo-blue.svg
+logoDark: /micronaut-assets/main-site/wp-content/uploads/2025/01/Agorapulse-logo-dark.svg
 logoClass: h-8 w-auto
 ---
 

@@ -36,6 +36,7 @@ const mainSitePages = defineCollection({
     outcome: z.string().optional(),
     technologies: z.array(z.string()).default([]),
     logo: z.string().optional(),
+    logoDark: z.string().optional(),
     logoClass: z.string().optional(),
     logoInvertOnDark: z.boolean().default(false)
   })
@@ -85,6 +86,7 @@ const blogPosts = defineCollection({
     technologies: z.array(z.string()).default([]),
     href: z.string().optional(),
     logo: z.string().optional(),
+    logoDark: z.string().optional(),
     logoClass: z.string().optional(),
     logoInvertOnDark: z.boolean().default(false)
   })

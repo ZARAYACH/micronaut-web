@@ -86,7 +86,11 @@ const cloudLogos = [
 
 const assetDimensions: Record<string, { width: number; height: number }> = {
   "/micronaut-assets/main-site/wp-content/uploads/2025/01/Agorapulse-logo-blue.svg": { width: 1204, height: 251 },
+  "/micronaut-assets/main-site/wp-content/uploads/2025/01/Agorapulse-logo-dark.svg": { width: 1204, height: 251 },
   "/micronaut-assets/main-site/wp-content/uploads/2025/01/Kestra.full_.logo_.dark_.svg": { width: 889, height: 203 },
+  "/micronaut-assets/main-site/wp-content/uploads/2025/01/Kestra.full_.logo_.light-text.svg": { width: 889, height: 203 },
+  "/micronaut-assets/main-site/wp-content/uploads/2025/02/Sonar_Logo_Dark-Backgrounds.svg": { width: 225, height: 87 },
+  "/micronaut-assets/main-site/wp-content/uploads/2025/02/Sonar_Logo_Light-Backgrounds.svg": { width: 225, height: 87 },
   "/micronaut-assets/home/minecraft.png": { width: 429, height: 185 },
   "/micronaut-assets/home/mojang.png": { width: 387, height: 185 },
   "/micronaut-assets/home/samsung-smart-things.png": { width: 429, height: 185 },
@@ -99,7 +103,9 @@ const dimensionsForAsset = (assetPath?: string) => assetPath ? assetDimensions[a
 const stories = (await getSuccessStories()).map((story) => ({
   ...story,
   logo: story.logo ? withBasePath(story.logo) : undefined,
-  logoDimensions: dimensionsForAsset(story.logo)
+  logoDark: story.logoDark ? withBasePath(story.logoDark) : undefined,
+  logoDimensions: dimensionsForAsset(story.logo),
+  logoDarkDimensions: dimensionsForAsset(story.logoDark)
 }));
 const featuredStories = stories.slice(0, 3);
 const secondaryStories = stories.slice(3);
@@ -110,16 +116,19 @@ const storyLogoItems = stories
     name: story.organization,
     href: withBasePath(story.href),
     image: story.logo ?? "",
+    darkImage: story.logoDark,
     className: story.logoClass,
     width: story.logoDimensions?.width,
     height: story.logoDimensions?.height,
-    logoInvertOnDark: story.logoInvertOnDark
+    darkWidth: story.logoDarkDimensions?.width,
+    darkHeight: story.logoDarkDimensions?.height,
+    logoUseLightSurfaceOnDark: story.logoInvertOnDark && !story.logoDark
   }));
 
 const previousCustomerLogos = [
-  { name: "Minecraft", href: "https://www.minecraft.net/", image: withBasePath("/micronaut-assets/home/minecraft.png"), className: "h-12", width: 429, height: 185, logoInvertOnDark: false },
-  { name: "Mojang", href: "https://en.wikipedia.org/wiki/Mojang_Studios", image: withBasePath("/micronaut-assets/home/mojang.png"), className: "h-12", width: 387, height: 185, logoInvertOnDark: false },
-  { name: "Target", href: "https://www.target.com", image: withBasePath("/micronaut-assets/home/target.png"), className: "h-16", width: 142, height: 185, logoInvertOnDark: false }
+  { name: "Minecraft", href: "https://www.minecraft.net/", image: withBasePath("/micronaut-assets/home/minecraft.png"), darkImage: undefined, className: "h-12", width: 429, height: 185, darkWidth: undefined, darkHeight: undefined, logoUseLightSurfaceOnDark: true },
+  { name: "Mojang", href: "https://en.wikipedia.org/wiki/Mojang_Studios", image: withBasePath("/micronaut-assets/home/mojang.png"), darkImage: undefined, className: "h-12", width: 387, height: 185, darkWidth: undefined, darkHeight: undefined, logoUseLightSurfaceOnDark: true },
+  { name: "Target", href: "https://www.target.com", image: withBasePath("/micronaut-assets/home/target.png"), darkImage: undefined, className: "h-16", width: 142, height: 185, darkWidth: undefined, darkHeight: undefined, logoUseLightSurfaceOnDark: true }
 ];
 const whoUsesLogoItems = [...storyLogoItems, ...previousCustomerLogos];
 const rotatingLogoItems = [...whoUsesLogoItems, ...whoUsesLogoItems];
@@ -293,8 +302,11 @@ const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(await
             <CardHeader>
               {story.logo ? (
                 <div class="flex h-16 min-w-0 items-center">
-                  <span class="inline-flex h-14 max-w-[12rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card">
-                    <img src={story.logo} alt={`${story.organization} logo`} class:list={["max-h-full max-w-full object-contain object-left", story.logoClass, story.logoInvertOnDark && "dark:brightness-0 dark:invert"]} loading="lazy" width={story.logoDimensions?.width} height={story.logoDimensions?.height} />
+                  <span class:list={["inline-flex h-14 max-w-[12rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card", story.logoInvertOnDark && !story.logoDark && "dark:!bg-white"]}>
+                    <img src={story.logo} alt={`${story.organization} logo`} class:list={["max-h-full max-w-full object-contain object-left", story.logoClass, story.logoDark && "dark:hidden"]} loading="lazy" width={story.logoDimensions?.width} height={story.logoDimensions?.height} />
+                    {story.logoDark ? (
+                      <img src={story.logoDark} alt={`${story.organization} logo`} class:list={["hidden max-h-full max-w-full object-contain object-left dark:block", story.logoClass]} loading="lazy" width={story.logoDarkDimensions?.width} height={story.logoDarkDimensions?.height} />
+                    ) : null}
                   </span>
                 </div>
               ) : null}
@@ -323,8 +335,11 @@ const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(await
             <Card className="h-full gap-4 py-5 transition group-hover:-translate-y-0.5 group-hover:border-brand/50 group-hover:shadow-md">
               <CardHeader className="gap-3 px-5">
                 {story.logo ? (
-                  <span class="inline-flex h-11 max-w-[10rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card">
-                    <img src={story.logo} alt={`${story.organization} logo`} class:list={["max-h-full max-w-full object-contain object-left", story.logoClass, story.logoInvertOnDark && "dark:brightness-0 dark:invert"]} loading="lazy" width={story.logoDimensions?.width} height={story.logoDimensions?.height} />
+                  <span class:list={["inline-flex h-11 max-w-[10rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card", story.logoInvertOnDark && !story.logoDark && "dark:!bg-white"]}>
+                    <img src={story.logo} alt={`${story.organization} logo`} class:list={["max-h-full max-w-full object-contain object-left", story.logoClass, story.logoDark && "dark:hidden"]} loading="lazy" width={story.logoDimensions?.width} height={story.logoDimensions?.height} />
+                    {story.logoDark ? (
+                      <img src={story.logoDark} alt={`${story.organization} logo`} class:list={["hidden max-h-full max-w-full object-contain object-left dark:block", story.logoClass]} loading="lazy" width={story.logoDarkDimensions?.width} height={story.logoDarkDimensions?.height} />
+                    ) : null}
                   </span>
                 ) : null}
                 <CardAction className="row-span-1">
@@ -347,7 +362,10 @@ const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(await
           {rotatingLogoItems.map((customer, index) => (
             <a
               href={customer.href}
-              class="group flex h-20 w-[12.5rem] shrink-0 items-center justify-center rounded-md border border-border/70 bg-card px-5 shadow-sm transition hover:border-brand/50 hover:shadow-md dark:border-white/10 dark:bg-background"
+              class:list={[
+                "group flex h-20 w-[12.5rem] shrink-0 items-center justify-center rounded-md border border-border/70 bg-card px-5 shadow-sm transition hover:border-brand/50 hover:shadow-md dark:border-white/10 dark:bg-background",
+                customer.logoUseLightSurfaceOnDark && "dark:!bg-white"
+              ]}
               aria-label={`${customer.name}${index >= whoUsesLogoItems.length ? " duplicate" : ""}`}
               aria-hidden={index >= whoUsesLogoItems.length ? "true" : undefined}
               tabindex={index >= whoUsesLogoItems.length ? "-1" : undefined}
@@ -358,12 +376,25 @@ const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(await
                 class:list={[
                   "max-h-full max-w-full object-contain transition group-hover:opacity-100",
                   customer.className,
-                  customer.logoInvertOnDark && "dark:brightness-0 dark:invert"
+                  customer.darkImage && "dark:hidden"
                 ]}
                 loading="lazy"
                 width={customer.width}
                 height={customer.height}
               />
+              {customer.darkImage ? (
+                <img
+                  src={customer.darkImage}
+                  alt={`${customer.name} logo`}
+                  class:list={[
+                    "hidden max-h-full max-w-full object-contain transition group-hover:opacity-100 dark:block",
+                    customer.className
+                  ]}
+                  loading="lazy"
+                  width={customer.darkWidth}
+                  height={customer.darkHeight}
+                />
+              ) : null}
             </a>
           ))}
         </div>

@@ -1,19 +1,5 @@
----
-import { docsSnippetStyles } from "@/components/web/docs-snippet-styles";
----
-
-<script is:inline define:vars={{ docsSnippetStyles }}>
+<script is:inline>
   (() => {
-    const copyButtonClass = docsSnippetStyles.copyButton;
-
-    const setClassName = (element, className) => {
-      element.className = className;
-    };
-
-    const addClassName = (element, className) => {
-      element.classList.add(...className.split(/\s+/).filter(Boolean));
-    };
-
     const snippetText = (block) => {
       const code = block.querySelector("code");
       return code?.innerText || code?.textContent || "";
@@ -35,18 +21,7 @@ import { docsSnippetStyles } from "@/components/web/docs-snippet-styles";
       textarea.remove();
     };
 
-    const decorateLanguageButton = (button, active) => {
-      button.setAttribute("data-slot", "button");
-      button.dataset.variant = "ghost";
-      button.dataset.size = "xs";
-      setClassName(
-        button,
-        `${docsSnippetStyles.buttonGhostXs} ${docsSnippetStyles.languageButton} ${active ? docsSnippetStyles.languageButtonActive : docsSnippetStyles.languageButtonInactive}`
-      );
-    };
-
     const decorateCopyButtonIcon = (button) => {
-      addClassName(button, copyButtonClass);
       const icon = button.querySelector("svg");
       if (!icon) {
         return;
@@ -56,17 +31,6 @@ import { docsSnippetStyles } from "@/components/web/docs-snippet-styles";
       icon.setAttribute("stroke-linecap", "round");
       icon.setAttribute("stroke-linejoin", "round");
       icon.setAttribute("stroke-width", "2");
-    };
-
-    const decorateCodeSurface = (root) => {
-      root.querySelectorAll("pre.shiki").forEach((pre) => {
-        setClassName(pre, docsSnippetStyles.codePre);
-        pre.setAttribute("tabindex", pre.getAttribute("tabindex") || "0");
-        const code = pre.querySelector("code");
-        if (code) {
-          addClassName(code, docsSnippetStyles.codeElement);
-        }
-      });
     };
 
     const setCopyState = (button, copied) => {
@@ -122,7 +86,6 @@ import { docsSnippetStyles } from "@/components/web/docs-snippet-styles";
           const active = index === activeIndex;
           tab.setAttribute("aria-selected", String(active));
           tab.tabIndex = active ? 0 : -1;
-          decorateLanguageButton(tab, active);
         });
       };
 
@@ -148,11 +111,6 @@ import { docsSnippetStyles } from "@/components/web/docs-snippet-styles";
     };
 
     const enhanceTemplateSnippetControls = (root) => {
-      root.querySelectorAll(".docs-snippet-tabs button[role='tab'], .docs-code-tabs button[role='tab']").forEach((option) => {
-        const active = option.getAttribute("aria-selected") === "true";
-        decorateLanguageButton(option, active);
-      });
-
       root.querySelectorAll(".docs-snippet-template").forEach((template) => {
         bindStaticSnippetTemplate(template);
       });
@@ -184,7 +142,6 @@ import { docsSnippetStyles } from "@/components/web/docs-snippet-styles";
         root.dataset.generatedDocsEnhanced = "true";
         stabilizeGeneratedImages(root);
         enhanceTemplateSnippetControls(root);
-        decorateCodeSurface(root);
       });
     };
 

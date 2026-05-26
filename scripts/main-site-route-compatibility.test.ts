@@ -100,6 +100,49 @@ test("new route files use the compatibility manifest", async (): Promise<any> =>
   }
 });
 
+test("runtime theme route and header controls stay removed", async (): Promise<any> => {
+  await assert.rejects(
+    () => fs.access(path.join(projectDirectory, "src/pages/new.astro")),
+    (error: any): boolean => error?.code === "ENOENT",
+  );
+
+  const [siteHeaderSource, webLayoutSource] = await Promise.all([
+    fs.readFile(
+      path.join(projectDirectory, "src/components/web/site-header.tsx"),
+      "utf8",
+    ),
+    fs.readFile(
+      path.join(projectDirectory, "src/layouts/WebLayout.astro"),
+      "utf8",
+    ),
+  ]);
+
+  for (const removedHeaderFragment of [
+    "ExperienceThemeSwitch",
+    "MobileExperienceThemeLinks",
+    "MobileThemeModeControl",
+    "ThemeToggle",
+    "Classic",
+    "/new/",
+  ]) {
+    assert.doesNotMatch(
+      siteHeaderSource,
+      new RegExp(escapeRegExp(removedHeaderFragment)),
+    );
+  }
+
+  for (const removedLayoutFragment of [
+    "EXPERIENCE_THEME_STORAGE_KEY",
+    "RUNTIME_EXPERIENCE_ENABLED",
+    "data-runtime-experience-enabled",
+  ]) {
+    assert.doesNotMatch(
+      webLayoutSource,
+      new RegExp(escapeRegExp(removedLayoutFragment)),
+    );
+  }
+});
+
 test("compatibility documentation covers production hosts and legacy matrix", async (): Promise<any> => {
   const doc = await fs.readFile(
     path.join(projectDirectory, "README.md"),

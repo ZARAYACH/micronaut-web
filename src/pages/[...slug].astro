@@ -114,7 +114,8 @@ const postDateFormatter = new Intl.DateTimeFormat("en", {
 });
 const successStoryCards = successStories.map((story) => ({
   ...story,
-  logo: story.logo ? withBasePath(story.logo) : undefined
+  logo: story.logo ? withBasePath(story.logo) : undefined,
+  logoDark: story.logoDark ? withBasePath(story.logoDark) : undefined
 }));
 const featuredStory = successStoryCards[1];
 const outcomeGroups = [
@@ -155,17 +156,28 @@ const outcomeGroups = [
               <CardHeader>
                 {featuredStory.logo ? (
                   <div class="flex h-12 min-w-0 items-center">
-                    <span class="inline-flex h-12 max-w-[11rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card">
+                    <span class:list={["inline-flex h-12 max-w-[11rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card", featuredStory.logoInvertOnDark && !featuredStory.logoDark && "dark:!bg-white"]}>
                       <img
                         src={featuredStory.logo}
                         alt={`${featuredStory.organization} logo`}
                         class:list={[
                           "max-h-full max-w-full object-contain object-left",
                           featuredStory.logoClass,
-                          featuredStory.logoInvertOnDark && "dark:brightness-0 dark:invert"
+                          featuredStory.logoDark && "dark:hidden"
                         ]}
                         loading="lazy"
                       />
+                      {featuredStory.logoDark ? (
+                        <img
+                          src={featuredStory.logoDark}
+                          alt={`${featuredStory.organization} logo`}
+                          class:list={[
+                            "hidden max-h-full max-w-full object-contain object-left dark:block",
+                            featuredStory.logoClass
+                          ]}
+                          loading="lazy"
+                        />
+                      ) : null}
                     </span>
                   </div>
                 ) : null}
@@ -210,17 +222,28 @@ const outcomeGroups = [
                 <CardHeader>
                   {story.logo ? (
                     <div class="flex h-12 min-w-0 items-center">
-                      <span class="inline-flex h-12 max-w-[10rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card">
+                      <span class:list={["inline-flex h-12 max-w-[10rem] items-center rounded-md border border-border/70 bg-background px-3 py-2 shadow-sm dark:border-white/10 dark:bg-card", story.logoInvertOnDark && !story.logoDark && "dark:!bg-white"]}>
                         <img
                           src={story.logo}
                           alt={`${story.organization} logo`}
                           class:list={[
                             "max-h-full max-w-full object-contain object-left",
                             story.logoClass,
-                            story.logoInvertOnDark && "dark:brightness-0 dark:invert"
+                            story.logoDark && "dark:hidden"
                           ]}
                           loading="lazy"
                         />
+                        {story.logoDark ? (
+                          <img
+                            src={story.logoDark}
+                            alt={`${story.organization} logo`}
+                            class:list={[
+                              "hidden max-h-full max-w-full object-contain object-left dark:block",
+                              story.logoClass
+                            ]}
+                            loading="lazy"
+                          />
+                        ) : null}
                       </span>
                     </div>
                   ) : null}

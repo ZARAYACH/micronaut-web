@@ -35,6 +35,10 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
     packageJson.scripts["prepare:generated-content"],
     "node scripts/prepare-generated-content.ts",
   );
+  assert.equal(
+    packageJson.scripts["extract:inline-assets"],
+    "node scripts/extract-inline-assets.ts",
+  );
   assertScriptOrder(
     packageJson.scripts.dev,
     "npm run prepare:generated-content",
@@ -44,6 +48,21 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
     packageJson.scripts.build,
     "npm run prepare:generated-content",
     "astro build",
+  );
+  assertScriptOrder(
+    packageJson.scripts.build,
+    "astro build",
+    "npm run extract:inline-assets",
+  );
+  assertScriptOrder(
+    packageJson.scripts.build,
+    "npm run extract:inline-assets",
+    "node scripts/prepare-template-artifacts.ts",
+  );
+  assertScriptOrder(
+    packageJson.scripts["build:site"],
+    "astro build",
+    "npm run extract:inline-assets",
   );
 });
 
@@ -954,6 +973,10 @@ test("docs routes render generated fragments and serve generated assets", async 
   assertNoRuntimeGeneratedRendering(
     "docs static enhancer",
     generatedDocsStaticEnhancerSource,
+  );
+  assert.doesNotMatch(
+    generatedDocsStaticEnhancerSource,
+    /docsSnippetStyles|define:vars/,
   );
   assert.match(
     assetsRouteSource,
