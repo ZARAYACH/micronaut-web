@@ -450,6 +450,17 @@ function assertMicronautHttpClientGuideHasProperSnippets(source: string) {
     /data-copy-active-snippet/,
     "Micronaut HTTP Client guide snippet cards must include copy controls",
   );
+  assertSnippetLanguageIcon(source, "java", "java");
+  assertSnippetLanguageIcon(source, "kotlin", "kotlin");
+  assertSnippetLanguageIcon(source, "groovy", "groovy");
+  assertSnippetLanguageIcon(source, "properties", "properties");
+  assertSnippetLanguageIcon(source, "yaml", "yaml");
+  if (source.includes('data-lang="gradle"')) {
+    assertSnippetLanguageIcon(source, "gradle", "gradle");
+  }
+  if (source.includes('data-lang="maven"')) {
+    assertSnippetLanguageIcon(source, "maven", "maven");
+  }
   assert.doesNotMatch(
     source,
     /<micronaut-snippet|docs-snippet-callout-validation/,
@@ -627,6 +638,22 @@ async function writeGuideFixture(
       `include::{sourceDir}/${slug}/@sourceDir@/deployment/k8s.yml[]`,
       "----",
       "<1> Kubernetes include callout.",
+      "",
+      "[source,kotlin]",
+      "----",
+      "class GuideKotlinSnippet",
+      "----",
+      "",
+      "[source,groovy]",
+      "----",
+      "class GuideGroovySnippet {",
+      "}",
+      "----",
+      "",
+      "[source,properties]",
+      "----",
+      "guide.fixture.enabled=true",
+      "----",
       "",
       ".Configuration Properties",
       '[cols="1,1"]',
@@ -847,4 +874,33 @@ function nonStrictEnv(): any {
 
 function lines(value: any): any {
   return value.split(/\r?\n/).filter(Boolean);
+}
+
+function assertSnippetLanguageIcon(
+  source: string,
+  language: string,
+  icon: string,
+): void {
+  assert.match(
+    buttonHtmlForLanguage(source, language),
+    new RegExp(`docs-code-language-icon-${escapeRegExp(icon)}`),
+    `${language} guide snippets should use the ${icon} icon`,
+  );
+}
+
+function buttonHtmlForLanguage(source: string, language: string): string {
+  const dataLangIndex = source.indexOf(`data-lang="${language}"`);
+  if (dataLangIndex < 0) {
+    return "";
+  }
+  const buttonStart = source.lastIndexOf("<button", dataLangIndex);
+  const buttonEnd = source.indexOf("</button>", dataLangIndex);
+  if (buttonStart < 0 || buttonEnd < 0) {
+    return "";
+  }
+  return source.slice(buttonStart, buttonEnd + "</button>".length);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

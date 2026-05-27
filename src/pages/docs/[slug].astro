@@ -100,7 +100,7 @@ function extractGeneratedDocSections(html: string) {
     ]}>
       <div class:list={["min-w-0", !generatedDocHtml && "xl:px-14"]}>
         {!generatedDocHtml && (
-          <header class="mb-7">
+          <header id={`${project.slug}-docs`} class="mb-7 scroll-mt-24">
             <div class="mb-4 flex items-center gap-3">
               <IconBadge name={project.icon} size="lg" />
               <Badge variant="secondary">{project.primaryCategory}</Badge>
@@ -145,12 +145,12 @@ micronaut.category=${project.primaryCategory}`}</code></pre>
       </div>
       {contentSections.length > 0 && (
         <aside class="hidden xl:block" aria-label="In this section">
-          <div class="sticky top-24 grid gap-1.5 pl-2.5 pr-6 text-[0.82rem]">
+          <div class="sticky top-[calc(var(--topbar-height)+24px)] grid max-h-[calc(100vh-var(--topbar-height)-48px)] gap-1.5 overflow-y-auto pb-7 pl-2.5 pr-6 text-[0.82rem] [scrollbar-width:thin]" data-docs-scroll-container>
             <h2 class="font-medium">In this section</h2>
             <Separator className="opacity-70" />
             {contentSections.map((section) => (
               <a href={`#${section.id}`} data-docs-scroll-link data-docs-section-depth={section.depth} data-docs-section-parent={section.parentId || ""} class:list={[
-                "rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:text-accent-foreground",
+                "relative rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-foreground data-[active=true]:before:absolute data-[active=true]:before:bottom-[7px] data-[active=true]:before:left-[-11px] data-[active=true]:before:top-[7px] data-[active=true]:before:w-0.5 data-[active=true]:before:rounded-full data-[active=true]:before:bg-brand data-[active=true]:before:content-['']",
                 section.depth > 1 && "pl-5 text-xs"
               ]}>
                 {section.label}

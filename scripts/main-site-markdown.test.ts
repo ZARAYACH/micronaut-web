@@ -117,6 +117,7 @@ String index() {
 
   assert.match(html, /docs-snippet-template docs-code-block/);
   assert.match(html, /role="tab"[^>]*data-lang="java"/);
+  assert.match(html, /docs-code-language-icon-java/);
   assert.match(html, /data-copy-active-snippet/);
   assert.match(html, /<code class="language-java [^"]*shiki-code/);
   assert.doesNotMatch(html, /<pre><code class="language-java">/);
@@ -149,8 +150,10 @@ test("main-site Markdown snippets infer Gradle and XML when fences have no langu
 `);
 
   assert.match(html, /role="tab"[^>]*data-lang="gradle"/);
+  assert.match(html, /docs-code-language-icon-gradle/);
   assert.match(html, /<code class="language-gradle [^"]*shiki-code/);
   assert.match(html, /role="tab"[^>]*data-lang="xml"/);
+  assert.match(html, /docs-code-language-icon-xml/);
   assert.match(html, /<code class="language-xml [^"]*shiki-code/);
 });
 

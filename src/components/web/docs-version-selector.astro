@@ -113,6 +113,14 @@ function routedDocsHref(href: string) {
       document.querySelectorAll<HTMLElement>("[data-docs-version-selector]"),
     );
 
+  const nodeContainsVersionSelector = (node: Node) =>
+    node instanceof Element &&
+    (node.matches("[data-docs-version-selector]") ||
+      Boolean(node.querySelector("[data-docs-version-selector]")));
+
+  const mutationAddsVersionSelector = (mutation: MutationRecord) =>
+    Array.from(mutation.addedNodes).some(nodeContainsVersionSelector);
+
   const isVersionOption = (value: unknown): value is DocsVersionOption => {
     if (!value || typeof value !== "object") {
       return false;
@@ -249,7 +257,11 @@ function routedDocsHref(href: string) {
       state.initialized = true;
       document.addEventListener("change", onVersionSelectChange);
       document.addEventListener("astro:hydrate", () => updateAllSelects());
-      state.observer = new MutationObserver(() => updateAllSelects());
+      state.observer = new MutationObserver((mutations) => {
+        if (mutations.some(mutationAddsVersionSelector)) {
+          updateAllSelects();
+        }
+      });
       state.observer.observe(document.body, {
         childList: true,
         subtree: true,

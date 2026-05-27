@@ -1,0 +1,257 @@
+<script>
+  type DocsScrollSpyState = {
+    animationFrame?: number;
+    initialized?: boolean;
+    observer?: MutationObserver;
+  };
+
+  type DocsScrollSpyWindow = Window & {
+    __micronautDocsScrollSpy?: DocsScrollSpyState;
+  };
+
+  const scrollSpyState = () => {
+    const scrollSpyWindow = window as DocsScrollSpyWindow;
+    scrollSpyWindow.__micronautDocsScrollSpy ||= {};
+    return scrollSpyWindow.__micronautDocsScrollSpy;
+  };
+
+  const readScrollOffset = () => {
+    const value = window.getComputedStyle(
+      document.documentElement,
+    ).scrollPaddingTop;
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed + 8 : 88;
+  };
+
+  const activeScrollOffset = () =>
+    Math.max(readScrollOffset() + 8, window.innerHeight * 0.25);
+
+  const targetIdForLink = (link: Element) => {
+    const explicitTarget = link.getAttribute("data-docs-target-id");
+    if (explicitTarget) {
+      return explicitTarget;
+    }
+    const href = link.getAttribute("href");
+    if (!href?.startsWith("#")) {
+      return undefined;
+    }
+    const targetId = href.slice(1);
+    try {
+      return decodeURIComponent(targetId);
+    } catch {
+      return targetId;
+    }
+  };
+
+  const scrollActiveLinkIntoView = (link: HTMLElement) => {
+    const container = link.closest<HTMLElement>(
+      "[data-docs-scroll-container]",
+    );
+    if (!container || container.scrollHeight <= container.clientHeight) {
+      return;
+    }
+    const containerRect = container.getBoundingClientRect();
+    const linkRect = link.getBoundingClientRect();
+    const margin = 20;
+    if (linkRect.top < containerRect.top + margin) {
+      container.scrollTop -= containerRect.top + margin - linkRect.top;
+    } else if (linkRect.bottom > containerRect.bottom - margin) {
+      container.scrollTop += linkRect.bottom - containerRect.bottom + margin;
+    }
+  };
+
+  const scrollLinks = () =>
+    Array.from(
+      document.querySelectorAll<HTMLElement>("[data-docs-scroll-link]"),
+    );
+
+  const sectionTargets = (links: HTMLElement[]) => {
+    const ids = new Set(
+      links.map(targetIdForLink).filter(Boolean) as string[],
+    );
+    return Array.from(ids)
+      .map((id) => document.getElementById(id))
+      .filter((target): target is HTMLElement => Boolean(target))
+      .sort(
+        (left, right) =>
+          left.getBoundingClientRect().top -
+          right.getBoundingClientRect().top,
+      ) as HTMLElement[];
+  };
+
+  const setActiveId = (links: HTMLElement[], activeId: string) => {
+    const activeLinks: HTMLElement[] = [];
+    for (const link of links) {
+      const active = targetIdForLink(link) === activeId;
+      link.dataset.active = active ? "true" : "false";
+      if (active) {
+        link.setAttribute("aria-current", "location");
+        activeLinks.push(link);
+      } else if (link.getAttribute("aria-current") === "location") {
+        link.removeAttribute("aria-current");
+      }
+    }
+    for (const link of activeLinks) {
+      scrollActiveLinkIntoView(link);
+    }
+  };
+
+  const setActiveIdFromHash = () => {
+    if (!window.location.hash) {
+      return false;
+    }
+    let activeId = "";
+    try {
+      activeId = decodeURIComponent(window.location.hash.slice(1));
+    } catch {
+      activeId = window.location.hash.slice(1);
+    }
+    const links = scrollLinks();
+    if (!links.some((link) => targetIdForLink(link) === activeId)) {
+      return false;
+    }
+    setActiveId(links, activeId);
+    return true;
+  };
+
+  const activeProjectSectionToggles = (slug: string) =>
+    Array.from(
+      document.querySelectorAll<HTMLElement>(
+        "[data-docs-project-section-toggle]",
+      ),
+    ).filter((toggle) => toggle.dataset.docsProjectSlug === slug);
+
+  const projectSectionLists = (slug: string) =>
+    Array.from(
+      document.querySelectorAll<HTMLElement>("[data-docs-project-sections]"),
+    ).filter((list) => list.dataset.docsProjectSlug === slug);
+
+  const setProjectSectionsExpanded = (slug: string, expanded: boolean) => {
+    for (const toggle of activeProjectSectionToggles(slug)) {
+      toggle.setAttribute("aria-expanded", String(expanded));
+    }
+    for (const list of projectSectionLists(slug)) {
+      list.hidden = !expanded;
+      list.dataset.state = expanded ? "expanded" : "collapsed";
+    }
+  };
+
+  const toggleProjectSections = (toggle: HTMLElement) => {
+    const slug = toggle.dataset.docsProjectSlug;
+    if (!slug) {
+      return;
+    }
+    const sections = projectSectionLists(slug);
+    if (!sections.length) {
+      return;
+    }
+    setProjectSectionsExpanded(slug, sections.some((section) => section.hidden));
+  };
+
+  const onProjectSectionToggleClick = (event: MouseEvent) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    const toggle = target.closest<HTMLElement>(
+      "[data-docs-project-section-toggle]",
+    );
+    if (!toggle) {
+      return;
+    }
+    event.preventDefault();
+    toggleProjectSections(toggle);
+  };
+
+  const update = () => {
+    const links = scrollLinks();
+    const targets = sectionTargets(links);
+    if (!links.length || !targets.length) {
+      return;
+    }
+
+    const offset = activeScrollOffset();
+    let activeTarget = targets[0];
+    for (const target of targets) {
+      if (target.getBoundingClientRect().top <= offset) {
+        activeTarget = target;
+      } else {
+        break;
+      }
+    }
+    const activeId = activeTarget?.id;
+    if (activeId) {
+      setActiveId(links, activeId);
+    }
+  };
+
+  const scheduleUpdate = () => {
+    const state = scrollSpyState();
+    if (state.animationFrame) {
+      window.cancelAnimationFrame(state.animationFrame);
+    }
+    state.animationFrame = window.requestAnimationFrame(() => {
+      state.animationFrame = 0;
+      update();
+    });
+  };
+
+  const scheduleHashUpdate = () => {
+    window.setTimeout(() => {
+      if (!setActiveIdFromHash()) {
+        scheduleUpdate();
+      }
+    }, 0);
+    window.setTimeout(scheduleUpdate, 150);
+  };
+
+  const nodeContainsScrollSpyMarkup = (node: Node) =>
+    node instanceof Element &&
+    (node.matches("[data-docs-scroll-link], [data-docs-scroll-container]") ||
+      Boolean(
+        node.querySelector(
+          "[data-docs-scroll-link], [data-docs-scroll-container]",
+        ),
+      ));
+
+  const mutationAddsScrollSpyMarkup = (mutation: MutationRecord) =>
+    Array.from(mutation.addedNodes).some(nodeContainsScrollSpyMarkup);
+
+  const enhanceDocsScrollSpy = () => {
+    const state = scrollSpyState();
+    if (state.initialized) {
+      scheduleUpdate();
+      return;
+    }
+
+    state.initialized = true;
+    document.addEventListener("click", onProjectSectionToggleClick);
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("hashchange", scheduleHashUpdate);
+    document.addEventListener("astro:hydrate", scheduleUpdate);
+    state.observer = new MutationObserver((mutations) => {
+      if (mutations.some(mutationAddsScrollSpyMarkup)) {
+        scheduleUpdate();
+      }
+    });
+    state.observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    if (window.location.hash) {
+      scheduleHashUpdate();
+    } else {
+      scheduleUpdate();
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", enhanceDocsScrollSpy, {
+      once: true,
+    });
+  } else {
+    enhanceDocsScrollSpy();
+  }
+</script>

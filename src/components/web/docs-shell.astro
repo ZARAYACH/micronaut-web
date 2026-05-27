@@ -4,7 +4,7 @@ import {
   DocsSidebarMobileSheet,
   DocsSidebarRailControl,
 } from "@/components/web/docs-sidebar-controls";
-import { DocsScrollSpy } from "@/components/web/docs-scroll-spy";
+import DocsScrollSpy from "@/components/web/docs-scroll-spy.astro";
 import type { DocsProjectCatalog } from "@/lib/content-catalog";
 
 type ActiveSection = {
@@ -58,6 +58,7 @@ const {
             projectCatalog={projectCatalog}
             activeSlug={activeSlug}
             activeSections={activeSections}
+            instanceId="desktop"
           />
           <DocsSidebarRailControl client:load />
         </div>
@@ -71,11 +72,12 @@ const {
             projectCatalog={projectCatalog}
             activeSlug={activeSlug}
             activeSections={activeSections}
+            instanceId="mobile"
           />
         </DocsSidebarMobileSheet>
       </div>
       <slot />
     </main>
   </div>
-  <DocsScrollSpy client:idle />
+  <DocsScrollSpy />
 </div>

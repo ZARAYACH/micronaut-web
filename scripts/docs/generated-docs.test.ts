@@ -460,6 +460,23 @@ test("docs renderer turns code, dependency, configuration, and properties snippe
       "",
       "<1> Snippet callout follows the generated card.",
       "",
+      "[source,java]",
+      "----",
+      "class GeneratedJavaSnippet {",
+      "}",
+      "----",
+      "",
+      "[source,kotlin]",
+      "----",
+      "class GeneratedKotlinSnippet",
+      "----",
+      "",
+      "[source,groovy]",
+      "----",
+      "class GeneratedGroovySnippet {",
+      "}",
+      "----",
+      "",
       "dependency:micronaut-http-client[groupId=io.micronaut,title=HTTP Client dependency,description=Rendered from dependency macro]",
       "",
       "[configuration,title=Configuration snippet]",
@@ -503,6 +520,17 @@ test("docs renderer turns code, dependency, configuration, and properties snippe
   assert.match(generatedHtml, /docs-code-snippet-template/);
   assert.match(generatedHtml, /docs-dependency-template/);
   assert.match(generatedHtml, /docs-properties-template/);
+  assertSnippetLanguageIcon(generatedHtml, "java", "java");
+  assertSnippetLanguageIcon(generatedHtml, "kotlin", "kotlin");
+  assertSnippetLanguageIcon(generatedHtml, "groovy", "groovy");
+  assertSnippetLanguageIcon(generatedHtml, "gradle", "gradle");
+  assertSnippetLanguageIcon(generatedHtml, "maven", "maven");
+  assertSnippetLanguageIcon(generatedHtml, "properties", "properties");
+  assertSnippetLanguageIcon(generatedHtml, "yaml", "yaml");
+  assertSnippetLanguageIcon(generatedHtml, "toml", "toml");
+  assertSnippetLanguageIcon(generatedHtml, "groovy-config", "groovy");
+  assertSnippetLanguageIcon(generatedHtml, "hocon", "hocon");
+  assertSnippetLanguageIcon(generatedHtml, "json-config", "json");
   assertNoRuntimeGeneratedRendering("generated docs HTML", generatedHtml);
   assert.match(generatedHtml, /docs-code-callouts/);
   assert.match(generatedHtml, /<i class="conum" data-value="1"><\/i>/);
@@ -947,6 +975,10 @@ test("docs routes render generated fragments and serve generated assets", async 
     ),
     "utf8",
   );
+  const docsShellSource = await fs.readFile(
+    path.join(projectDirectory, "src", "components", "web", "docs-shell.astro"),
+    "utf8",
+  );
   const docsSidebarContentSource = await fs.readFile(
     path.join(
       projectDirectory,
@@ -964,6 +996,16 @@ test("docs routes render generated fragments and serve generated assets", async 
       "components",
       "web",
       "docs-version-selector.astro",
+    ),
+    "utf8",
+  );
+  const docsScrollSpySource = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "components",
+      "web",
+      "docs-scroll-spy.astro",
     ),
     "utf8",
   );
@@ -1011,9 +1053,37 @@ test("docs routes render generated fragments and serve generated assets", async 
     docsSidebarContentSource,
     /versionManifestHref="\/versions\.json"/,
   );
+  assert.match(
+    docsSidebarContentSource,
+    /isActiveProject[\s\S]*\? `#\$\{project\.slug\}-docs`[\s\S]*: withBasePath\(project\.href\)/,
+  );
   assert.match(docsSidebarContentSource, /DocsVersionSelector/);
   assert.doesNotMatch(docsSidebarContentSource, /DocsVersionSwitcher/);
   assert.doesNotMatch(docsSidebarContentSource, /client:idle/);
+  assert.match(docsShellSource, /docs-scroll-spy\.astro/);
+  assert.match(docsShellSource, /<DocsScrollSpy \/>/);
+  assert.match(docsShellSource, /instanceId="desktop"/);
+  assert.match(docsShellSource, /instanceId="mobile"/);
+  assert.doesNotMatch(docsShellSource, /DocsScrollSpy client:idle/);
+  assert.doesNotMatch(docsScrollSpySource, /"use client"/);
+  assert.match(docsSidebarContentSource, /data-docs-scroll-container/);
+  assert.match(docsSidebarContentSource, /data-docs-project-section-toggle/);
+  assert.match(docsSidebarContentSource, /data-docs-project-sections/);
+  assert.match(
+    docsSidebarContentSource,
+    /aria-expanded=\{hasActiveSections \? "true" : undefined\}/,
+  );
+  assert.match(
+    docsSidebarContentSource,
+    /aria-controls=\{hasActiveSections \? projectSectionsId : undefined\}/,
+  );
+  assert.match(
+    docsSidebarContentSource,
+    /data-\[active=true\]:before:bg-brand/,
+  );
+  assert.match(docsPageSource, /id=\{`\$\{project\.slug\}-docs`\}/);
+  assert.match(docsPageSource, /data-docs-scroll-container/);
+  assert.match(docsPageSource, /data-\[active=true\]:before:bg-brand/);
   assert.match(docsVersionSelectorSource, /data-docs-version-selector/);
   assert.match(docsVersionSelectorSource, /withBasePathForBase/);
   assert.match(docsVersionSelectorSource, /withSurfacePath\("docs"/);
@@ -1022,8 +1092,39 @@ test("docs routes render generated fragments and serve generated assets", async 
     /document\.addEventListener\("change"/,
   );
   assert.match(docsVersionSelectorSource, /MutationObserver/);
+  assert.match(
+    docsVersionSelectorSource,
+    /mutations\.some\(mutationAddsVersionSelector\)/,
+  );
+  assert.doesNotMatch(
+    docsVersionSelectorSource,
+    /new MutationObserver\(\(\) => updateAllSelects\(\)\)/,
+  );
   assert.match(docsVersionSelectorSource, /astro:hydrate/);
   assert.doesNotMatch(docsVersionSelectorSource, /astro-island/);
+  assert.match(docsScrollSpySource, /activeScrollOffset/);
+  assert.match(docsScrollSpySource, /setActiveIdFromHash/);
+  assert.match(docsScrollSpySource, /scrollActiveLinkIntoView/);
+  assert.match(
+    docsScrollSpySource,
+    /window\.addEventListener\("scroll", scheduleUpdate/,
+  );
+  assert.match(
+    docsScrollSpySource,
+    /window\.addEventListener\("hashchange", scheduleHashUpdate\)/,
+  );
+  assert.match(
+    docsScrollSpySource,
+    /document\.addEventListener\("astro:hydrate"/,
+  );
+  assert.match(docsScrollSpySource, /onProjectSectionToggleClick/);
+  assert.match(docsScrollSpySource, /event\.preventDefault\(\)/);
+  assert.match(docsScrollSpySource, /setProjectSectionsExpanded/);
+  assert.match(
+    docsScrollSpySource,
+    /document\.addEventListener\("click", onProjectSectionToggleClick\)/,
+  );
+  assert.match(docsScrollSpySource, /MutationObserver/);
 });
 
 function assertNoRuntimeGeneratedRendering(label: string, source: string) {
@@ -1158,4 +1259,29 @@ function escapeRegExp(value: any): any {
 
 function textOnly(value: any): any {
   return value.replace(/<[^>]*>/g, "");
+}
+
+function assertSnippetLanguageIcon(
+  source: string,
+  language: string,
+  icon: string,
+): void {
+  assert.match(
+    buttonHtmlForLanguage(source, language),
+    new RegExp(`docs-code-language-icon-${escapeRegExp(icon)}`),
+    `${language} snippets should use the ${icon} icon`,
+  );
+}
+
+function buttonHtmlForLanguage(source: string, language: string): string {
+  const dataLangIndex = source.indexOf(`data-lang="${language}"`);
+  if (dataLangIndex < 0) {
+    return "";
+  }
+  const buttonStart = source.lastIndexOf("<button", dataLangIndex);
+  const buttonEnd = source.indexOf("</button>", dataLangIndex);
+  if (buttonStart < 0 || buttonEnd < 0) {
+    return "";
+  }
+  return source.slice(buttonStart, buttonEnd + "</button>".length);
 }

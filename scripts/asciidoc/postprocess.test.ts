@@ -52,10 +52,12 @@ test("AsciiDoc snippets render through the shared component templates", async ()
   for (const language of [
     "bash",
     "gradle",
+    "groovy-config",
     "groovy",
     "hocon",
     "java",
     "json",
+    "json-config",
     "kotlin",
     "maven",
     "properties",
@@ -65,6 +67,29 @@ test("AsciiDoc snippets render through the shared component templates", async ()
     "yaml",
   ]) {
     assert.match(html, new RegExp(`data-lang="${language}"`));
+  }
+
+  for (const [language, icon] of [
+    ["bash", "terminal"],
+    ["gradle", "gradle"],
+    ["groovy", "groovy"],
+    ["groovy-config", "groovy"],
+    ["hocon", "hocon"],
+    ["java", "java"],
+    ["json", "json"],
+    ["json-config", "json"],
+    ["kotlin", "kotlin"],
+    ["maven", "maven"],
+    ["properties", "properties"],
+    ["text", "text"],
+    ["toml", "toml"],
+    ["xml", "xml"],
+    ["yaml", "yaml"],
+  ]) {
+    assert.match(
+      buttonHtmlForLanguage(html, language),
+      new RegExp(`docs-code-language-icon-${icon}`),
+    );
   }
 
   assert.match(text, /\$ curl http:\/\/localhost:8080\/hello\s+Hello World/);
@@ -197,4 +222,17 @@ function textOnly(value: string): string {
     .replace(/&amp;/g, "&")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function buttonHtmlForLanguage(value: string, language: string): string {
+  const dataLangIndex = value.indexOf(`data-lang="${language}"`);
+  if (dataLangIndex < 0) {
+    return "";
+  }
+  const buttonStart = value.lastIndexOf("<button", dataLangIndex);
+  const buttonEnd = value.indexOf("</button>", dataLangIndex);
+  if (buttonStart < 0 || buttonEnd < 0) {
+    return "";
+  }
+  return value.slice(buttonStart, buttonEnd + "</button>".length);
 }
