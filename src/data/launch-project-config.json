@@ -14,7 +14,7 @@
     {
       "id": "mcp",
       "label": "MCP",
-      "icon": "bot",
+      "icon": "plug",
       "description": "Model Context Protocol servers, clients, and tool integrations."
     },
     {
@@ -68,7 +68,7 @@
     {
       "id": "logging",
       "label": "Logging",
-      "icon": "feature:seamless-api-visibility",
+      "icon": "logs",
       "description": "Logging backends, log bridges, cloud logging, metrics, tracing, and observability integrations."
     },
     {
@@ -199,7 +199,7 @@
     {
       "id": "mcp",
       "title": "MCP",
-      "icon": "bot",
+      "icon": "plug",
       "description": "Model Context Protocol servers, clients, and tool integrations.",
       "featureNames": ["mcp-http", "mcp-stdio", "mcp-client-java-sdk"],
       "matchPattern": "\\b(mcp|model context protocol|tool integration|model-facing|model client)\\b"
@@ -271,7 +271,7 @@
     {
       "id": "logging",
       "title": "Logging",
-      "icon": "feature:seamless-api-visibility",
+      "icon": "logs",
       "description": "Logging backends, log bridges, cloud logging, metrics, tracing, and observability integrations.",
       "featureNames": ["jmx", "control-panel", "micrometer-annotation", "micrometer-observation", "micrometer-observation-http", "micrometer-appoptics", "micrometer-atlas", "micrometer-azure-monitor", "micrometer-cloudwatch", "micrometer-datadog", "micrometer-dynatrace", "micrometer-elastic", "micrometer-ganglia", "micrometer-graphite", "micrometer-humio", "micrometer-influx", "micrometer-jmx", "micrometer-kairos", "micrometer-new-relic", "micrometer-oracle-cloud", "micrometer-prometheus", "micrometer-prometheus-pushgateway", "micrometer-signalfx", "micrometer-stackdriver", "micrometer-statsd", "micrometer-wavefront", "azure-tracing", "gcp-cloud-trace", "tracing-jaeger", "tracing-zipkin", "tracing-opentelemetry-exporter-logging", "tracing-opentelemetry-exporter-otlp", "tracing-opentelemetry-gcp", "tracing-opentelemetry-jaeger", "tracing-opentelemetry-xray", "tracing-opentelemetry-zipkin", "logback", "log4j2", "slf4j-simple", "slf4j-simple-logger", "jul-to-slf4j", "amazon-cloudwatch-logging", "azure-logging", "gcp-logging", "oracle-cloud-logging"],
       "matchPattern": "\\b(logging|logs?|management|health|jmx|control-panel|micrometer|metrics?|observation|tracing|trace|opentelemetry|prometheus|datadog|new-relic|zipkin|jaeger|xray|logback|log4j2|slf4j)\\b"

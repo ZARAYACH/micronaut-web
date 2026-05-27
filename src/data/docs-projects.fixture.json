@@ -162,7 +162,7 @@
     {
       "slug": "languages",
       "name": "Languages",
-      "icon": "code",
+      "icon": "languages",
       "description": "Language-specific integrations and JVM polyglot support.",
       "projectSlugs": [
         "groovy",
@@ -258,7 +258,7 @@
       "submodulePath": "repos/micronaut-test",
       "platformVersionKey": "managed-micronaut-test",
       "version": "5.0.0",
-      "icon": "lucide:test-tube-2",
+      "icon": "lucide:flask-conical",
       "primaryCategory": "dev-and-test",
       "categorySlugs": [
         "dev-and-test"
@@ -471,7 +471,7 @@
       "submodulePath": "repos/micronaut-micrometer",
       "platformVersionKey": "managed-micronaut-micrometer",
       "version": "6.0.0",
-      "icon": "lucide:chart-line",
+      "icon": "lucide:activity",
       "primaryCategory": "analytics",
       "categorySlugs": [
         "analytics"
@@ -492,7 +492,7 @@
       "submodulePath": "repos/micronaut-sql",
       "platformVersionKey": "managed-micronaut-sql",
       "version": "7.0.1",
-      "icon": "lucide:database",
+      "icon": "image:languages/sql.svg",
       "primaryCategory": "data-access",
       "categorySlugs": [
         "data-access"
@@ -597,7 +597,7 @@
       "submodulePath": "repos/micronaut-aws",
       "platformVersionKey": "managed-micronaut-aws",
       "version": "5.0.0",
-      "icon": "lucide:cloud",
+      "icon": "lucide:cloud-cog",
       "primaryCategory": "cloud",
       "categorySlugs": [
         "cloud"
@@ -745,7 +745,7 @@
       "submodulePath": "repos/micronaut-views",
       "platformVersionKey": "managed-micronaut-views",
       "version": "6.0.0",
-      "icon": "lucide:layout-template",
+      "icon": "lucide:panels-top-left",
       "primaryCategory": "views",
       "categorySlugs": [
         "views"
@@ -850,7 +850,7 @@
       "submodulePath": "repos/micronaut-data",
       "platformVersionKey": "managed-micronaut-data",
       "version": "5.0.1",
-      "icon": "lucide:database",
+      "icon": "lucide:table-properties",
       "primaryCategory": "most-popular",
       "categorySlugs": [
         "most-popular",
@@ -872,7 +872,7 @@
       "submodulePath": "repos/micronaut-cache",
       "platformVersionKey": "managed-micronaut-cache",
       "version": "6.0.0",
-      "icon": "lucide:database-zap",
+      "icon": "lucide:memory-stick",
       "primaryCategory": "misc",
       "categorySlugs": [
         "misc"
@@ -914,7 +914,7 @@
       "submodulePath": "repos/micronaut-jackson-xml",
       "platformVersionKey": "managed-micronaut-jackson-xml",
       "version": "5.0.0",
-      "icon": "brand:json",
+      "icon": "image:languages/xml.svg",
       "primaryCategory": "api",
       "categorySlugs": [
         "api"
@@ -935,7 +935,7 @@
       "submodulePath": "repos/micronaut-jaxrs",
       "platformVersionKey": "managed-micronaut-jaxrs",
       "version": "5.0.0",
-      "icon": "lucide:route",
+      "icon": "lucide:network",
       "primaryCategory": "api",
       "categorySlugs": [
         "api"
@@ -998,7 +998,7 @@
       "submodulePath": "repos/micronaut-reactor",
       "platformVersionKey": "managed-micronaut-reactor",
       "version": "4.0.0",
-      "icon": "lucide:workflow",
+      "icon": "lucide:atom",
       "primaryCategory": "reactive",
       "categorySlugs": [
         "reactive"
@@ -1019,7 +1019,7 @@
       "submodulePath": "repos/micronaut-azure",
       "platformVersionKey": "managed-micronaut-azure",
       "version": "6.0.0",
-      "icon": "lucide:cloud",
+      "icon": "lucide:cloud-upload",
       "primaryCategory": "cloud",
       "categorySlugs": [
         "cloud"
@@ -1040,7 +1040,7 @@
       "submodulePath": "repos/micronaut-jms",
       "platformVersionKey": "managed-micronaut-jms",
       "version": "5.0.0",
-      "icon": "lucide:message-square",
+      "icon": "lucide:messages-square",
       "primaryCategory": "messaging",
       "categorySlugs": [
         "messaging"
@@ -1082,7 +1082,7 @@
       "submodulePath": "repos/micronaut-oracle-cloud",
       "platformVersionKey": "managed-micronaut-oraclecloud",
       "version": "6.0.0",
-      "icon": "lucide:cloud",
+      "icon": "brand:oracle",
       "primaryCategory": "cloud",
       "categorySlugs": [
         "cloud"
@@ -1146,7 +1146,7 @@
       "submodulePath": "repos/micronaut-r2dbc",
       "platformVersionKey": "managed-micronaut-r2dbc",
       "version": "7.0.1",
-      "icon": "lucide:database",
+      "icon": "lucide:waves",
       "primaryCategory": "data-access",
       "categorySlugs": [
         "data-access"
@@ -1167,7 +1167,7 @@
       "submodulePath": "repos/micronaut-coherence",
       "platformVersionKey": "managed-micronaut-coherence",
       "version": "6.0.0",
-      "icon": "lucide:boxes",
+      "icon": "lucide:layers-3",
       "primaryCategory": "data-access",
       "categorySlugs": [
         "data-access"
@@ -1209,7 +1209,7 @@
       "submodulePath": "repos/micronaut-problem-json",
       "platformVersionKey": "managed-micronaut-problem",
       "version": "4.0.0",
-      "icon": "brand:json",
+      "icon": "lucide:file-json",
       "primaryCategory": "errors",
       "categorySlugs": [
         "errors"
@@ -1357,7 +1357,7 @@
       "submodulePath": "repos/micronaut-chatbots",
       "platformVersionKey": "managed-micronaut-chatbots",
       "version": "2.0.0",
-      "icon": "lucide:bot",
+      "icon": "lucide:message-circle",
       "primaryCategory": "misc",
       "categorySlugs": [
         "misc"
@@ -1378,7 +1378,7 @@
       "submodulePath": "repos/micronaut-test-resources",
       "platformVersionKey": "managed-micronaut-test-resources",
       "version": "4.0.0",
-      "icon": "lucide:test-tube-2",
+      "icon": "lucide:container",
       "primaryCategory": "dev-and-test",
       "categorySlugs": [
         "dev-and-test"
@@ -1399,7 +1399,7 @@
       "submodulePath": "repos/micronaut-validation",
       "platformVersionKey": "managed-micronaut-validation",
       "version": "5.0.0",
-      "icon": "lucide:check-circle",
+      "icon": "lucide:shield-check",
       "primaryCategory": "validation",
       "categorySlugs": [
         "validation"
@@ -1441,7 +1441,7 @@
       "submodulePath": "repos/micronaut-control-panel",
       "platformVersionKey": "managed-micronaut-control-panel",
       "version": "2.0.0",
-      "icon": "lucide:sliders-horizontal",
+      "icon": "lucide:sliders-vertical",
       "primaryCategory": "dev-and-test",
       "categorySlugs": [
         "dev-and-test"
@@ -1483,7 +1483,7 @@
       "submodulePath": "repos/micronaut-sourcegen",
       "platformVersionKey": "managed-micronaut-sourcegen",
       "version": "2.0.0",
-      "icon": "lucide:code",
+      "icon": "lucide:file-code-2",
       "primaryCategory": "build",
       "categorySlugs": [
         "build"
@@ -1546,7 +1546,7 @@
       "submodulePath": "repos/micronaut-json-schema",
       "platformVersionKey": "managed-micronaut-json-schema",
       "version": "2.0.1",
-      "icon": "brand:json",
+      "icon": "lucide:file-json-2",
       "primaryCategory": "api",
       "categorySlugs": [
         "api"
@@ -1651,7 +1651,7 @@
       "submodulePath": "repos/micronaut-openrewrite",
       "platformVersionKey": "managed-micronaut-openrewrite",
       "version": "1.0.0",
-      "icon": "lucide:folder-git-2",
+      "icon": "lucide:git-compare-arrows",
       "primaryCategory": "build",
       "categorySlugs": [
         "build"

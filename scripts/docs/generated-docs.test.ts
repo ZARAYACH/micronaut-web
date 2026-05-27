@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile as execFileCallback } from "node:child_process";
+import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -174,6 +175,43 @@ test("generated docs tooling uses Micronaut Platform catalog instead of the old 
       `${file} should not reference the old published docs aggregate`,
     );
   }
+});
+
+test("docs project catalog uses unique project and category icons", async (): Promise<any> => {
+  const catalog = JSON.parse(
+    await fs.readFile(
+      path.join(projectDirectory, "src", "data", "docs-projects.fixture.json"),
+      "utf8",
+    ),
+  );
+  const iconEntries = [
+    ...catalog.categories.map((category: any): any => ({
+      icon: category.icon,
+      owner: `category:${category.slug}`,
+    })),
+    ...catalog.projects.map((project: any): any => ({
+      icon: project.icon,
+      owner: `project:${project.slug}`,
+    })),
+  ];
+  const lucideIcons = await catalogLucideIconComponents();
+  const ownersByIcon = new Map<string, string[]>();
+  const unsupportedIcons: string[] = [];
+  for (const entry of iconEntries) {
+    const icon = await resolvedCatalogIconIdentity(entry.icon, lucideIcons);
+    if (!icon) {
+      unsupportedIcons.push(entry.icon);
+      continue;
+    }
+    ownersByIcon.set(icon, [...(ownersByIcon.get(icon) || []), entry.owner]);
+  }
+  const duplicateIcons = [...ownersByIcon.entries()]
+    .filter(([, owners]): any => owners.length > 1)
+    .map(([icon, owners]): any => `${icon}: ${owners.join(", ")}`)
+    .sort();
+
+  assert.deepEqual([...new Set(unsupportedIcons)].sort(), []);
+  assert.deepEqual(duplicateIcons, []);
 });
 
 test("docs renderer uses checked-in project metadata when external metadata is absent", async (t: any): Promise<any> => {
@@ -1258,6 +1296,80 @@ async function writeGuide(
 
 function lines(value: any): any {
   return value.split(/\r?\n/).filter(Boolean);
+}
+
+function canonicalCatalogIcon(icon: string): string {
+  return icon.startsWith("lucide:") ? icon.slice("lucide:".length) : icon;
+}
+
+async function catalogLucideIconComponents(): Promise<Map<string, string>> {
+  const iconGlyphSource = await fs.readFile(
+    path.join(projectDirectory, "src", "components", "web", "icon-glyph.tsx"),
+    "utf8",
+  );
+  const iconMapSource =
+    iconGlyphSource.match(
+      /const icons: Record<string, LucideIcon> = \{([\s\S]*?)\n\};/,
+    )?.[1] || "";
+  return new Map(
+    [
+      ...iconMapSource.matchAll(
+        /^\s*(?:"([^"]+)"|([a-z][\w-]*)):\s*([A-Z]\w*)/gm,
+      ),
+    ]
+      .map((match): [string, string] => [match[1] || match[2], match[3]])
+      .filter(([icon, component]): boolean => Boolean(icon && component)),
+  );
+}
+
+async function resolvedCatalogIconIdentity(
+  icon: string,
+  lucideIcons: Map<string, string>,
+): Promise<string | undefined> {
+  const assetPath = catalogIconAssetPath(icon);
+  if (assetPath) {
+    try {
+      const asset = await fs.readFile(assetPath);
+      return `asset:${createHash("sha256").update(asset).digest("hex")}`;
+    } catch {
+      return undefined;
+    }
+  }
+  const component = lucideIcons.get(canonicalCatalogIcon(icon));
+  return component ? `lucide:${component}` : undefined;
+}
+
+function catalogIconAssetPath(icon: string): string | undefined {
+  if (icon.startsWith("brand:")) {
+    return path.join(
+      projectDirectory,
+      "public",
+      "micronaut-assets",
+      "icons",
+      "brands",
+      `${icon.slice("brand:".length)}.svg`,
+    );
+  }
+  if (icon.startsWith("feature:")) {
+    return path.join(
+      projectDirectory,
+      "public",
+      "micronaut-assets",
+      "icons",
+      "features",
+      `${icon.slice("feature:".length)}.svg`,
+    );
+  }
+  if (icon.startsWith("image:")) {
+    return path.join(
+      projectDirectory,
+      "public",
+      "micronaut-assets",
+      "icons",
+      icon.slice("image:".length),
+    );
+  }
+  return undefined;
 }
 
 function escapeRegExp(value: any): any {

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { promises as fs } from "node:fs";
 import { createRequire } from "node:module";
@@ -15,6 +16,39 @@ const projectDirectory = path.resolve(
 );
 const require = createRequire(import.meta.url);
 const modules = importSnippetModules();
+
+test("launch feature category icons are unique", async (): Promise<any> => {
+  const launchProjectConfig = JSON.parse(
+    await fs.readFile(
+      path.join(projectDirectory, "src", "data", "launch-project-config.json"),
+      "utf8",
+    ),
+  );
+
+  const iconComponents = await launchLucideIconComponents();
+  await assertUniqueLaunchIcons(
+    "featureCategories",
+    launchProjectConfig.featureCategories.map((category: any): any => ({
+      icon: category.icon,
+      owner: category.id,
+    })),
+    iconComponents,
+  );
+  await assertUniqueLaunchIcons(
+    "capabilityGroups",
+    launchProjectConfig.capabilityGroups.map((group: any): any => ({
+      icon: group.icon,
+      owner: group.id,
+    })),
+    iconComponents,
+  );
+  for (const category of launchProjectConfig.featureCategories) {
+    const group = launchProjectConfig.capabilityGroups.find(
+      (candidate: any): any => candidate.id === category.id,
+    );
+    assert.equal(group?.icon, category.icon);
+  }
+});
 
 test("homepage code example Markdown files use plain fenced blocks", async (): Promise<any> => {
   const { parseMarkdownCodeSnippetVariants } = await modules;
@@ -176,6 +210,108 @@ test("main-site Markdown uses local copies of micronaut.io upload resources", as
 
   assert.deepEqual(failures, []);
 });
+
+async function assertUniqueLaunchIcons(
+  label: string,
+  entries: Array<{ icon: string; owner: string }>,
+  iconComponents: Map<string, string>,
+): Promise<void> {
+  const ownersByIcon = new Map<string, string[]>();
+  const unsupportedIcons: string[] = [];
+  for (const entry of entries) {
+    const icon = await resolvedLaunchIconIdentity(entry.icon, iconComponents);
+    if (!icon) {
+      unsupportedIcons.push(entry.icon);
+      continue;
+    }
+    ownersByIcon.set(icon, [...(ownersByIcon.get(icon) || []), entry.owner]);
+  }
+  const duplicateIcons = [...ownersByIcon.entries()]
+    .filter(([, owners]): any => owners.length > 1)
+    .map(([icon, owners]): any => `${icon}: ${owners.join(", ")}`)
+    .sort();
+
+  assert.deepEqual(
+    [...new Set(unsupportedIcons)].sort(),
+    [],
+    `${label} icons must resolve`,
+  );
+  assert.deepEqual(duplicateIcons, [], `${label} icons must be unique`);
+}
+
+function canonicalLaunchIcon(icon: string): string {
+  return icon.startsWith("lucide:") ? icon.slice("lucide:".length) : icon;
+}
+
+async function launchLucideIconComponents(): Promise<Map<string, string>> {
+  const iconGlyphSource = await fs.readFile(
+    path.join(projectDirectory, "src", "components", "web", "icon-glyph.tsx"),
+    "utf8",
+  );
+  const iconMapSource =
+    iconGlyphSource.match(
+      /const icons: Record<string, LucideIcon> = \{([\s\S]*?)\n\};/,
+    )?.[1] || "";
+  return new Map(
+    [
+      ...iconMapSource.matchAll(
+        /^\s*(?:"([^"]+)"|([a-z][\w-]*)):\s*([A-Z]\w*)/gm,
+      ),
+    ]
+      .map((match): [string, string] => [match[1] || match[2], match[3]])
+      .filter(([icon, component]): boolean => Boolean(icon && component)),
+  );
+}
+
+async function resolvedLaunchIconIdentity(
+  icon: string,
+  iconComponents: Map<string, string>,
+): Promise<string | undefined> {
+  const assetPath = launchIconAssetPath(icon);
+  if (assetPath) {
+    try {
+      const asset = await fs.readFile(assetPath);
+      return `asset:${createHash("sha256").update(asset).digest("hex")}`;
+    } catch {
+      return undefined;
+    }
+  }
+  const component = iconComponents.get(canonicalLaunchIcon(icon));
+  return component ? `lucide:${component}` : undefined;
+}
+
+function launchIconAssetPath(icon: string): string | undefined {
+  if (icon.startsWith("brand:")) {
+    return path.join(
+      projectDirectory,
+      "public",
+      "micronaut-assets",
+      "icons",
+      "brands",
+      `${icon.slice("brand:".length)}.svg`,
+    );
+  }
+  if (icon.startsWith("feature:")) {
+    return path.join(
+      projectDirectory,
+      "public",
+      "micronaut-assets",
+      "icons",
+      "features",
+      `${icon.slice("feature:".length)}.svg`,
+    );
+  }
+  if (icon.startsWith("image:")) {
+    return path.join(
+      projectDirectory,
+      "public",
+      "micronaut-assets",
+      "icons",
+      icon.slice("image:".length),
+    );
+  }
+  return undefined;
+}
 
 async function importSnippetModules(): Promise<any> {
   const temporaryDirectory = await fs.mkdtemp(
