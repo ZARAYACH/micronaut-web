@@ -261,7 +261,7 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
         <h2 class="text-2xl font-semibold tracking-tight">Latest Guides</h2>
       </div>
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {recentGuides.map((guide) => <LatestGuideCard guide={guide} root={root} />)}
+        {recentGuides.map((guide) => <LatestGuideCard client:visible guide={guide} root={root} />)}
       </div>
     </section>
   )}
@@ -291,7 +291,7 @@ function filterHref(next: Partial<{ q: string; category: string; tag: string; so
               data-date={guide.publicationDate}
               data-minutes={guide.estimatedMinutes}
             >
-              <LatestGuideCard guide={guide} root={root} />
+              <LatestGuideCard client:visible guide={guide} root={root} />
             </div>
           ))}
         </div>

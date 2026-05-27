@@ -1,5 +1,8 @@
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Card,
   CardContent,
@@ -7,6 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   guideOptionPath,
   guideOverviewPath,
@@ -27,6 +38,7 @@ export function LatestGuideCard({
   const href = withBasePath(
     option ? guideOptionPath(option, root) : guideOverviewPath(guide, root),
   );
+  const hasVariantMenu = guide.options.length > 1;
   return (
     <Card className="h-full">
       <CardHeader>
@@ -61,11 +73,55 @@ export function LatestGuideCard({
         </div>
         <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
           <span>{guide.estimatedMinutes} min</span>
-          <Button asChild variant="ghost" size="sm">
-            <a href={href} aria-label={`Read ${guide.title}`}>
-              Read
-            </a>
-          </Button>
+          {hasVariantMenu ? (
+            <ButtonGroup>
+              <Button asChild variant="outline" size="sm">
+                <a href={href} aria-label={`Read ${guide.title}`}>
+                  Read
+                </a>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={`Choose variant for ${guide.title}`}
+                  >
+                    <ChevronDownIcon className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-56">
+                  <DropdownMenuLabel>Variants</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {guide.options.map((variant) => {
+                    const active = variant.file === option?.file;
+                    return (
+                      <DropdownMenuItem key={variant.id} asChild>
+                        <a
+                          href={withBasePath(guideOptionPath(variant, root))}
+                          aria-current={active ? "page" : undefined}
+                        >
+                          <span>{variant.languageLabel}</span>
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            {variant.buildToolLabel}
+                          </span>
+                          {active ? (
+                            <CheckIcon className="ml-1 size-4" />
+                          ) : null}
+                        </a>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </ButtonGroup>
+          ) : (
+            <Button asChild variant="outline" size="sm">
+              <a href={href} aria-label={`Read ${guide.title}`}>
+                Read
+              </a>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

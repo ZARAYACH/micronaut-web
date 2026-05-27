@@ -449,7 +449,17 @@ test("latest guide replacement routes and parallel generated-content preparation
     /docsSnippetStyles|define:vars/,
   );
   assert.match(guideCatalog, /version\.current \? rootPath : version\.href/);
+  assert.match(guideCatalog, /LatestGuideCard client:visible/);
+  assert.doesNotMatch(
+    guideCatalog,
+    /<LatestGuideCard guide=\{guide\} root=\{root\} \/>/,
+  );
   assert.match(guideCard, /preferredGuideOption\(guide\)/);
+  assert.match(guideCard, /ButtonGroup/);
+  assert.match(guideCard, /DropdownMenu/);
+  assert.match(guideCard, /DropdownMenuTrigger asChild/);
+  assert.match(guideCard, /guide\.options\.map/);
+  assert.match(guideCard, /guideOptionPath\(variant, root\)/);
   assert.match(guideCard, /guideOverviewPath\(guide, root\)/);
 });
 
