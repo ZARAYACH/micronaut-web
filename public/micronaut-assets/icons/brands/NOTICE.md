@@ -8,5 +8,7 @@ carry separate license and trademark considerations. See:
 - `simple-icons-LICENSE.md`
 - `simple-icons-DISCLAIMER.md`
 
-The generated docs render these SVGs as monochrome sidebar, module-card, and
+The generated docs render these SVGs as sidebar, module-card, and
 code-language icons for nominative identification of supported technologies.
+Some project icons use the Simple Icons brand color in the UI when it improves
+recognition.

@@ -61,6 +61,7 @@ import {
   Workflow,
   type LucideIcon
 } from "lucide-react";
+import type { CSSProperties } from "react";
 
 import { cn } from "@/lib/utils";
 import { withBasePath } from "@/lib/base-path";
@@ -130,6 +131,20 @@ const icons: Record<string, LucideIcon> = {
   workflow: Workflow
 };
 
+const brandIconColors: Record<string, string> = {
+  apachecassandra: "#1287B1",
+  mongodb: "#47A248",
+  neo4j: "#4581C3",
+  opensearch: "#005EB8",
+  redis: "#FF4438",
+  spring: "#6DB33F"
+};
+
+const preservedImageIcons = new Set([
+  "image:projects/eclipsestore.png",
+  "image:projects/reactor.png"
+]);
+
 function normalizeLucideName(name: string) {
   if (name.startsWith("lucide:")) {
     return name.slice("lucide:".length);
@@ -144,10 +159,40 @@ function assetThemeClass(name: string, themeTreatment: IconThemeTreatment) {
   if (themeTreatment === "inverted") {
     return "brightness-0 invert";
   }
-  if (name.startsWith("feature:")) {
+  if (name.startsWith("feature:") || preservedImageIcons.has(name)) {
     return undefined;
   }
   return "dark:brightness-0 dark:invert";
+}
+
+function DecorativeBrandGlyph({
+  src,
+  brand,
+  className
+}: {
+  src: string;
+  brand: string;
+  className?: string;
+}) {
+  const style: CSSProperties = {
+    backgroundColor: brandIconColors[brand] || "currentColor",
+    maskImage: `url(${src})`,
+    maskPosition: "center",
+    maskRepeat: "no-repeat",
+    maskSize: "contain",
+    WebkitMaskImage: `url(${src})`,
+    WebkitMaskPosition: "center",
+    WebkitMaskRepeat: "no-repeat",
+    WebkitMaskSize: "contain"
+  };
+
+  return (
+    <span
+      className={cn("inline-block", className)}
+      style={style}
+      aria-hidden="true"
+    />
+  );
 }
 
 function DecorativeAssetGlyph({
@@ -184,12 +229,12 @@ export function IconGlyph({
   themeTreatment?: IconThemeTreatment;
 }) {
   if (name.startsWith("brand:")) {
+    const brand = name.slice("brand:".length);
     return (
-      <DecorativeAssetGlyph
-        src={withBasePath(`/micronaut-assets/icons/brands/${name.slice("brand:".length)}.svg`)}
-        name={name}
+      <DecorativeBrandGlyph
+        src={withBasePath(`/micronaut-assets/icons/brands/${brand}.svg`)}
+        brand={brand}
         className={className}
-        themeTreatment={themeTreatment}
       />
     );
   }

@@ -258,7 +258,7 @@
       "submodulePath": "repos/micronaut-test",
       "platformVersionKey": "managed-micronaut-test",
       "version": "5.0.0",
-      "icon": "lucide:flask-conical",
+      "icon": "brand:junit5",
       "primaryCategory": "dev-and-test",
       "categorySlugs": [
         "dev-and-test"
@@ -407,7 +407,7 @@
       "submodulePath": "repos/micronaut-grpc",
       "platformVersionKey": "managed-micronaut-grpc",
       "version": "5.0.0",
-      "icon": "lucide:waypoints",
+      "icon": "image:projects/grpc.png",
       "primaryCategory": "api",
       "categorySlugs": [
         "api"
@@ -914,7 +914,7 @@
       "submodulePath": "repos/micronaut-jackson-xml",
       "platformVersionKey": "managed-micronaut-jackson-xml",
       "version": "5.0.0",
-      "icon": "image:languages/xml.svg",
+      "icon": "brand:xml",
       "primaryCategory": "api",
       "categorySlugs": [
         "api"
@@ -998,7 +998,7 @@
       "submodulePath": "repos/micronaut-reactor",
       "platformVersionKey": "managed-micronaut-reactor",
       "version": "4.0.0",
-      "icon": "lucide:atom",
+      "icon": "image:projects/reactor.png",
       "primaryCategory": "reactive",
       "categorySlugs": [
         "reactive"
@@ -1504,7 +1504,7 @@
       "submodulePath": "repos/micronaut-eclipsestore",
       "platformVersionKey": "managed-micronaut-eclipsestore",
       "version": "2.0.0",
-      "icon": "lucide:archive",
+      "icon": "image:projects/eclipsestore.png",
       "primaryCategory": "data-access",
       "categorySlugs": [
         "data-access"
