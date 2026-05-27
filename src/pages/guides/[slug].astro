@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import GeneratedDocsStaticEnhancer from "@/components/web/generated-docs-static-enhancer.astro";
 import LatestGuidesCatalog from "@/components/web/latest-guides-catalog.astro";
+import { ArrowUp } from "lucide-react";
 import {
   allGeneratedGuideTags,
   guideOptionPath,
@@ -318,23 +319,7 @@ function variantAnchor(option: GeneratedGuideOption) {
                 aria-label="Back to top"
                 data-guide-page-index-top
               >
-                <svg
-                  class="size-3.5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="m5 12 7-7 7 7"></path>
-                  <path d="M12 19V5"></path>
-                </svg>
+                <ArrowUp className="size-3.5" aria-hidden="true" />
               </a>
             </div>
             <nav class="grid gap-px border-l border-border pl-2.5" aria-label="Current guide sections" data-guide-page-index-nav>
