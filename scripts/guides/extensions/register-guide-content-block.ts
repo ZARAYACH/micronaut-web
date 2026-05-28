@@ -6,11 +6,12 @@ import type {
   Section,
 } from "@asciidoctor/core";
 
-import { guideMacroPayloadFromValue } from "../guide-blocks.ts";
+type GuideMacroPayload = {
+  attributes: Record<string, string>;
+  target: string;
+};
 
-type GuideContentResolver = (
-  payload: ReturnType<typeof guideMacroPayloadFromValue>,
-) => Promise<string[]>;
+type GuideContentResolver = (payload: GuideMacroPayload) => Promise<string[]>;
 
 export function registerGuideContentBlock(
   registry: Registry,
@@ -42,4 +43,10 @@ export function registerGuideContentBlock(
       return holder;
     });
   });
+}
+
+function guideMacroPayloadFromValue(value: unknown): GuideMacroPayload {
+  return JSON.parse(
+    Buffer.from(String(value || ""), "base64url").toString("utf8"),
+  ) as GuideMacroPayload;
 }

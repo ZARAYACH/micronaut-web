@@ -5,14 +5,10 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { expandDependencyMacrosToBlocks } from "../dependencies.ts";
 import { micronautExtensionRegistry } from "../extensions/index.ts";
 import { renderAsciiDoc } from "../rendering.ts";
-import { snippetBlock } from "../snippet-blocks.ts";
-import { expandSnippetMacrosToBlocks } from "../snippets.ts";
-import { normalizeAsciiDocSource } from "../source-normalizer.ts";
 import { guideExtensionRegistry } from "../../guides/extensions/index.ts";
-import type { GuideRenderContext } from "../../guides/preprocessor.ts";
+import type { GuideRenderContext } from "../../guides/model.ts";
 
 const projectDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -223,6 +219,33 @@ test("snippet block processor absorbs following callout lines from the document 
   assert.match(text, /Manual callout/);
 });
 
+test("generated snippet ids stay unique without shared render state", async (): Promise<any> => {
+  const repeatedPayload = {
+    samples: [{ language: "java", source: "class Example {}" }],
+  };
+  const converted = await renderAsciiDoc({
+    asciidoctor,
+    source: [
+      snippetBlock("code", repeatedPayload),
+      snippetBlock("code", repeatedPayload),
+    ].join("\n"),
+    convertOptions: {
+      attributes: {
+        icons: "font",
+        idprefix: "",
+        idseparator: "-",
+      },
+      base_dir: fixtureDirectory,
+    },
+  });
+  const ids = [...converted.matchAll(/\bid="(generated-docs-snippet[^"]*)"/g)]
+    .map((match): string => match[1])
+    .filter((id): boolean => !/-tab-\d+$|-panel-\d+$/.test(id));
+
+  assert.equal(ids.length, 2);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
 test("guide macro block processors render snippet gallery macros", async (): Promise<any> => {
   const context = guideMacroFixtureContext();
   const source = await fs.readFile(
@@ -277,6 +300,63 @@ test("guide macro block processors render snippet gallery macros", async (): Pro
   );
 });
 
+test("guide dependencies group renders DependencyMacroSubstitution-compatible snippets", async (): Promise<any> => {
+  const source = [
+    ":dependencies:",
+    "dependency:micronaut-http-client[groupId=io.micronaut,callout=1]",
+    "dependency:micronaut-validation[groupId=io.micronaut.validation,scope=test,callout=2]",
+    "dependency:micronaut-bom[groupId=io.micronaut.platform,pom=true,version=4.9.0]",
+    "dependency:micronaut-inject-java[groupId=io.micronaut,scope=annotationProcessor,versionProperty=${micronaut.version}]",
+    ":dependencies:",
+    "<1> Adds HTTP client dependency.",
+    "<2> Adds validation dependency.",
+  ].join("\n");
+
+  const gradleConverted = await renderGuideSource(source, {
+    buildTool: "gradle",
+  });
+  const gradleText = textOnly(gradleConverted);
+  assert.match(gradleText, /build\.gradle/);
+  assert.match(
+    gradleText,
+    /implementation\("io\.micronaut:micronaut-http-client"\)/,
+  );
+  assert.match(
+    gradleText,
+    /testImplementation\("io\.micronaut\.validation:micronaut-validation"\)/,
+  );
+  assert.match(
+    gradleText,
+    /implementation platform\("io\.micronaut\.platform:micronaut-bom:4\.9\.0"\)/,
+  );
+  assert.match(
+    gradleText,
+    /annotationProcessor\("io\.micronaut:micronaut-inject-java"\)/,
+  );
+  assert.match(gradleText, /Adds HTTP client dependency/);
+  assert.match(gradleText, /Adds validation dependency/);
+
+  const mavenConverted = await renderGuideSource(source, {
+    buildTool: "maven",
+  });
+  const mavenText = textOnly(mavenConverted);
+  assert.match(mavenText, /pom\.xml/);
+  assert.match(mavenText, /<scope>compile<\/scope>/);
+  assert.match(mavenText, /<scope>test<\/scope>/);
+  assert.match(mavenText, /<type>pom<\/type>/);
+  assert.match(mavenText, /<scope>import<\/scope>/);
+  assert.match(
+    mavenText,
+    /Add the following to your annotationProcessorPaths element/,
+  );
+  assert.match(mavenText, /<path>/);
+  assert.match(mavenText, /<version>\$\{micronaut\.version\}<\/version>/);
+  assert.match(mavenConverted, /data-value="1"/);
+  assert.match(mavenConverted, /data-value="2"/);
+  assert.doesNotMatch(mavenConverted, /<!--1-->|<!--2-->/);
+  assert.doesNotMatch(mavenConverted, /:dependencies:|dependency:/);
+});
+
 async function renderSnippetGalleryFixture(): Promise<{
   converted: string;
   html: string;
@@ -290,17 +370,9 @@ async function renderSnippetGalleryFixture(): Promise<{
     path.join(fixtureDirectory, "snippet-gallery.adoc"),
     "utf8",
   );
-  const expandedSource = expandDependencyMacrosToBlocks(
-    expandSnippetMacrosToBlocks(
-      normalizeAsciiDocSource(source),
-      context,
-      fixtureSnippetSamples,
-    ),
-    context,
-  );
   const converted = await renderAsciiDoc({
     asciidoctor,
-    source: expandedSource,
+    source,
     convertOptions: {
       attributes: {
         icons: "font",
@@ -320,6 +392,106 @@ async function renderSnippetGalleryFixture(): Promise<{
   };
 }
 
+function renderGuideSource(
+  source: string,
+  option: Partial<GuideRenderContext["option"]>,
+): Promise<string> {
+  const context = guideMacroFixtureContext();
+  context.option = {
+    ...context.option,
+    ...option,
+  };
+  return renderAsciiDoc({
+    asciidoctor,
+    source,
+    convertOptions: {
+      attributes: {
+        icons: "font",
+        idprefix: "",
+        idseparator: "-",
+      },
+      base_dir: context.guide.directory,
+      extension_registry: guideExtensionRegistry(asciidoctor, context),
+    },
+  });
+}
+
+function snippetBlock(kind: any, payload: any): any {
+  return snippetBlockLines(kind, payload, {
+    surroundWithBlankLines: false,
+  }).join("\n");
+}
+
+function snippetBlockLines(
+  kind: any,
+  payload: any,
+  options: { surroundWithBlankLines?: boolean } = {},
+): any {
+  const normalized = normalizeSnippetPayload(payload);
+  const lines = [];
+  if (options.surroundWithBlankLines !== false) {
+    lines.push("");
+  }
+  lines.push(snippetBlockAttributeLine(kind, normalized));
+  lines.push("--");
+  lines.push("--");
+  lines.push(...snippetCalloutValidationLines(normalized.samples));
+  if (options.surroundWithBlankLines !== false) {
+    lines.push("");
+  }
+  return lines;
+}
+
+function snippetBlockAttributeLine(kind: any, payload: any): any {
+  return `[${kind === "dependency" ? "dependency" : "snippet"},payload=${Buffer.from(
+    JSON.stringify({ ...payload, kind }),
+    "utf8",
+  ).toString("base64url")}]`;
+}
+
+function snippetCalloutValidationLines(samples: any): any {
+  const source = (Array.isArray(samples) ? samples : [])
+    .map((sample: any): any => sample.source || "")
+    .filter((sampleSource: any): any => /<\d+>|<!--\d+-->/.test(sampleSource))
+    .join("\n");
+  if (!source) {
+    return [];
+  }
+  const longestHyphenRun = Math.max(
+    3,
+    ...Array.from(String(source).matchAll(/^-{4,}$/gm)).map(
+      (match: any): any => match[0].length,
+    ),
+  );
+  const delimiter = "-".repeat(longestHyphenRun + 1);
+  return ["[.docs-snippet-callout-validation]", delimiter, source, delimiter];
+}
+
+function normalizeSnippetPayload(payload: any): any {
+  return {
+    ...payload,
+    description: payload?.description || "",
+    samples: normalizeSnippetSamples(payload?.samples),
+    title: payload?.title || "",
+  };
+}
+
+function normalizeSnippetSamples(samples: any): any {
+  return (Array.isArray(samples) ? samples : []).map((sample: any): any => {
+    const normalized: any = {
+      language: sample.language || "text",
+      source: String(sample.source || "").trimEnd(),
+    };
+    if (sample.group) {
+      normalized.group = String(sample.group);
+    }
+    if (sample.highlighterLanguage) {
+      normalized.highlighterLanguage = sample.highlighterLanguage;
+    }
+    return normalized;
+  });
+}
+
 function guideMacroFixtureContext(): GuideRenderContext {
   const guidesDirectory = path.join(fixtureDirectory, "guide-macros");
   const guideDirectory = path.join(
@@ -333,6 +505,9 @@ function guideMacroFixtureContext(): GuideRenderContext {
         {
           applicationType: "DEFAULT",
           features: ["http-client"],
+          groovyFeatures: [],
+          javaFeatures: [],
+          kotlinFeatures: [],
           name: "default",
         },
       ],

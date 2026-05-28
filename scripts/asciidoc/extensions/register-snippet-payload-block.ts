@@ -6,14 +6,11 @@ import type {
   Section,
 } from "@asciidoctor/core";
 
-import { renderSnippetBlock } from "../component-renderer.ts";
-import type { SnippetRenderState } from "../component-renderer.ts";
-import { snippetPayloadFromValue } from "../snippet-payloads.ts";
+import { renderSnippetBlock } from "./snippet-block-renderer.ts";
 
 export function registerSnippetPayloadBlock(
   registry: Registry,
   blockName: string,
-  renderState: SnippetRenderState,
 ): void {
   registry.block(function registerSnippetPayloadBlock(
     this: BlockProcessorDslInterface,
@@ -31,13 +28,14 @@ export function registerSnippetPayloadBlock(
         ? snippetPayloadFromValue(attributes.payload)
         : undefined;
       return payload
-        ? renderSnippetBlock(
-            this,
-            parent as Block | Section,
-            payload,
-            renderState,
-          )
+        ? renderSnippetBlock(this, parent as Block | Section, payload)
         : undefined;
     });
   });
+}
+
+function snippetPayloadFromValue(value: unknown): any {
+  return JSON.parse(
+    Buffer.from(String(value || ""), "base64url").toString("utf8"),
+  );
 }

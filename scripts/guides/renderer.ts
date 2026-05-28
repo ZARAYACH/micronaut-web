@@ -5,8 +5,7 @@ import { renderAsciiDoc } from "../asciidoc/rendering.ts";
 import { optimizeImages as optimizeGeneratedGuideHtml } from "../shared/generated-html.ts";
 import { shikiStyle } from "../shared/highlight.ts";
 import { guideExtensionRegistry } from "./extensions/index.ts";
-import { guideRenderContext, preprocessGuideSource } from "./preprocessor.ts";
-import type { Guide, GuideOption } from "./model.ts";
+import type { Guide, GuideOption, GuideRenderContext } from "./model.ts";
 import { productionUrl } from "../../src/lib/route-compatibility.ts";
 
 export async function renderGuideOption(
@@ -17,12 +16,10 @@ export async function renderGuideOption(
   renderOptions: { strict?: boolean } = {},
 ): Promise<string> {
   const context = await guideRenderContext({ guidesDirectory, guide, option });
-  const source = await preprocessGuideSource({
-    guidesDirectory,
-    guide,
-    option,
-    context,
-  });
+  const source = await fs.readFile(
+    path.join(guide.directory, guide.asciidoc),
+    "utf8",
+  );
   let html = await renderAsciiDoc({
     asciidoctor,
     source,
@@ -44,6 +41,33 @@ export async function renderGuideOption(
   html = rewriteGuideUrls(html, guide.slug);
   html = optimizeGeneratedGuideHtml(html);
   return `${shikiStyle()}\n${html.trim()}`;
+}
+
+async function guideRenderContext({
+  guidesDirectory,
+  guide,
+  option,
+}: {
+  guidesDirectory: string;
+  guide: Guide;
+  option: GuideOption;
+}): Promise<GuideRenderContext> {
+  return {
+    guidesDirectory,
+    guide,
+    option,
+    version: await readVersion(guidesDirectory),
+  };
+}
+
+async function readVersion(guidesDirectory: string): Promise<string> {
+  try {
+    return (
+      await fs.readFile(path.join(guidesDirectory, "version.txt"), "utf8")
+    ).trim();
+  } catch {
+    return "";
+  }
 }
 
 export async function copyGuideAssets(

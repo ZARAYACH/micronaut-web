@@ -6,8 +6,6 @@ import type {
   Registry,
 } from "@asciidoctor/core";
 
-import { macroText } from "../../asciidoc/listing.ts";
-
 export function registerGuideLinkMacro(registry: Registry): void {
   registry.inlineMacro(
     "guideLink",
@@ -32,4 +30,28 @@ export function registerGuideLinkMacro(registry: Registry): void {
       });
     },
   );
+}
+
+function macroText(attrs: any): any {
+  return macroAttribute(attrs, "text") || attrs?.$positional?.[0] || "";
+}
+
+function macroAttribute(attrs: any, name: string): any {
+  if (attrs?.[name] !== undefined) {
+    return String(attrs[name]);
+  }
+  const text = attrs?.text || attrs?.$positional?.join(",");
+  if (typeof text === "string") {
+    const match = new RegExp(
+      `(?:^|,)\\s*${escapeRegExp(name)}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^,]+))`,
+    ).exec(text);
+    if (match) {
+      return (match[1] ?? match[2] ?? match[3] ?? "").trim();
+    }
+  }
+  return undefined;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

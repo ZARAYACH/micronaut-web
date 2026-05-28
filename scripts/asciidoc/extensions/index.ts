@@ -1,10 +1,10 @@
 import type { Registry } from "@asciidoctor/core";
 
-import { snippetRenderState } from "../component-renderer.ts";
 import { registerApiMacros } from "./register-api-macros.ts";
 import { registerComponentFooterProcessor } from "./register-component-footer-processor.ts";
 import { registerConfigurationBlock } from "./register-configuration-block.ts";
 import { registerDependencyBlock } from "./register-dependency-block.ts";
+import { registerDocsSourcePreprocessor } from "./register-docs-source-preprocessor.ts";
 import { registerPackageMacro } from "./register-package-macro.ts";
 import { registerSnippetBlock } from "./register-snippet-block.ts";
 import { registerSnippetPayloadBlocks } from "./register-snippet-payload-blocks.ts";
@@ -17,11 +17,11 @@ export function micronautExtensionRegistry(
   options: { snippetSamples: any },
 ): Registry {
   const registry = asciidoctor.Extensions.create();
-  const renderState = snippetRenderState(registry);
+  registerDocsSourcePreprocessor(registry);
   registerApiMacros(registry, context);
   registerPackageMacro(registry, context);
-  registerSnippetBlock(registry, context, options, renderState);
-  registerDependencyBlock(registry, context, renderState);
+  registerSnippetBlock(registry, context, options);
+  registerDependencyBlock(registry, context);
   return registry;
 }
 
@@ -34,11 +34,10 @@ export function registerComponentRenderingExtensions(
     return registry;
   }
 
-  const renderState = snippetRenderState(registry);
   if (options.registerSnippetPayloadBlocks !== false) {
-    registerSnippetPayloadBlocks(registry, renderState);
+    registerSnippetPayloadBlocks(registry);
   }
-  registerConfigurationBlock(registry, renderState);
+  registerConfigurationBlock(registry);
   registerComponentFooterProcessor(registry);
   componentRenderingRegistries.add(registry);
   return registry;

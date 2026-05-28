@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { normalizeSourceCalloutMarkers } from "../callouts.ts";
+import { normalizeSourceCalloutMarkers } from "../../guides/extensions/register-guide-snippet-blocks.ts";
 
 test("normalizeSourceCalloutMarkers converts guide shorthand comment markers", (): any => {
   assert.equal(

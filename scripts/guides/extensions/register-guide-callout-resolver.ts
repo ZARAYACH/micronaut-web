@@ -1,18 +1,19 @@
-import type { SnippetRenderState } from "../../asciidoc/component-renderer.ts";
-import {
-  GUIDE_CALLOUT_BLOCK,
-  guideMacroPayloadFromValue,
-} from "../guide-blocks.ts";
-import { includeCallout } from "../preprocessor.ts";
-import type { GuideRenderContext } from "../preprocessor.ts";
+import path from "node:path";
 
-export function registerGuideCalloutResolver(
-  renderState: SnippetRenderState,
+import type { CalloutLineResolver } from "../../asciidoc/extensions/snippet-block-renderer.ts";
+import type { GuideRenderContext } from "../model.ts";
+import {
+  includeGuideAdoc,
+  replaceGuideTemplateArguments,
+} from "./register-guide-content-blocks.ts";
+
+const GUIDE_CALLOUT_BLOCK = "guide-callout";
+
+export function guideCalloutLineResolver(
   context: GuideRenderContext,
-): void {
-  renderState.resolveCalloutLines = (
-    line: string,
-  ): Promise<string[] | undefined> => resolveGuideCalloutLines(line, context);
+): CalloutLineResolver {
+  return (line: string): Promise<string[] | undefined> =>
+    resolveGuideCalloutLines(line, context);
 }
 
 async function resolveGuideCalloutLines(
@@ -26,5 +27,59 @@ async function resolveGuideCalloutLines(
     return undefined;
   }
   const payload = guideMacroPayloadFromValue(match[1]);
-  return includeCallout(payload.target, payload.attributes, context);
+  return includeGuideCallout(payload.target, payload.attributes, context);
+}
+
+export async function includeGuideCallout(
+  target: string,
+  attributes: Record<string, string>,
+  context: GuideRenderContext,
+  includeStack: Set<string> = new Set(),
+): Promise<string[]> {
+  const lines = await includeGuideAdoc(
+    path.join(
+      context.guidesDirectory,
+      "src",
+      "docs",
+      "common",
+      "callouts",
+      `callout-${ensureSuffix(target.trim(), ".adoc")}`,
+    ),
+    context,
+    includeStack,
+  );
+  const explicitNumber = calloutNumber(attributes);
+  return lines.map((line) => {
+    const replaced = replaceGuideTemplateArguments(line, attributes);
+    return explicitNumber
+      ? replaced.replace(/^<\.>/, `<${explicitNumber}>`)
+      : replaced;
+  });
+}
+
+function guideMacroPayloadFromValue(value: unknown): {
+  attributes: Record<string, string>;
+  target: string;
+} {
+  return JSON.parse(
+    Buffer.from(String(value || ""), "base64url").toString("utf8"),
+  );
+}
+
+function calloutNumber(attributes: Record<string, string>): string {
+  const positional = attributes as Record<string, string> & {
+    $positional?: string[];
+    _positional?: string[];
+  };
+  const number =
+    attributes.number ||
+    attributes.callout ||
+    positional._positional?.[0] ||
+    positional.$positional?.[0] ||
+    "";
+  return /^\d+$/.test(number) ? number : "";
+}
+
+function ensureSuffix(value: string, suffix: string): string {
+  return value.endsWith(suffix) ? value : `${value}${suffix}`;
 }

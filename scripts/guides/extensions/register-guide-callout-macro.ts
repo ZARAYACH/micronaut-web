@@ -6,12 +6,10 @@ import type {
   Section,
 } from "@asciidoctor/core";
 
-import {
-  GUIDE_CALLOUT_BLOCK,
-  guideMacroPayloadFromValue,
-} from "../guide-blocks.ts";
-import { includeCallout } from "../preprocessor.ts";
-import type { GuideRenderContext } from "../preprocessor.ts";
+import type { GuideRenderContext } from "../model.ts";
+import { includeGuideCallout } from "./register-guide-callout-resolver.ts";
+
+const GUIDE_CALLOUT_BLOCK = "guide-callout";
 
 export function registerGuideCalloutMacro(
   registry: Registry,
@@ -34,10 +32,23 @@ export function registerGuideCalloutMacro(
         );
         await this.parseContent(
           holder,
-          await includeCallout(payload.target, payload.attributes, context),
+          await includeGuideCallout(
+            payload.target,
+            payload.attributes,
+            context,
+          ),
         );
         return holder;
       });
     },
+  );
+}
+
+function guideMacroPayloadFromValue(value: unknown): {
+  attributes: Record<string, string>;
+  target: string;
+} {
+  return JSON.parse(
+    Buffer.from(String(value || ""), "base64url").toString("utf8"),
   );
 }

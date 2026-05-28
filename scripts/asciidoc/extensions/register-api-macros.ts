@@ -6,8 +6,6 @@ import type {
   Registry,
 } from "@asciidoctor/core";
 
-import { macroAttribute, macroText } from "../listing.ts";
-
 const API_MACROS = ["api", "ann", "mnapi", "jdk", "jee", "rs", "rx", "reactor"];
 
 export function registerApiMacros(registry: Registry, context: any): void {
@@ -204,4 +202,51 @@ function scapeDots(value: any): any {
 
 function simpleName(className: any): any {
   return className.split(".").filter(Boolean).at(-1) || className;
+}
+
+function macroAttribute(attrs: any, name: string): any {
+  if (attrs?.[name] !== undefined) {
+    return cleanMacroAttributeValue(String(attrs[name]), name);
+  }
+  const text = attrs?.text || attrs?.$positional?.join(",");
+  if (typeof text === "string") {
+    const match = new RegExp(
+      `(?:^|,)\\s*${escapeRegExp(name)}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^,]+))`,
+    ).exec(text);
+    if (match) {
+      return cleanMacroAttributeValue(
+        (match[1] ?? match[2] ?? match[3] ?? "").trim(),
+        name,
+      );
+    }
+  }
+  return undefined;
+}
+
+function macroText(attrs: any): any {
+  return macroAttribute(attrs, "text") || attrs?.$positional?.[0] || "";
+}
+
+function cleanMacroAttributeValue(value: string, name: string): string {
+  if (name !== "title") {
+    return value;
+  }
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && !trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && !trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1);
+  }
+  if (
+    (!trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (!trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(0, -1);
+  }
+  return trimmed;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

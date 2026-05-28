@@ -1,10 +1,9 @@
 import type { Registry } from "@asciidoctor/core";
 
 import { registerComponentRenderingExtensions } from "../../asciidoc/extensions/index.ts";
-import { snippetRenderState } from "../../asciidoc/component-renderer.ts";
-import type { GuideRenderContext } from "../preprocessor.ts";
+import type { GuideRenderContext } from "../model.ts";
 import { registerGuideCalloutMacro } from "./register-guide-callout-macro.ts";
-import { registerGuideCalloutResolver } from "./register-guide-callout-resolver.ts";
+import { guideCalloutLineResolver } from "./register-guide-callout-resolver.ts";
 import { registerGuideContentBlocks } from "./register-guide-content-blocks.ts";
 import { registerGuideDependenciesBlock } from "./register-guide-dependencies-block.ts";
 import { registerGuideLinkMacro } from "./register-guide-link-macro.ts";
@@ -16,12 +15,11 @@ export function guideExtensionRegistry(
   context: GuideRenderContext,
 ): Registry {
   const registry = asciidoctor.Extensions.create();
-  const renderState = snippetRenderState(registry);
-  registerGuideCalloutResolver(renderState, context);
+  const resolveCalloutLines = guideCalloutLineResolver(context);
   registerGuidePreprocessor(registry, context);
   registerGuideLinkMacro(registry);
-  registerGuideSnippetBlocks(registry, context, renderState);
-  registerGuideDependenciesBlock(registry, context, renderState);
+  registerGuideSnippetBlocks(registry, context, resolveCalloutLines);
+  registerGuideDependenciesBlock(registry, context, resolveCalloutLines);
   registerGuideCalloutMacro(registry, context);
   registerGuideContentBlocks(registry, context);
   return registerComponentRenderingExtensions(asciidoctor, registry);

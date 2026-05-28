@@ -1,10 +1,10 @@
 # AsciiDoc Rendering Pipeline
 
 This directory contains the shared AsciiDoc rendering pipeline used by generated
-Micronaut docs and guides. The pipeline renders adoc sources to static HTML
-fragments during the build. Snippet, dependency, configuration, listing, and
-configuration-property output is produced through Asciidoctor.js conversion and
-shared React component markup.
+Micronaut docs and guides. The build reads adoc sources, registers focused
+Asciidoctor.js extensions, and emits static HTML fragments. Snippets,
+dependencies, configuration examples, and source listings are rendered as shared
+React component markup during conversion.
 
 ## Inputs
 
@@ -15,68 +15,92 @@ Docs rendering starts in `scripts/docs/renderer.ts`.
 - Each TOC node points at an adoc file under `src/main/docs/guide`.
 - Project attributes are built from platform metadata, checked-in project
   metadata, and the project's `gradle.properties`.
+- Raw adoc source is passed to Asciidoctor with `micronautExtensionRegistry(...)`.
 
 Guides rendering starts in `scripts/guides/renderer.ts`.
 
-- `scripts/guides/preprocessor.ts` expands guide-specific include and sample
-  macros before Asciidoctor receives the source.
-- The same shared `renderAsciiDoc(...)` function then converts the result.
+- The renderer reads the selected guide adoc file directly.
+- Guide metadata and the selected language/build/test option become a
+  `GuideRenderContext`.
+- Raw guide source is passed to Asciidoctor with `guideExtensionRegistry(...)`.
 
-## Source Preparation
+There is no separate source expansion step before Asciidoctor conversion. Source
+shape fixes, guide macro expansion, and snippet rendering are extension
+responsibilities.
 
-Docs adoc source is prepared before conversion in this order:
+## Docs Extensions
 
-1. `normalizeAsciiDocSource(...)` fixes source shapes that Asciidoctor cannot
-   consume directly in this site pipeline.
-2. `expandSnippetMacrosToBlocks(...)` converts source-compatible
-   `snippet::target[]` macros into `[snippet,payload=...]` open blocks.
-3. `expandDependencyMacrosToBlocks(...)` converts source-compatible
-   `dependency:target[]` macros into `[dependency,payload=...]` open blocks.
+`scripts/asciidoc/extensions/index.ts` creates a registry with
+`asciidoctor.Extensions.create()` and passes it to focused register functions.
 
-The payload value is base64url-encoded JSON. It carries rendering data: kind,
-title, description, and samples. The carrier block is an internal
-representation and must not appear in generated HTML.
+The docs registry registers:
 
-## Extension Registration
-
-`scripts/asciidoc/extensions/index.ts` creates the Asciidoctor extension
-registry with `asciidoctor.Extensions.create()`.
-
-Focused files in `scripts/asciidoc/extensions/` receive the registry and
-register one Asciidoctor extension family each:
-
+- `registerDocsSourcePreprocessor(...)`, which handles legacy docs source shapes
+  that must be adjusted before parsing.
 - inline API macros such as `api:`, `ann:`, `mnapi:`, `jdk:`, `rs:`, `rx:`, and
   `reactor:`
 - the `pkg:` inline macro
-- the `[snippet]` block processor
-- the `[dependency]` block processor
+- the `snippet::target[]` block macro
+- the `dependency:target[]` block macro
+- shared component rendering extensions for `[snippet]`, `[dependency]`, and
+  `[configuration]` blocks
 
-The snippet and dependency block processors render directly by calling
-`renderSnippetBlock(...)`. They do not emit marker HTML and do not rely on a
-postprocess step.
+The old `normalizeAsciiDocSource(...)` function and the old pre-conversion
+snippet/dependency expansion helpers are not used. Equivalent behavior now lives
+in register files under `scripts/asciidoc/extensions/`.
 
-`renderSnippetBlock(...)` uses the active document `Reader` while the block
-processor is running to absorb an immediately following callout list. Matching
-callouts are rendered as the snippet footer, source callout numbers are
-renumbered for display, and unmatched callout lines are pushed back into the
-reader as manual callout list content. This keeps snippet callout handling inside
-the AsciiDoc parsing pipeline instead of normalizing the full source string
-before conversion.
+## Guide Extensions
 
-The same extensions folder also adds shared component rendering extensions to
-the registry:
+`scripts/guides/extensions/index.ts` creates the guide registry and registers all
+guide-specific Asciidoctor behavior.
 
-- `[configuration]` listing blocks become generated code snippet cards.
-- Internal `[snippet,payload=...]` and `[dependency,payload=...]` blocks are
-  supported when no caller-provided registry already registered them.
-- A tree processor attaches following callout lists to renderable listing
-  blocks before conversion.
+The guide registry registers:
+
+- `registerGuidePreprocessor(...)`, which replaces guide placeholders, appends
+  the license include, rewrites include targets, applies language/build/JDK
+  exclusions, rewrites guide macros into internal blocks, and groups
+  `:dependencies:` sections.
+- `registerGuideSnippetBlocks(...)`, which resolves `source:`, `test:`,
+  `rawTest:`, `resource:`, `testResource:`, and `zipInclude:` payloads and
+  renders them as snippet cards.
+- `registerGuideDependenciesBlock(...)`, which renders single `dependency:`
+  macros and grouped `:dependencies:` blocks as Gradle or Maven snippets.
+- `registerGuideCalloutMacro(...)` and `guideCalloutLineResolver(...)`, which
+  resolve shared guide callout includes.
+- `registerGuideContentBlocks(...)`, which resolves `common:`,
+  `common-template:`, `external:`, `external-template:`, `rocker:`, and
+  `diffLink:` content.
+- `registerGuideLinkMacro(...)`, which handles guide links.
+
+There is no `scripts/guides/preprocessor.ts` or `scripts/guides/guide-blocks.ts`
+path. The guide renderer does not expand snippets before Asciidoctor runs.
+
+## Snippet Rendering
+
+Snippet-like output is rendered by block processors, not by HTML postprocessing.
+
+Docs snippets and dependencies are registered from
+`scripts/asciidoc/extensions/register-snippet-block.ts` and
+`scripts/asciidoc/extensions/register-dependency-block.ts`. Guide snippets and
+dependencies are registered from guide extension files.
+
+All of these processors build a payload and call the shared snippet renderer in
+`scripts/asciidoc/extensions/snippet-block-renderer.ts`. That renderer creates
+pass blocks containing static HTML from `renderSnippetBlock(...)`.
+
+The active Asciidoctor `Reader` is used while a snippet block is processed to
+absorb an immediately following callout list. Matching callouts are rendered in
+the snippet footer. Unmatched callout lines are pushed back into the reader so
+AsciiDoc can still parse them as normal callout content.
+
+This keeps callout handling inside the AsciiDoc pipeline. Generated HTML should
+not contain carrier blocks, marker elements, or unconsumed guide macro syntax.
 
 ## Conversion
 
 `scripts/asciidoc/rendering.ts` owns the final conversion call.
 
-It creates an Asciidoctor memory logger, installs the component rendering
+It creates an Asciidoctor memory logger, installs component rendering
 extensions, and calls `asciidoctor.convert(...)` with:
 
 - `header_footer: false`
@@ -85,10 +109,11 @@ extensions, and calls `asciidoctor.convert(...)` with:
 - `MicronautComponentHtmlConverter` as the default converter
 - the prepared extension registry
 
-Diagnostics are collected from the memory logger. In strict mode, caller-supplied
-fatal diagnostic filters decide which Asciidoctor warnings fail the render.
+Diagnostics are collected from the memory logger. In strict mode,
+caller-supplied fatal diagnostic filters decide which Asciidoctor warnings fail
+the render.
 
-## Component Rendering
+## Component Converter
 
 `MicronautComponentHtmlConverter` only handles regular Asciidoctor nodes that are
 still best rendered by a converter:
@@ -96,23 +121,9 @@ still best rendered by a converter:
 - ordinary listing blocks
 - configuration property tables
 
-Snippet-like macro output is handled by block processors instead. The block
-processors create pass blocks containing static HTML returned by
-`renderSnippetBlock(...)`.
-
-The renderer splits snippet markup by source shape:
-
-- `snippets/macro-snippets.ts` renders extension-created snippet and dependency
-  payloads.
-- `snippets/listing-snippets.ts` renders ordinary source listing blocks.
-- `snippets/properties-snippets.ts` renders configuration property tables.
-- `configuration-samples.ts` converts `[configuration]` YAML into language
-  variants such as YAML, TOML, properties, Groovy config, and HOCON.
-
-All generated snippet cards use
-`src/components/web/docs-generated-snippet.tsx`, which server-renders shared
-React component markup into static HTML. React is not hydrated for generated
-docs snippets.
+Snippet and dependency macro output is handled by block processors. The
+converter should not own guide macro expansion, snippet payload resolution, or
+dependency snippet generation.
 
 ## Syntax Highlighting
 
@@ -143,18 +154,22 @@ The current pipeline does not use:
 
 - `<micronaut-snippet>` marker elements
 - `static-snippets.ts`
-- AsciiDoc HTML postprocessing for snippets
 - `micronaut-snippet` wrapper parsing
+- `normalizeAsciiDocSource(...)`
+- `scripts/guides/preprocessor.ts`
+- `scripts/guides/guide-blocks.ts`
+- pre-conversion snippet or dependency expansion outside Asciidoctor extensions
+- AsciiDoc HTML postprocessing for snippets or callouts
 
-All snippet, dependency, and configuration rendering must stay inside the
-AsciiDoc rendering pipeline.
+All snippet, dependency, callout, guide macro, and configuration rendering must
+stay inside the AsciiDoc rendering pipeline.
 
 ## Output
 
 Docs rendering writes generated fragments under `src/content/generated-docs`.
-Guides rendering writes generated fragments under `src/content/generated-guides`.
-Those generated HTML files and copied assets are ignored by Git and are rebuilt
-by dev, build, and surface build commands.
+Guides rendering writes generated fragments under
+`src/content/generated-guides`. Those generated HTML files and copied assets are
+ignored by Git and rebuilt by dev, build, and surface build commands.
 
 ## Useful Checks
 
@@ -162,6 +177,12 @@ Run the shared AsciiDoc tests after changing this directory:
 
 ```bash
 npm run test:asciidoc
+```
+
+Run guide tests after changing guide extensions:
+
+```bash
+npm run test:guides
 ```
 
 Run script typechecking when changing Extension API types or renderer contracts:

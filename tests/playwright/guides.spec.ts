@@ -74,7 +74,15 @@ test("guide overview redirects to the preferred variant and exposes variant navi
   await expect(
     page.getByRole("heading", { level: 1, name: httpClientGuideTitle }),
   ).toBeVisible();
-  await expect(page.getByText("Guide content unavailable")).toBeVisible();
+  await expect(page.getByText("Guide content unavailable")).toHaveCount(0);
+  await expect(
+    page.getByText(
+      "In this guide, we will create a Micronaut application written in Java",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.locator(".docs-code-snippet-template").first(),
+  ).toBeVisible();
 
   const guideNavigation = page.locator('aside[aria-label="On this guide"]');
   await expect(guideNavigation).toBeVisible();

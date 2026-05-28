@@ -1,4 +1,29 @@
-export function normalizeAsciiDocSource(source: any): any {
+import type {
+  DocumentProcessorDslInterface,
+  Reader,
+  Registry,
+} from "@asciidoctor/core";
+
+export function registerDocsSourcePreprocessor(registry: Registry): void {
+  registry.preprocessor(function registerDocsSourcePreprocessor(
+    this: DocumentProcessorDslInterface,
+  ): void {
+    this.process(function processDocsSourcePreprocessor(
+      document: unknown,
+      reader: unknown,
+    ): Reader {
+      const sourceReader = reader as Reader;
+      return new (sourceReader as any).constructor(
+        document,
+        rewriteDocsSource(sourceReader.lines.join("\n")).split(/\r?\n/),
+        sourceReader.cursor,
+        {},
+      );
+    });
+  });
+}
+
+function rewriteDocsSource(source: string): string {
   let normalized = source;
   normalized = removeGeneratedConfigurationPropertyIncludes(normalized);
   normalized = normalized.replace(
@@ -21,14 +46,14 @@ export function normalizeAsciiDocSource(source: any): any {
   );
 }
 
-function removeGeneratedConfigurationPropertyIncludes(source: any): any {
+function removeGeneratedConfigurationPropertyIncludes(source: string): string {
   return source.replace(
     /^include::\{includedir}\/?configurationProperties\/[^\r\n\[]+\[[^\r\n\]]*]\s*$/gm,
     "",
   );
 }
 
-function looksLikeJava(code: any): any {
+function looksLikeJava(code: string): boolean {
   return (
     code.startsWith("@") ||
     code.includes(" public ") ||

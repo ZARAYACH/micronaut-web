@@ -6,8 +6,6 @@ import type {
   Registry,
 } from "@asciidoctor/core";
 
-import { macroText } from "../listing.ts";
-
 export function registerPackageMacro(registry: Registry, context: any): void {
   registry.inlineMacro(
     "pkg",
@@ -43,4 +41,28 @@ function packageLink(context: any, target: any, attrs: any): any {
     href: `assets/${context.project.slug}/docs/api/${packageName.replaceAll(".", "/")}/package-summary.html`,
     label: macroText(attrs) || packageName,
   };
+}
+
+function macroText(attrs: any): any {
+  return macroAttribute(attrs, "text") || attrs?.$positional?.[0] || "";
+}
+
+function macroAttribute(attrs: any, name: string): any {
+  if (attrs?.[name] !== undefined) {
+    return String(attrs[name]);
+  }
+  const text = attrs?.text || attrs?.$positional?.join(",");
+  if (typeof text === "string") {
+    const match = new RegExp(
+      `(?:^|,)\\s*${escapeRegExp(name)}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^,]+))`,
+    ).exec(text);
+    if (match) {
+      return (match[1] ?? match[2] ?? match[3] ?? "").trim();
+    }
+  }
+  return undefined;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

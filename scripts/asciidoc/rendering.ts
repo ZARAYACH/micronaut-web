@@ -1,7 +1,14 @@
+import { Html5Converter } from "@asciidoctor/core";
 import type { Registry } from "@asciidoctor/core";
 
-import { MicronautComponentHtmlConverter } from "./component-renderer.ts";
+import { escapeRegExp } from "../shared/html.ts";
 import { registerComponentRenderingExtensions } from "./extensions/index.ts";
+import { componentFooterHtml } from "./extensions/register-component-footer-processor.ts";
+import {
+  renderGeneratedPropertiesCard,
+  renderGeneratedSnippetCard,
+  renderSnippetVariant,
+} from "./extensions/snippet-block-renderer.ts";
 
 type AsciidoctorConvertOptions = Record<string, unknown> & {
   converter?: unknown;
@@ -16,6 +23,56 @@ type RenderAsciiDocOptions = {
   fatalDiagnostic?: (diagnostic: string) => boolean;
   strict?: boolean;
 };
+
+class MicronautComponentHtmlConverter extends Html5Converter {
+  private micronautListingIndex = 0;
+  private micronautPropertiesIndex = 0;
+
+  override async convert_listing(node: any): Promise<string> {
+    if (isSnippetCalloutValidationBlock(node)) {
+      return "";
+    }
+
+    const footerHtml = await this.footerHtml(node);
+    const generatedIndex = this.micronautListingIndex;
+    this.micronautListingIndex += 1;
+    return renderListingSnippetCard({
+      descriptionHtml: "",
+      footerHtml,
+      id: node.id || `generated-listing-snippet-${generatedIndex}`,
+      language: listingBlockLanguage(node),
+      source: node.getSource?.() || "",
+      titleHtml: node.hasTitle() ? String(node.title || "") : "",
+    });
+  }
+
+  override async convert_table(node: any): Promise<string> {
+    if (!isConfigurationPropertyTable(node)) {
+      return super.convert_table(node);
+    }
+
+    const generatedIndex = this.micronautPropertiesIndex;
+    this.micronautPropertiesIndex += 1;
+    const anchorId = node.id || `generated-properties-${generatedIndex}`;
+    const tableHtml = configurationPropertyTableHtml(
+      await super.convert_table(node),
+      node.id,
+    );
+    const propertyCount = configurationPropertyCount(node);
+    return renderPropertiesSnippetCard({
+      anchorId,
+      propertyCount,
+      tableHtml,
+      title: configurationPropertyTitle(node),
+    });
+  }
+
+  private async footerHtml(node: object): Promise<string> {
+    return componentFooterHtml(node, (footerNode) =>
+      super.convert_colist(footerNode),
+    );
+  }
+}
 
 export async function renderAsciiDoc({
   asciidoctor,
@@ -72,6 +129,122 @@ export async function renderAsciiDoc({
   }
 
   return html;
+}
+
+function isSnippetCalloutValidationBlock(node: unknown): boolean {
+  const candidate = node as { context?: unknown; role?: unknown };
+  return (
+    Boolean(node && typeof node === "object") &&
+    candidate.context === "listing" &&
+    candidate.role === "docs-snippet-callout-validation"
+  );
+}
+
+function listingBlockLanguage(node: any): string {
+  return String(
+    node.getAttribute?.("language") ||
+      node.attributes?.language ||
+      node.getAttribute?.("lang") ||
+      "text",
+  )
+    .trim()
+    .toLowerCase();
+}
+
+async function renderListingSnippetCard({
+  descriptionHtml = "",
+  footerHtml,
+  id,
+  language,
+  source,
+  titleHtml = "",
+}: {
+  descriptionHtml?: string;
+  footerHtml: string;
+  id: string;
+  language: string;
+  source: string;
+  titleHtml?: string;
+}): Promise<string> {
+  return renderGeneratedSnippetCard({
+    copyLabel: "Copy code",
+    descriptionHtml,
+    footerHtml,
+    id,
+    kind: "code",
+    optionsLabel: "Code language",
+    titleHtml,
+    variants: [
+      await renderSnippetVariant({
+        active: true,
+        language,
+        panelId: `${id}-panel-0`,
+        sample: { language, source },
+        tabId: `${id}-tab-0`,
+      }),
+    ],
+  });
+}
+
+async function renderPropertiesSnippetCard({
+  anchorId,
+  propertyCount,
+  tableHtml,
+  title,
+}: {
+  anchorId: string;
+  propertyCount: number;
+  tableHtml: string;
+  title: string;
+}): Promise<string> {
+  return renderGeneratedPropertiesCard({
+    anchorId,
+    countLabel: `${propertyCount} ${
+      propertyCount === 1 ? "property" : "properties"
+    }`,
+    eyebrow: "Configuration properties",
+    id: `${anchorId}-properties`,
+    tableHtml,
+    title,
+  });
+}
+
+function isConfigurationPropertyTable(node: any): boolean {
+  return (
+    node?.context === "table" &&
+    /configuration properties/i.test(configurationPropertyTitle(node))
+  );
+}
+
+function configurationPropertyTitle(node: any): string {
+  return String(node?.title || "")
+    .trim()
+    .replace(/^Table\s+\d+\.\s*/i, "");
+}
+
+function configurationPropertyCount(node: any): number {
+  return Number(node?.rows?.body?.length || node?.attributes?.rowcount || 0);
+}
+
+function configurationPropertyTableHtml(tableHtml: string, id: any): string {
+  return hideTableCaption(removeTableId(tableHtml, id));
+}
+
+function hideTableCaption(tableHtml: string): string {
+  return tableHtml.replace(
+    /<caption class="title">/,
+    '<caption class="sr-only">',
+  );
+}
+
+function removeTableId(tableHtml: string, id: any): string {
+  if (!id) {
+    return tableHtml;
+  }
+  return tableHtml.replace(
+    new RegExp(`(<table\\b[^>]*)\\s+id="${escapeRegExp(String(id))}"`),
+    "$1",
+  );
 }
 
 function formatAsciidoctorDiagnostic(message: any): string {

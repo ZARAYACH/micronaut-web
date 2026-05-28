@@ -46,6 +46,13 @@ export interface GuideOption {
   zipUrl: string;
 }
 
+export interface GuideRenderContext {
+  guidesDirectory: string;
+  guide: Guide;
+  option: GuideOption;
+  version: string;
+}
+
 export const DEFAULT_GUIDE_SLUGS = [
   "creating-your-first-micronaut-app",
   "micronaut-http-client",

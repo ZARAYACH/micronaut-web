@@ -288,10 +288,6 @@ test("latest guide replacement routes and parallel generated-content preparation
     path.join(projectDirectory, "scripts", "guides", "renderer.ts"),
     "utf8",
   );
-  const guidesPreprocessor = await fs.readFile(
-    path.join(projectDirectory, "scripts", "guides", "preprocessor.ts"),
-    "utf8",
-  );
   const guidesExtensions = await readDirectoryText(
     path.join(projectDirectory, "scripts", "guides", "extensions"),
   );
@@ -440,12 +436,18 @@ test("latest guide replacement routes and parallel generated-content preparation
   assert.doesNotMatch(guidesRenderer, /renderStaticSnippetCards/);
   assert.doesNotMatch(guidesRenderer, /renderStaticDocsSnippets/);
   assert.doesNotMatch(guidesRenderer, /renderStaticListingBlockSnippets/);
-  assert.doesNotMatch(guidesPreprocessor, /snippetBlockLines/);
+  await assert.rejects(
+    () =>
+      fs.access(
+        path.join(projectDirectory, "scripts", "guides", "preprocessor.ts"),
+      ),
+    (error: any): boolean => error?.code === "ENOENT",
+  );
   assert.match(guidesExtensions, /registry\.block/);
   assert.match(guidesExtensions, /renderSnippetBlockWithCalloutReader/);
-  assert.doesNotMatch(guidesPreprocessor, /normalizeAsciiDocCallouts/);
-  assert.doesNotMatch(guidesPreprocessor, /normalizeOrphanCalloutLists/);
-  assert.doesNotMatch(guidesPreprocessor, /SNIPPET_CALLOUT_VALIDATION_CLASS/);
+  assert.doesNotMatch(guidesExtensions, /normalizeAsciiDocCallouts/);
+  assert.doesNotMatch(guidesExtensions, /normalizeOrphanCalloutLists/);
+  assert.doesNotMatch(guidesExtensions, /SNIPPET_CALLOUT_VALIDATION_CLASS/);
   assertNoRuntimeGeneratedRendering(
     "generated guides static enhancer",
     generatedDocsStaticEnhancer,

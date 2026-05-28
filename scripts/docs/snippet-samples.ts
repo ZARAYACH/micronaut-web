@@ -1,8 +1,6 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
-import { macroAttribute } from "../asciidoc/listing.ts";
-import { normalizeSnippetIndent } from "../asciidoc/snippets.ts";
 import { extractTaggedSource } from "../shared/tagged-source.ts";
 
 export function docsSnippetSamples(target: any, attrs: any, context: any): any {
@@ -116,4 +114,69 @@ function sortSnippetDirectories(directories: any): any {
     (left: any, right: any): any =>
       rank(left) - rank(right) || left.localeCompare(right),
   );
+}
+
+function normalizeSnippetIndent(source: any, indentValue: any): any {
+  const lines = source.replace(/\s+$/, "").split(/\r?\n/);
+  const nonBlank = lines.filter((line: any): any => line.trim());
+  const commonIndent = nonBlank.length
+    ? Math.min(
+        ...nonBlank.map(
+          (line: any): any =>
+            line.match(/^[ \t]*/)[0].replaceAll("\t", "    ").length,
+        ),
+      )
+    : 0;
+  const indent = Number.parseInt(indentValue || "0", 10);
+  const prefix =
+    Number.isFinite(indent) && indent > 0 ? " ".repeat(indent) : "";
+  return lines
+    .map(
+      (line: any): any =>
+        prefix + line.slice(Math.min(commonIndent, line.length)),
+    )
+    .join("\n");
+}
+
+function macroAttribute(attrs: any, name: string): any {
+  if (attrs?.[name] !== undefined) {
+    return cleanMacroAttributeValue(String(attrs[name]), name);
+  }
+  const text = attrs?.text || attrs?.$positional?.join(",");
+  if (typeof text === "string") {
+    const match = new RegExp(
+      `(?:^|,)\\s*${escapeRegExp(name)}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^,]+))`,
+    ).exec(text);
+    if (match) {
+      return cleanMacroAttributeValue(
+        (match[1] ?? match[2] ?? match[3] ?? "").trim(),
+        name,
+      );
+    }
+  }
+  return undefined;
+}
+
+function cleanMacroAttributeValue(value: string, name: string): string {
+  if (name !== "title") {
+    return value;
+  }
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && !trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && !trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1);
+  }
+  if (
+    (!trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (!trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(0, -1);
+  }
+  return trimmed;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

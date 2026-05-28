@@ -1,11 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { expandDependencyMacrosToBlocks } from "../asciidoc/dependencies.ts";
 import { micronautExtensionRegistry } from "../asciidoc/extensions/index.ts";
 import { renderAsciiDoc } from "../asciidoc/rendering.ts";
-import { expandSnippetMacrosToBlocks } from "../asciidoc/snippets.ts";
-import { normalizeAsciiDocSource } from "../asciidoc/source-normalizer.ts";
 import { shikiStyle } from "../shared/highlight.ts";
 import { optimizeImages } from "../shared/generated-html.ts";
 import { attribute, html } from "../shared/html.ts";
@@ -70,10 +67,7 @@ async function renderNode(
   node: any,
 ): Promise<any> {
   const sourceFile = path.join(context.guideSourceDirectory, node.file);
-  let source = await fs.readFile(sourceFile, "utf8");
-  source = normalizeAsciiDocSource(source);
-  source = expandSnippetMacrosToBlocks(source, context, docsSnippetSamples);
-  source = expandDependencyMacrosToBlocks(source, context);
+  const source = await fs.readFile(sourceFile, "utf8");
 
   const converted = await renderAsciiDoc({
     asciidoctor,

@@ -9,13 +9,9 @@ import type {
 import yaml from "js-yaml";
 import { stringify as stringifyToml } from "smol-toml";
 
-import { renderSnippetBlock } from "../component-renderer.ts";
-import type { SnippetRenderState } from "../component-renderer.ts";
+import { renderSnippetBlock } from "./snippet-block-renderer.ts";
 
-export function registerConfigurationBlock(
-  registry: Registry,
-  renderState: SnippetRenderState,
-): void {
+export function registerConfigurationBlock(registry: Registry): void {
   registry.block(function registerConfigurationBlock(
     this: BlockProcessorDslInterface,
   ): void {
@@ -28,18 +24,13 @@ export function registerConfigurationBlock(
       attrs: unknown,
     ): Promise<Block> {
       const attributes = attrs as Record<string, unknown>;
-      return renderSnippetBlock(
-        this,
-        parent as Block | Section,
-        {
-          kind: "code",
-          samples: configurationSamples(
-            (await (reader as Reader).readLines()).join("\n"),
-          ),
-          title: String(attributes.title || ""),
-        },
-        renderState,
-      );
+      return renderSnippetBlock(this, parent as Block | Section, {
+        kind: "code",
+        samples: configurationSamples(
+          (await (reader as Reader).readLines()).join("\n"),
+        ),
+        title: String(attributes.title || ""),
+      });
     });
   });
 }

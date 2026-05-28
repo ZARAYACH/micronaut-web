@@ -1,22 +1,17 @@
+import { promises as fs } from "node:fs";
 import path from "node:path";
 
 import type { Registry } from "@asciidoctor/core";
-import {
-  GUIDE_COMMON_BLOCK,
-  GUIDE_COMMON_TEMPLATE_BLOCK,
-  GUIDE_DIFF_LINK_BLOCK,
-  GUIDE_EXTERNAL_BLOCK,
-  GUIDE_EXTERNAL_TEMPLATE_BLOCK,
-  GUIDE_ROCKER_BLOCK,
-} from "../guide-blocks.ts";
-import {
-  includeAdoc,
-  includeRocker,
-  includeTemplate,
-} from "../preprocessor.ts";
-import type { GuideRenderContext } from "../preprocessor.ts";
-import { appFeatures } from "../model.ts";
+import { appFeatures, type GuideRenderContext } from "../model.ts";
 import { registerGuideContentBlock } from "./register-guide-content-block.ts";
+import { prepareGuideSourceForExtensions } from "./register-guide-preprocessor.ts";
+
+const GUIDE_COMMON_BLOCK = "guide-common";
+const GUIDE_COMMON_TEMPLATE_BLOCK = "guide-common-template";
+const GUIDE_DIFF_LINK_BLOCK = "guide-diff-link";
+const GUIDE_EXTERNAL_BLOCK = "guide-external";
+const GUIDE_EXTERNAL_TEMPLATE_BLOCK = "guide-external-template";
+const GUIDE_ROCKER_BLOCK = "guide-rocker";
 
 export function registerGuideContentBlocks(
   registry: Registry,
@@ -25,37 +20,141 @@ export function registerGuideContentBlocks(
   registerGuideContentBlock(registry, GUIDE_COMMON_BLOCK, (payload) =>
     payload.target.trim() === "header-top.adoc"
       ? Promise.resolve([])
-      : includeAdoc(
+      : includeGuideAdoc(
           commonSnippetPath(context.guidesDirectory, payload.target),
           context,
         ),
   );
   registerGuideContentBlock(registry, GUIDE_COMMON_TEMPLATE_BLOCK, (payload) =>
-    includeTemplate(
+    includeGuideTemplate(
       commonSnippetPath(context.guidesDirectory, payload.target),
       payload.attributes,
       context,
     ),
   );
   registerGuideContentBlock(registry, GUIDE_EXTERNAL_BLOCK, (payload) =>
-    includeAdoc(externalPath(context.guidesDirectory, payload.target), context),
+    includeGuideAdoc(
+      externalPath(context.guidesDirectory, payload.target),
+      context,
+    ),
   );
   registerGuideContentBlock(
     registry,
     GUIDE_EXTERNAL_TEMPLATE_BLOCK,
     (payload) =>
-      includeTemplate(
+      includeGuideTemplate(
         externalPath(context.guidesDirectory, payload.target),
         payload.attributes,
         context,
       ),
   );
   registerGuideContentBlock(registry, GUIDE_ROCKER_BLOCK, (payload) =>
-    includeRocker(payload.target, context),
+    includeGuideRocker(payload.target, context),
   );
   registerGuideContentBlock(registry, GUIDE_DIFF_LINK_BLOCK, (payload) =>
     Promise.resolve([diffLink(payload.target, payload.attributes, context)]),
   );
+}
+
+export async function includeGuideAdoc(
+  file: string,
+  context: GuideRenderContext,
+  includeStack: Set<string> = new Set(),
+): Promise<string[]> {
+  const normalized = path.resolve(file);
+  if (includeStack.has(normalized)) {
+    return [];
+  }
+  try {
+    const source = await fs.readFile(normalized, "utf8");
+    includeStack.add(normalized);
+    try {
+      return prepareIncludedGuideSource(source, context).split(/\r?\n/);
+    } finally {
+      includeStack.delete(normalized);
+    }
+  } catch {
+    return [`NOTE: Missing include \`${path.basename(file)}\`.`];
+  }
+}
+
+async function includeGuideTemplate(
+  file: string,
+  attributes: Record<string, string>,
+  context: GuideRenderContext,
+  includeStack: Set<string> = new Set(),
+): Promise<string[]> {
+  const normalized = path.resolve(file);
+  if (includeStack.has(normalized)) {
+    return [];
+  }
+  try {
+    const source = await fs.readFile(normalized, "utf8");
+    includeStack.add(normalized);
+    try {
+      const replaced = source
+        .split(/\r?\n/)
+        .map((line) => replaceGuideTemplateArguments(line, attributes))
+        .join("\n");
+      return prepareIncludedGuideSource(replaced, context).split(/\r?\n/);
+    } finally {
+      includeStack.delete(normalized);
+    }
+  } catch {
+    return [`NOTE: Missing include \`${path.basename(file)}\`.`];
+  }
+}
+
+async function includeGuideRocker(
+  target: string,
+  context: GuideRenderContext,
+): Promise<string[]> {
+  const file = path.join(
+    context.guidesDirectory,
+    "buildSrc",
+    "src",
+    "main",
+    "java",
+    "io",
+    "micronaut",
+    "guides",
+    "feature",
+    "template",
+    `${target.trim()}.rocker.raw`,
+  );
+  try {
+    return (await fs.readFile(file, "utf8")).split(/\r?\n/);
+  } catch {
+    return [`NOTE: Missing rocker template \`${target.trim()}\`.`];
+  }
+}
+
+export function replaceGuideTemplateArguments(
+  line: string,
+  attributes: Record<string, string>,
+): string {
+  return line.replace(/\{(\d+)(?:_([UL]))?}/g, (match, index, transform) => {
+    const value = attributes[`arg${index}`];
+    if (value === undefined) {
+      return match;
+    }
+    if (transform === "U") {
+      return value.toUpperCase();
+    }
+    if (transform === "L") {
+      return value.toLowerCase();
+    }
+    return value;
+  });
+}
+
+function prepareIncludedGuideSource(
+  source: string,
+  context: GuideRenderContext,
+): string {
+  return prepareGuideSourceForExtensions(source, context, {
+    appendLicense: false,
+  });
 }
 
 function commonSnippetPath(guidesDirectory: any, target: any): any {
