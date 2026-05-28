@@ -16,7 +16,7 @@
     "prepare:generated-docs": "npm run render:docs",
     "prepare:generated-content": "node scripts/prepare-generated-content.ts",
     "test:main-site": "node --test scripts/main-site*.test.ts",
-    "test:asciidoc": "node --test scripts/asciidoc/*.test.ts",
+    "test:asciidoc": "node --test scripts/asciidoc/tests/*.test.ts",
     "test:docs": "node --test scripts/docs/*.test.ts",
     "test:guides": "node --test scripts/guides/*.test.ts && npm run test:guides:browser",
     "test:guides:browser": "playwright test --config playwright.config.ts",
@@ -37,12 +37,13 @@
     "preview": "astro preview --host 127.0.0.1"
   },
   "dependencies": {
+    "@asciidoctor/core": "4.0.0-alpha.5",
     "@astrojs/react": "5.0.5",
     "@shikijs/core": "4.1.0",
     "@shikijs/engine-javascript": "4.1.0",
     "@shikijs/langs": "4.1.0",
     "@shikijs/themes": "4.1.0",
-    "asciidoctor": "^3.0.4",
+    "asciidoctor": "4.0.0-alpha.5",
     "astro": "6.3.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "2.1.1",

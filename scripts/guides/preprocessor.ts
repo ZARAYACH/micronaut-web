@@ -4,12 +4,29 @@ import path from "node:path";
 import {
   calloutMarkerForLanguage,
   calloutNumber,
-  normalizeAsciiDocCallouts,
   normalizeSourceCalloutMarkers,
 } from "../asciidoc/callouts.ts";
-import { snippetPassthroughBlockLines } from "../asciidoc/snippet-blocks.ts";
 import { parseAttributeList } from "../asciidoc/adoc-attributes.ts";
 import { extractTaggedSource } from "../shared/tagged-source.ts";
+import {
+  GUIDE_COMMON_BLOCK,
+  GUIDE_COMMON_TEMPLATE_BLOCK,
+  GUIDE_CALLOUT_BLOCK,
+  GUIDE_DEPENDENCIES_BLOCK,
+  GUIDE_DEPENDENCY_BLOCK,
+  GUIDE_DIFF_LINK_BLOCK,
+  GUIDE_EXTERNAL_BLOCK,
+  GUIDE_EXTERNAL_TEMPLATE_BLOCK,
+  GUIDE_RAW_TEST_BLOCK,
+  GUIDE_RESOURCE_BLOCK,
+  GUIDE_ROCKER_BLOCK,
+  GUIDE_SOURCE_BLOCK,
+  GUIDE_TEST_BLOCK,
+  GUIDE_TEST_RESOURCE_BLOCK,
+  GUIDE_ZIP_INCLUDE_BLOCK,
+  guideBlockLines,
+  guideMacroLines,
+} from "./guide-blocks.ts";
 import {
   appFeatures,
   cliCommandForApp,
@@ -22,32 +39,62 @@ const MACRO_LINE = /^([A-Za-z][A-Za-z0-9_-]*):([^\[]*)\[(.*)]\s*$/;
 const DEFAULT_MIN_JDK = 21;
 const LICENSE_INCLUDE = "common:license.adoc[]";
 
-export async function preprocessGuideSource({
+export type GuideRenderContext = {
+  guidesDirectory: string;
+  guide: any;
+  option: any;
+  version: string;
+};
+
+export async function guideRenderContext({
   guidesDirectory,
   guide,
   option,
-}: any): Promise<any> {
-  const sourceFile = path.join(guide.directory, guide.asciidoc);
-  let source = await fs.readFile(sourceFile, "utf8");
-  source = `${source.replace(/\s+$/, "")}\n\n${LICENSE_INCLUDE}\n`;
-  const context = {
+}: {
+  guidesDirectory: string;
+  guide: any;
+  option: any;
+}): Promise<GuideRenderContext> {
+  return {
     guidesDirectory,
     guide,
     option,
     version: await readVersion(guidesDirectory),
   };
-  const expanded = await expandLines(source.split(/\r?\n/), context, new Set());
-  return replacePlaceholders(
-    normalizeAsciiDocCallouts(expanded.join("\n")),
-    context,
-  );
 }
 
-async function expandLines(
-  lines: any,
-  context: any,
-  includeStack: any,
-): Promise<any> {
+export async function preprocessGuideSource({
+  guidesDirectory,
+  guide,
+  option,
+  context,
+}: any): Promise<any> {
+  context ||= await guideRenderContext({ guidesDirectory, guide, option });
+  const sourceFile = path.join(guide.directory, guide.asciidoc);
+  const source = await fs.readFile(sourceFile, "utf8");
+  return prepareGuideSource(source, context);
+}
+
+export function prepareGuideSource(
+  source: string,
+  context: GuideRenderContext,
+  options: { appendLicense?: boolean } = {},
+): string {
+  const withLicense =
+    options.appendLicense === false
+      ? source
+      : `${source.replace(/\s+$/, "")}\n\n${LICENSE_INCLUDE}\n`;
+  return replacePlaceholders(withLicense, context);
+}
+
+export function rewriteGuideSourceForExtensions(
+  source: string,
+  context: GuideRenderContext,
+): string {
+  return rewriteGuideLines(source.split(/\r?\n/), context).join("\n");
+}
+
+function rewriteGuideLines(lines: string[], context: GuideRenderContext): any {
   const output = [];
   let excludeLanguage = false;
   let excludeBuild = false;
@@ -55,8 +102,9 @@ async function expandLines(
   let dependencyGroup = false;
   let groupedDependencies = [];
 
-  for (const rawLine of lines) {
-    const line = processGuideLinks(rawLine);
+  for (let index = 0; index < lines.length; index += 1) {
+    const rawLine = lines[index];
+    const line = rawLine;
     if (line === ":exclude-for-languages:") {
       excludeLanguage = false;
       continue;
@@ -103,8 +151,15 @@ async function expandLines(
     if (line === ":dependencies:") {
       dependencyGroup = !dependencyGroup;
       if (!dependencyGroup) {
-        output.push(...dependencyLines(groupedDependencies, context));
+        const { bodyLines, nextIndex } = collectFollowingCalloutLines(
+          lines,
+          index + 1,
+        );
+        output.push(
+          ...dependencyGroupBlockLines(groupedDependencies, bodyLines),
+        );
         groupedDependencies = [];
+        index = nextIndex - 1;
       }
       continue;
     }
@@ -112,20 +167,25 @@ async function expandLines(
       groupedDependencies.push(line);
       continue;
     }
-    output.push(...(await expandMacroLine(line, context, includeStack)));
+    if (snippetMacroLine(line)) {
+      const { bodyLines, nextIndex } = collectFollowingCalloutLines(
+        lines,
+        index + 1,
+      );
+      output.push(...rewriteMacroLine(line, bodyLines));
+      index = nextIndex - 1;
+      continue;
+    }
+    output.push(...rewriteMacroLine(line));
   }
 
   if (groupedDependencies.length) {
-    output.push(...dependencyLines(groupedDependencies, context));
+    output.push(...dependencyGroupBlockLines(groupedDependencies));
   }
   return output;
 }
 
-async function expandMacroLine(
-  line: any,
-  context: any,
-  includeStack: any,
-): Promise<any> {
+function rewriteMacroLine(line: any, bodyLines: string[] = []): any {
   const match = MACRO_LINE.exec(line);
   if (!match) {
     return [line];
@@ -133,65 +193,136 @@ async function expandMacroLine(
 
   const [, type, target, rawAttributes] = match;
   const attributes = parseAttributes(rawAttributes);
+  const payload = { attributes, target };
   switch (type) {
     case "callout":
-      return includeCallout(target, attributes, context, includeStack);
+      return guideMacroLines(GUIDE_CALLOUT_BLOCK, payload);
     case "common":
-      if (target.trim() === "header-top.adoc") {
-        return [];
-      }
-      return includeAdoc(
-        commonSnippetPath(context.guidesDirectory, target),
-        context,
-        includeStack,
-      );
+      return guideBlockLines(GUIDE_COMMON_BLOCK, payload);
     case "common-template":
-      return includeTemplate(
-        commonSnippetPath(context.guidesDirectory, target),
-        attributes,
-        context,
-        includeStack,
-      );
+      return guideBlockLines(GUIDE_COMMON_TEMPLATE_BLOCK, payload);
     case "dependency":
-      return dependencyLines([line], context);
+      return guideBlockLines(GUIDE_DEPENDENCY_BLOCK, payload, bodyLines);
     case "diffLink":
-      return [diffLink(target, attributes, context)];
+      return guideBlockLines(GUIDE_DIFF_LINK_BLOCK, payload);
     case "external":
-      return includeAdoc(
-        externalPath(context.guidesDirectory, target),
-        context,
-        includeStack,
-      );
+      return guideBlockLines(GUIDE_EXTERNAL_BLOCK, payload);
     case "external-template":
-      return includeTemplate(
-        externalPath(context.guidesDirectory, target),
-        attributes,
-        context,
-        includeStack,
-      );
+      return guideBlockLines(GUIDE_EXTERNAL_TEMPLATE_BLOCK, payload);
     case "rawTest":
-      return sourceBlock(target, attributes, context, "raw-test");
+      return guideBlockLines(GUIDE_RAW_TEST_BLOCK, payload, bodyLines);
     case "resource":
-      return resourceBlock(target, attributes, context, "main");
+      return guideBlockLines(GUIDE_RESOURCE_BLOCK, payload, bodyLines);
     case "rocker":
-      return includeRocker(target, context);
+      return guideBlockLines(GUIDE_ROCKER_BLOCK, payload);
     case "source":
-      return sourceBlock(target, attributes, context, "main");
+      return guideBlockLines(GUIDE_SOURCE_BLOCK, payload, bodyLines);
     case "test":
-      return sourceBlock(target, attributes, context, "test");
+      return guideBlockLines(GUIDE_TEST_BLOCK, payload, bodyLines);
     case "testResource":
-      return resourceBlock(target, attributes, context, "test");
+      return guideBlockLines(GUIDE_TEST_RESOURCE_BLOCK, payload, bodyLines);
     case "zipInclude":
-      return zipIncludeBlock(target, attributes, context);
+      return guideBlockLines(GUIDE_ZIP_INCLUDE_BLOCK, payload, bodyLines);
     default:
       return [line];
   }
 }
 
-async function includeAdoc(
+function dependencyGroupBlockLines(
+  lines: string[],
+  bodyLines: string[] = [],
+): string[] {
+  const dependencies = lines
+    .map((line: any): any => MACRO_LINE.exec(line))
+    .filter(Boolean)
+    .map((match: any): any => ({
+      attributes: parseAttributes(match[3]),
+      target: match[2].trim(),
+    }));
+  return dependencies.length
+    ? guideBlockLines(GUIDE_DEPENDENCIES_BLOCK, { dependencies }, bodyLines)
+    : [];
+}
+
+function snippetMacroLine(line: string): boolean {
+  const match = MACRO_LINE.exec(line);
+  return Boolean(
+    match &&
+    new Set([
+      "dependency",
+      "rawTest",
+      "resource",
+      "source",
+      "test",
+      "testResource",
+      "zipInclude",
+    ]).has(match[1]),
+  );
+}
+
+function collectFollowingCalloutLines(
+  lines: string[],
+  startIndex: number,
+): { bodyLines: string[]; nextIndex: number } {
+  const bodyLines = [];
+  let index = startIndex;
+  let found = false;
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line.trim()) {
+      if (nextNonBlankLineStartsCallout(lines, index + 1)) {
+        bodyLines.push(line);
+        index += 1;
+        continue;
+      }
+      break;
+    }
+    if (isCalloutListLine(line)) {
+      bodyLines.push(line);
+      found = true;
+      index += 1;
+      continue;
+    }
+    if (isCalloutMacroLine(line)) {
+      bodyLines.push(...rewriteMacroLine(line));
+      found = true;
+      index += 1;
+      continue;
+    }
+    break;
+  }
+  return {
+    bodyLines: found ? bodyLines : [],
+    nextIndex: found ? index : startIndex,
+  };
+}
+
+function nextNonBlankLineStartsCallout(
+  lines: string[],
+  startIndex: number,
+): boolean {
+  for (let index = startIndex; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim()) {
+      continue;
+    }
+    return isCalloutListLine(line) || isCalloutMacroLine(line);
+  }
+  return false;
+}
+
+function isCalloutListLine(line: string): boolean {
+  return /^<(\.|\d+)>/.test(line);
+}
+
+function isCalloutMacroLine(line: string): boolean {
+  return MACRO_LINE.exec(line)?.[1] === "callout";
+}
+
+export async function includeAdoc(
   file: any,
-  context: any,
-  includeStack: any,
+  context: GuideRenderContext,
+  includeStack: Set<string> = new Set(),
 ): Promise<any> {
   const normalized = path.resolve(file);
   if (includeStack.has(normalized)) {
@@ -201,7 +332,7 @@ async function includeAdoc(
     const source = await fs.readFile(normalized, "utf8");
     includeStack.add(normalized);
     try {
-      return expandLines(source.split(/\r?\n/), context, includeStack);
+      return prepareIncludedGuideSource(source, context).split(/\r?\n/);
     } finally {
       includeStack.delete(normalized);
     }
@@ -210,11 +341,11 @@ async function includeAdoc(
   }
 }
 
-async function includeCallout(
+export async function includeCallout(
   target: any,
   attributes: any,
-  context: any,
-  includeStack: any,
+  context: GuideRenderContext,
+  includeStack: Set<string> = new Set(),
 ): Promise<any> {
   const lines = await includeAdoc(
     path.join(
@@ -237,19 +368,37 @@ async function includeCallout(
   });
 }
 
-async function includeTemplate(
+export async function includeTemplate(
   file: any,
   attributes: any,
-  context: any,
-  includeStack: any,
+  context: GuideRenderContext,
+  includeStack: Set<string> = new Set(),
 ): Promise<any> {
-  const lines = await includeAdoc(file, context, includeStack);
-  return lines.map((line: any): any =>
-    replaceTemplateArguments(line, attributes),
-  );
+  const normalized = path.resolve(file);
+  if (includeStack.has(normalized)) {
+    return [];
+  }
+  try {
+    const source = await fs.readFile(normalized, "utf8");
+    includeStack.add(normalized);
+    try {
+      const replaced = source
+        .split(/\r?\n/)
+        .map((line: any): any => replaceTemplateArguments(line, attributes))
+        .join("\n");
+      return prepareIncludedGuideSource(replaced, context).split(/\r?\n/);
+    } finally {
+      includeStack.delete(normalized);
+    }
+  } catch {
+    return [`NOTE: Missing include \`${path.basename(file)}\`.`];
+  }
 }
 
-async function includeRocker(target: any, context: any): Promise<any> {
+export async function includeRocker(
+  target: any,
+  context: GuideRenderContext,
+): Promise<any> {
   const file = path.join(
     context.guidesDirectory,
     "buildSrc",
@@ -270,15 +419,25 @@ async function includeRocker(target: any, context: any): Promise<any> {
   }
 }
 
-async function sourceBlock(
+function prepareIncludedGuideSource(
+  source: string,
+  context: GuideRenderContext,
+): string {
+  return rewriteGuideSourceForExtensions(
+    prepareGuideSource(source, context, { appendLicense: false }),
+    context,
+  );
+}
+
+export async function sourceSnippetPayload(
   target: any,
   attributes: any,
-  context: any,
+  context: GuideRenderContext,
   kind: any,
 ): Promise<any> {
   const file = await findSourceFile(target.trim(), attributes, context, kind);
   if (!file) {
-    return [`NOTE: Missing source \`${target.trim()}\`.`];
+    return missingNotePayload(`Missing source \`${target.trim()}\`.`);
   }
 
   let source = await fs.readFile(file, "utf8");
@@ -291,7 +450,8 @@ async function sourceBlock(
   const title = path
     .relative(context.guide.directory, file)
     .replaceAll(path.sep, "/");
-  return snippetPassthroughBlockLines("code", {
+  return {
+    kind: "code",
     title,
     samples: [
       {
@@ -299,13 +459,13 @@ async function sourceBlock(
         source,
       },
     ],
-  });
+  };
 }
 
-async function resourceBlock(
+export async function resourceSnippetPayload(
   target: any,
   attributes: any,
-  context: any,
+  context: GuideRenderContext,
   sourceSet: any,
 ): Promise<any> {
   const file = await findResourceFile(
@@ -315,7 +475,7 @@ async function resourceBlock(
     sourceSet,
   );
   if (!file) {
-    return [`NOTE: Missing resource \`${target.trim()}\`.`];
+    return missingNotePayload(`Missing resource \`${target.trim()}\`.`);
   }
 
   let source = await fs.readFile(file, "utf8");
@@ -325,7 +485,8 @@ async function resourceBlock(
   const title = path
     .relative(context.guide.directory, file)
     .replaceAll(path.sep, "/");
-  return snippetPassthroughBlockLines("code", {
+  return {
+    kind: "code",
     title,
     samples: [
       {
@@ -333,23 +494,24 @@ async function resourceBlock(
         source,
       },
     ],
-  });
+  };
 }
 
-async function zipIncludeBlock(
+export async function zipIncludeSnippetPayload(
   target: any,
   attributes: any,
-  context: any,
+  context: GuideRenderContext,
 ): Promise<any> {
   const file = await findFileInSourceRoots(target.trim(), attributes, context);
   if (!file) {
-    return [`NOTE: Missing zip include \`${target.trim()}\`.`];
+    return missingNotePayload(`Missing zip include \`${target.trim()}\`.`);
   }
   let source = await fs.readFile(file, "utf8");
   source = extractTaggedSource(source, tagSelection(attributes));
   source = normalizeSourceCalloutMarkers(source);
   source = normalizeIndent(source, attributes.indent);
-  return snippetPassthroughBlockLines("code", {
+  return {
+    kind: "code",
     title: target.trim(),
     samples: [
       {
@@ -357,24 +519,18 @@ async function zipIncludeBlock(
         source,
       },
     ],
-  });
+  };
 }
 
-function dependencyLines(lines: any, context: any): any {
-  const dependencies = lines
-    .map((line: any): any => MACRO_LINE.exec(line))
-    .filter(Boolean)
-    .map((match: any): any => ({
-      artifactId: match[2].trim(),
-      attributes: parseAttributes(match[3]),
-    }));
+export function dependencySnippetPayload(dependencies: any, context: any): any {
   if (!dependencies.length) {
-    return [];
+    return missingNotePayload("Missing dependency.");
   }
 
   if (context.option.buildTool === "maven") {
     const xml = dependencies
-      .map(({ artifactId, attributes }: any): any => {
+      .map(({ target, attributes }: any): any => {
+        const artifactId = target.trim();
         const groupId =
           attributes.groupId || attributes.groupdId || "io.micronaut";
         const scope = attributes.scope
@@ -390,7 +546,8 @@ function dependencyLines(lines: any, context: any): any {
 </dependency>`;
       })
       .join("\n");
-    return snippetPassthroughBlockLines("dependency", {
+    return {
+      kind: "dependency",
       title: "Dependency",
       samples: [
         {
@@ -399,7 +556,7 @@ function dependencyLines(lines: any, context: any): any {
           source: xml,
         },
       ],
-    });
+    };
   }
 
   const gradleScope = {
@@ -411,7 +568,8 @@ function dependencyLines(lines: any, context: any): any {
     annotationProcessor: "annotationProcessor",
   } as Record<string, string>;
   const gradle = dependencies
-    .map(({ artifactId, attributes }: any): any => {
+    .map(({ target, attributes }: any): any => {
+      const artifactId = target.trim();
       const groupId =
         attributes.groupId || attributes.groupdId || "io.micronaut";
       const scope =
@@ -420,7 +578,8 @@ function dependencyLines(lines: any, context: any): any {
       return `${scope}("${groupId}:${artifactId}${version}")${calloutMarkerForLanguage(attributes, "gradle")}`;
     })
     .join("\n");
-  return snippetPassthroughBlockLines("dependency", {
+  return {
+    kind: "dependency",
     title: "Dependency",
     samples: [
       {
@@ -429,7 +588,28 @@ function dependencyLines(lines: any, context: any): any {
         source: gradle,
       },
     ],
-  });
+  };
+}
+
+export function dependencyMacroPayload(
+  target: any,
+  attributes: any,
+  context: GuideRenderContext,
+): any {
+  return dependencySnippetPayload([{ target, attributes }], context);
+}
+
+function missingNotePayload(message: string): any {
+  return {
+    kind: "code",
+    samples: [
+      {
+        language: "text",
+        source: `NOTE: ${message}`,
+      },
+    ],
+    title: "",
+  };
 }
 
 async function findSourceFile(
@@ -645,38 +825,9 @@ function replacePlaceholders(source: any, context: any): any {
   return text;
 }
 
-function processGuideLinks(line: any): any {
-  return line.replace(/guideLink:([^\[]+)\[([^\]]+)]/g, "link:$1.html[$2]");
-}
-
-function diffLink(_target: any, attributes: any, context: any): any {
-  const appName = attributes.app || "default";
-  const app = findApp(context.guide, appName);
-  const excluded = new Set(
-    (attributes.featureExcludes || "").split("|").filter(Boolean),
-  );
-  const features = (
-    attributes.features
-      ? attributes.features.split("|")
-      : appFeatures(context.guide, context.option, appName)
-  ).filter((feature: any): any => feature && !excluded.has(feature));
-  const params = new URLSearchParams();
-  for (const feature of features) {
-    params.append("features", feature);
-  }
-  params.set("lang", context.option.language.toUpperCase());
-  params.set("build", context.option.buildTool.toUpperCase());
-  params.set("test", context.option.testFramework.toUpperCase());
-  params.set("name", appName === "default" ? "micronautguide" : appName);
-  params.set("type", String(app?.applicationType || "DEFAULT").toUpperCase());
-  params.set("package", "example.micronaut");
-  params.set("activity", "diff");
-  return `https://micronaut.io/launch?${params.toString()}[Diff, window="_blank"]`;
-}
-
 type Attributes = Record<string, string> & { _positional?: string[] };
 
-function parseAttributes(source: any): Attributes {
+export function parseAttributes(source: any): Attributes {
   return parseAttributeList(String(source || ""), {
     positionalKey: "_positional",
   }) as Attributes;
@@ -770,25 +921,6 @@ function replaceTemplateArguments(line: any, attributes: any): any {
       }
       return value;
     },
-  );
-}
-
-function commonSnippetPath(guidesDirectory: any, target: any): any {
-  return path.join(
-    guidesDirectory,
-    "src",
-    "docs",
-    "common",
-    "snippets",
-    `common-${ensureSuffix(target.trim(), ".adoc")}`,
-  );
-}
-
-function externalPath(guidesDirectory: any, target: any): any {
-  return path.join(
-    guidesDirectory,
-    "guides",
-    ensureSuffix(target.trim(), ".adoc"),
   );
 }
 

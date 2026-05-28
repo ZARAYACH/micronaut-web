@@ -1,29 +1,9 @@
 import { splitList } from "../shared/cli.ts";
 import { parseAttributeList } from "./adoc-attributes.ts";
 import { macroAttribute } from "./listing.ts";
-import {
-  snippetMarkerBlockHtml,
-  snippetPassthroughBlock,
-} from "./snippet-blocks.ts";
+import { snippetBlock } from "./snippet-blocks.ts";
 
-export function snippetBlocksHtml(
-  target: any,
-  attrs: any,
-  context: any,
-  resolveSamples: any,
-): any {
-  const deduped = snippetSamples(target, attrs, context, resolveSamples);
-  if (!deduped.length) {
-    return "";
-  }
-  return snippetMarkerBlockHtml("code", {
-    title: macroAttribute(attrs, "title") || "",
-    description: macroAttribute(attrs, "description") || "",
-    samples: deduped,
-  });
-}
-
-export function expandSnippetMacrosForCallouts(
+export function expandSnippetMacrosToBlocks(
   source: any,
   context: any,
   resolveSamples: any,
@@ -71,7 +51,7 @@ export function expandSnippetMacrosForCallouts(
     }
 
     output.push(
-      snippetPassthroughBlock("code", {
+      snippetBlock("code", {
         title: macroAttribute(attrs, "title") || "",
         description: macroAttribute(attrs, "description") || "",
         samples,

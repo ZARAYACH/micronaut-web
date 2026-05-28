@@ -5,36 +5,6 @@ import { attribute, decodeHtml, escapeRegExp } from "./html.ts";
 const CALLOUT_MARKER_PREFIX = "__MICRONAUT_CALLOUT_";
 const CALLOUT_MARKER_SUFFIX = "__";
 
-export function unwrapBlockParagraphs(input: any): any {
-  const startPattern = /<div class="paragraph">\s*<p>/gi;
-  let result = "";
-  let position = 0;
-  let match;
-  while ((match = startPattern.exec(input)) !== null) {
-    const paragraphStart = match.index;
-    const contentStart = startPattern.lastIndex;
-    const paragraphEnd = input.indexOf("</p>", contentStart);
-    if (paragraphEnd < 0) {
-      break;
-    }
-    const wrapper = /^\s*<\/div>/i.exec(input.slice(paragraphEnd + 4));
-    if (!wrapper) {
-      continue;
-    }
-    const wrapperEnd = paragraphEnd + 4 + wrapper[0].length;
-    const paragraphContent = input.slice(contentStart, paragraphEnd).trim();
-    if (!paragraphContent.startsWith("<micronaut-snippet")) {
-      continue;
-    }
-    result += input.slice(position, paragraphStart);
-    result += `${paragraphContent}\n`;
-    position = wrapperEnd;
-    startPattern.lastIndex = wrapperEnd;
-  }
-  result += input.slice(position);
-  return result;
-}
-
 export async function highlightListingBlocks(input: any): Promise<any> {
   let current = input;
   for (let pass = 0; pass < 4; pass += 1) {

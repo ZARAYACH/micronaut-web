@@ -2,25 +2,28 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 import { renderAsciiDoc } from "../asciidoc/rendering.ts";
-import { processAsciiDocHtml, shikiStyle } from "../asciidoc/postprocess.ts";
 import { optimizeImages as optimizeGeneratedGuideHtml } from "../shared/generated-html.ts";
-import { preprocessGuideSource } from "./preprocessor.ts";
+import { shikiStyle } from "../shared/highlight.ts";
+import { guideExtensionRegistry } from "./extensions/index.ts";
+import { guideRenderContext, preprocessGuideSource } from "./preprocessor.ts";
 import type { Guide, GuideOption } from "./model.ts";
 import { productionUrl } from "../../src/lib/route-compatibility.ts";
 
 export async function renderGuideOption(
-  asciidoctor: any,
+  asciidoctor: typeof import("@asciidoctor/core"),
   guidesDirectory: string,
   guide: Guide,
   option: GuideOption,
   renderOptions: { strict?: boolean } = {},
 ): Promise<string> {
+  const context = await guideRenderContext({ guidesDirectory, guide, option });
   const source = await preprocessGuideSource({
     guidesDirectory,
     guide,
     option,
+    context,
   });
-  let html = renderAsciiDoc({
+  let html = await renderAsciiDoc({
     asciidoctor,
     source,
     diagnosticsLabel: option.id,
@@ -34,10 +37,10 @@ export async function renderGuideOption(
         sourcedir: guide.directory,
       },
       base_dir: guide.directory,
+      extension_registry: guideExtensionRegistry(asciidoctor, context),
     },
   });
 
-  html = await processAsciiDocHtml(html);
   html = rewriteGuideUrls(html, guide.slug);
   html = optimizeGeneratedGuideHtml(html);
   return `${shikiStyle()}\n${html.trim()}`;

@@ -1,19 +1,22 @@
-import asciidoctorFactory from "asciidoctor";
+import * as asciidoctor from "@asciidoctor/core";
 import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { normalizeAsciiDocCallouts } from "./callouts.ts";
-import { micronautExtensionRegistry } from "./extensions.ts";
-import { processAsciiDocHtml } from "./postprocess.ts";
-import { renderAsciiDoc } from "./rendering.ts";
-import { expandSnippetMacrosForCallouts } from "./snippets.ts";
-import { normalizeAsciiDocSource } from "./source-normalizer.ts";
+import { expandDependencyMacrosToBlocks } from "../dependencies.ts";
+import { micronautExtensionRegistry } from "../extensions/index.ts";
+import { renderAsciiDoc } from "../rendering.ts";
+import { snippetBlock } from "../snippet-blocks.ts";
+import { expandSnippetMacrosToBlocks } from "../snippets.ts";
+import { normalizeAsciiDocSource } from "../source-normalizer.ts";
+import { guideExtensionRegistry } from "../../guides/extensions/index.ts";
+import type { GuideRenderContext } from "../../guides/preprocessor.ts";
 
 const projectDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
+  "..",
   "..",
   "..",
 );
@@ -24,14 +27,21 @@ const fixtureDirectory = path.join(
   "fixtures",
 );
 
-test("AsciiDoc snippets render through the shared component templates", async (): Promise<any> => {
-  const html = await renderSnippetGalleryFixture();
+test("AsciiDoc snippets render directly through generated React components", async (): Promise<any> => {
+  const { converted, html } = await renderSnippetGalleryFixture();
   const text = textOnly(html);
+
+  assert.doesNotMatch(converted, /\blistingblock\b/);
+  assert.doesNotMatch(
+    converted,
+    /\[(?:snippet|dependency),payload=|docs-snippet-callout-validation/,
+  );
+  assert.match(converted, /docs-code-snippet-template/);
 
   assert.doesNotMatch(html, /\blistingblock\b/);
   assert.doesNotMatch(
     html,
-    /<micronaut-snippet|docs-snippet-callout-validation/,
+    /\[(?:snippet|dependency),payload=|docs-snippet-callout-validation/,
   );
   assert.equal(count(html, /docs-code-snippet-template/g), 17);
   assert.equal(count(html, /docs-dependency-template/g), 1);
@@ -123,8 +133,154 @@ test("AsciiDoc snippets render through the shared component templates", async ()
   assert.match(text, /3 properties/);
 });
 
-async function renderSnippetGalleryFixture(): Promise<string> {
-  const asciidoctor = asciidoctorFactory();
+test("snippet, dependency, and configuration block processors render React snippet components", async (): Promise<any> => {
+  const context = {
+    attributes: {
+      projectGroup: "io.micronaut",
+    },
+  };
+  const converted = await renderAsciiDoc({
+    asciidoctor,
+    source: [
+      "[snippet,target=controller,title=Controller Block]",
+      "--",
+      "--",
+      "",
+      "[dependency,target=micronaut-http-client,groupId=io.micronaut,title=HTTP Client Block]",
+      "--",
+      "--",
+      "",
+      "[configuration,title=Configuration Block]",
+      "----",
+      "micronaut:",
+      "  application:",
+      "    name: demo",
+      "----",
+    ].join("\n"),
+    convertOptions: {
+      attributes: {
+        icons: "font",
+        idprefix: "",
+        idseparator: "-",
+      },
+      base_dir: fixtureDirectory,
+      extension_registry: micronautExtensionRegistry(asciidoctor, context, {
+        snippetSamples: fixtureSnippetSamples,
+      }),
+    },
+  });
+  const text = textOnly(converted);
+
+  assert.match(converted, /docs-code-snippet-template/);
+  assert.match(converted, /docs-dependency-template/);
+  assert.doesNotMatch(converted, /snippet::|dependency:/);
+  assert.match(text, /Controller Block/);
+  assert.match(text, /HTTP Client Block/);
+  assert.match(text, /Configuration Block/);
+  assert.match(text, /io\.micronaut:micronaut-http-client/);
+  assert.match(text, /micronaut\.application\.name=demo/);
+});
+
+test("snippet block processor absorbs following callout lines from the document reader", async (): Promise<any> => {
+  const converted = await renderAsciiDoc({
+    asciidoctor,
+    source: [
+      snippetBlock("code", {
+        samples: [
+          {
+            language: "java",
+            source: [
+              "class Example {",
+              "    void one() {} // <2>",
+              "    void two() {} // <4>",
+              "}",
+            ].join("\n"),
+          },
+        ],
+      }),
+      "<2> First source callout.",
+      "<4> Second source callout.",
+      "<5> Manual callout.",
+    ].join("\n"),
+    convertOptions: {
+      attributes: {
+        icons: "font",
+        idprefix: "",
+        idseparator: "-",
+      },
+      base_dir: fixtureDirectory,
+    },
+  });
+  const text = textOnly(converted);
+
+  assert.match(converted, /docs-code-callouts/);
+  assert.match(converted, /data-value="1"/);
+  assert.match(converted, /data-value="2"/);
+  assert.doesNotMatch(converted, /data-value="4"/);
+  assert.match(converted, /asciidoc-manual-callouts/);
+  assert.match(text, /First source callout/);
+  assert.match(text, /Second source callout/);
+  assert.match(text, /Manual callout/);
+});
+
+test("guide macro block processors render snippet gallery macros", async (): Promise<any> => {
+  const context = guideMacroFixtureContext();
+  const source = await fs.readFile(
+    path.join(fixtureDirectory, "snippet-gallery.adoc"),
+    "utf8",
+  );
+  const converted = await renderAsciiDoc({
+    asciidoctor,
+    source,
+    convertOptions: {
+      attributes: {
+        "guide-macro-gallery": "",
+        icons: "font",
+        idprefix: "",
+        idseparator: "-",
+      },
+      base_dir: context.guide.directory,
+      extension_registry: guideExtensionRegistry(asciidoctor, context),
+    },
+  });
+  const text = textOnly(converted);
+
+  assert.match(converted, /docs-code-snippet-template/);
+  assert.match(converted, /docs-dependency-template/);
+  assert.match(converted, /docs-code-callouts/);
+  assert.match(converted, /href="gallery-linked\.html"/);
+  assert.match(converted, /https:\/\/micronaut\.io\/launch\?/);
+  assert.match(text, /Common guide snippet content/);
+  assert.match(text, /Common template value: COMMON/);
+  assert.match(text, /External guide include content/);
+  assert.match(text, /External template value: external/);
+  assert.match(text, /Rocker template include content/);
+  assert.match(text, /GalleryController/);
+  assert.match(text, /Source callout loaded from a guide callout macro/);
+  assert.match(text, /GalleryControllerTest/);
+  assert.match(text, /GalleryRawTest/);
+  assert.match(text, /name: guide-gallery/);
+  assert.match(text, /enabled: true/);
+  assert.match(text, /io\.micronaut\.serde:micronaut-serde-jackson/);
+  assert.match(text, /Single dependency callout/);
+  assert.match(text, /io\.micronaut:micronaut-http-client/);
+  assert.match(text, /io\.micronaut\.validation:micronaut-validation/);
+  assert.match(text, /Grouped HTTP client dependency/);
+  assert.match(text, /Grouped validation dependency/);
+  assert.match(text, /Visible after exclude directives/);
+  assert.doesNotMatch(text, /Java excluded text should not render/);
+  assert.doesNotMatch(text, /Gradle excluded text should not render/);
+  assert.doesNotMatch(text, /JDK excluded text should not render/);
+  assert.doesNotMatch(
+    converted,
+    /source:|test:|rawTest:|resource:|testResource:|zipInclude:|common-template:|external-template:|rocker:|diffLink:|callout:/,
+  );
+});
+
+async function renderSnippetGalleryFixture(): Promise<{
+  converted: string;
+  html: string;
+}> {
   const context = {
     attributes: {
       projectGroup: "io.micronaut",
@@ -134,16 +290,17 @@ async function renderSnippetGalleryFixture(): Promise<string> {
     path.join(fixtureDirectory, "snippet-gallery.adoc"),
     "utf8",
   );
-  const normalizedSource = normalizeAsciiDocCallouts(
-    expandSnippetMacrosForCallouts(
+  const expandedSource = expandDependencyMacrosToBlocks(
+    expandSnippetMacrosToBlocks(
       normalizeAsciiDocSource(source),
       context,
       fixtureSnippetSamples,
     ),
+    context,
   );
-  const converted = renderAsciiDoc({
+  const converted = await renderAsciiDoc({
     asciidoctor,
-    source: normalizedSource,
+    source: expandedSource,
     convertOptions: {
       attributes: {
         icons: "font",
@@ -157,7 +314,60 @@ async function renderSnippetGalleryFixture(): Promise<string> {
     },
   });
 
-  return processAsciiDocHtml(converted, { unwrapSnippetParagraphs: true });
+  return {
+    converted,
+    html: converted,
+  };
+}
+
+function guideMacroFixtureContext(): GuideRenderContext {
+  const guidesDirectory = path.join(fixtureDirectory, "guide-macros");
+  const guideDirectory = path.join(
+    guidesDirectory,
+    "guides",
+    "snippet-gallery",
+  );
+  return {
+    guide: {
+      apps: [
+        {
+          applicationType: "DEFAULT",
+          features: ["http-client"],
+          name: "default",
+        },
+      ],
+      asciidoc: "snippet-gallery.adoc",
+      authors: ["Micronaut"],
+      base: "",
+      buildTools: ["gradle"],
+      categories: ["Test"],
+      cloud: "",
+      directory: guideDirectory,
+      intro: "Snippet gallery guide macro fixture.",
+      languages: ["java"],
+      minimumJavaVersion: "21",
+      publicationDate: "2026-01-01",
+      publish: true,
+      slug: "snippet-gallery",
+      tags: ["test"],
+      testFramework: "junit",
+      title: "Snippet Gallery",
+    },
+    guidesDirectory,
+    option: {
+      buildTool: "gradle",
+      buildToolLabel: "Gradle",
+      file: "snippet-gallery-gradle-java.html",
+      id: "snippet-gallery-gradle-java",
+      label: "Java / Gradle",
+      language: "java",
+      languageLabel: "Java",
+      sourceDir: "snippet-gallery-gradle-java",
+      testFramework: "junit",
+      zipUrl: "snippet-gallery-gradle-java.zip",
+    },
+    version: "4.9.0",
+  };
 }
 
 function fixtureSnippetSamples(target: any): any {

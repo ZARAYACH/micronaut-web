@@ -16,33 +16,44 @@ Generated HTML files and copied docs assets are ignored by Git and are created
 by `npm run dev` and `npm run build` before Astro starts. Do not hand-edit the
 generated HTML files or the generated `assets/` tree.
 
-## Static Snippet Pipeline
+The full shared adoc processing and rendering flow is documented in
+`scripts/asciidoc/README.md`.
 
-Docs snippets are rendered as static HTML during fragment generation. The
-AsciiDoc macros do not emit finished snippet cards directly. They emit semantic
-`<micronaut-snippet>` marker tags whose `data-payload` contains base64url JSON
-describing the snippet kind, title, description, and code samples.
+## AsciiDoc Snippet Pipeline
 
-After Asciidoctor.js produces HTML, `scripts/asciidoc/postprocess.ts` runs the
-shared docs/guides HTML pipeline. It calls
-`scripts/asciidoc/static-snippets.ts` to replace each marker with static HTML
-and wrap generated configuration property tables in the shared properties card.
-The static snippet markup comes from
-`src/components/web/docs-snippet-templates.tsx`; the renderer loads that support
-through `renderDocsSnippetStaticSupport()` so the generated HTML and browser
-enhancement use the same templates.
+Docs snippets are rendered as static HTML during fragment generation.
+AsciiDoc macros and guide preprocessors emit `[snippet]` and `[dependency]`
+open blocks whose base64url payload contains the snippet kind, title,
+description, and code samples. Those blocks are consumed by Asciidoctor.js block
+processors during conversion and are not emitted to generated HTML.
 
-The `[configuration]` preprocessor in `scripts/asciidoc/configuration.ts`
-also emits snippet markers. `configuration-samples.ts` parses the source YAML
-with `js-yaml`, formats TOML with `smol-toml`, and keeps the small remaining
-format adapters for Properties, Groovy config, and HOCON source text. Those
-adapters only generate source strings; Shiki still performs all syntax
-highlighting in the static snippet pipeline.
+Asciidoctor.js 4 renders through
+`scripts/asciidoc/component-renderer.ts`, a custom HTML converter that turns
+extension-created snippet nodes, listing blocks, and configuration property
+tables into shared component markup during conversion.
+
+The direct converter renders snippet cards with
+`src/components/web/docs-generated-snippet.tsx`, which server-renders the same
+React primitives used by the hand-authored docs snippet components. The legacy
+template fallback has been removed from the AsciiDoc pipeline.
+
+The renderer splits snippet types by source shape:
+`scripts/asciidoc/snippets/macro-snippets.ts` handles extension-created snippet
+nodes, `scripts/asciidoc/snippets/listing-snippets.ts` handles ordinary source
+listings, and `scripts/asciidoc/snippets/properties-snippets.ts` handles
+configuration property tables.
+
+The `[configuration]` block processor also creates snippet payload nodes.
+`configuration-samples.ts` parses the source YAML with `js-yaml`, formats TOML
+with `smol-toml`, and keeps the small remaining format adapters for Properties,
+Groovy config, and HOCON source text. Those adapters only generate source
+strings; Shiki still performs all syntax highlighting in the AsciiDoc snippet
+pipeline.
 
 Shiki highlighting stays in the build/server-side rendering path. Static snippet
-panels are highlighted by `scripts/asciidoc/static-snippets.ts`, and ordinary
-listing blocks are highlighted by the docs renderer. React is used only to render static
-markup for these generated fragments; snippets are not hydrated React islands.
+panels and ordinary listing blocks are highlighted by the component renderer.
+React is used only to render static markup for these generated fragments;
+snippets are not hydrated React islands.
 
 `src/components/web/generated-docs-enhancer.astro` adds progressive behavior in
 the browser: language tabs, active-panel copy buttons, and copy controls for

@@ -1,19 +1,15 @@
-import { snippetMarkerHtml } from "./snippet-markers.ts";
+import { snippetBlockAttributeLine } from "./snippet-payloads.ts";
 
 export const SNIPPET_CALLOUT_VALIDATION_CLASS =
   "docs-snippet-callout-validation";
 
-export function snippetMarkerBlockHtml(kind: any, payload: any): any {
-  return snippetMarkerHtml(kind, normalizeSnippetPayload(payload));
-}
-
-export function snippetPassthroughBlock(kind: any, payload: any): any {
-  return snippetPassthroughBlockLines(kind, payload, {
+export function snippetBlock(kind: any, payload: any): any {
+  return snippetBlockLines(kind, payload, {
     surroundWithBlankLines: false,
   }).join("\n");
 }
 
-export function snippetPassthroughBlockLines(
+export function snippetBlockLines(
   kind: any,
   payload: any,
   options: { surroundWithBlankLines?: boolean } = {},
@@ -23,9 +19,9 @@ export function snippetPassthroughBlockLines(
   if (options.surroundWithBlankLines !== false) {
     lines.push("");
   }
-  lines.push("++++");
-  lines.push(snippetMarkerHtml(kind, normalized));
-  lines.push("++++");
+  lines.push(snippetBlockAttributeLine(kind, normalized));
+  lines.push("--");
+  lines.push("--");
   lines.push(...snippetCalloutValidationLines(normalized.samples));
   if (options.surroundWithBlankLines !== false) {
     lines.push("");

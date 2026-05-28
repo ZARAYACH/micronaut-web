@@ -1,11 +1,51 @@
+import { parseAttributeList } from "./adoc-attributes.ts";
 import { macroAttribute } from "./listing.ts";
-import { snippetMarkerBlockHtml } from "./snippet-blocks.ts";
+import { snippetBlock } from "./snippet-blocks.ts";
 
-export function dependencyBlocksHtml(
-  target: any,
-  attrs: any,
-  context: any,
-): any {
+export function expandDependencyMacrosToBlocks(source: any, context: any): any {
+  const lines = source.split(/\r?\n/);
+  const output = [];
+  let delimiter: string | undefined;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (delimiter) {
+      output.push(line);
+      if (trimmed === delimiter) {
+        delimiter = undefined;
+      }
+      continue;
+    }
+
+    const delimiterMatch = /^(-{4,}|\.{4,}|\+{4,}|_{4,})$/.exec(trimmed);
+    if (delimiterMatch) {
+      delimiter = delimiterMatch[1];
+      output.push(line);
+      continue;
+    }
+
+    const macroMatch = /^dependency:([^\[]+)\[(.*)]\s*$/.exec(line);
+    if (!macroMatch) {
+      output.push(line);
+      continue;
+    }
+
+    const attrs = parseAttributeList(macroMatch[2], {
+      includeText: true,
+      positionalKey: "$positional",
+    });
+    output.push(
+      snippetBlock("dependency", {
+        ...dependencyPayload(macroMatch[1], attrs, context),
+        kind: "dependency",
+      }),
+    );
+  }
+
+  return output.join("\n");
+}
+
+export function dependencyPayload(target: any, attrs: any, context: any): any {
   const dependency = dependencyForTargetAndAttributes(
     target.trim(),
     attrs,
@@ -13,7 +53,7 @@ export function dependencyBlocksHtml(
   );
   const gradle = gradleDependency(dependency);
   const maven = mavenDependency(dependency);
-  return snippetMarkerBlockHtml("dependency", {
+  return {
     title: dependency.title,
     description: dependency.description,
     samples: [
@@ -28,7 +68,7 @@ export function dependencyBlocksHtml(
         source: maven,
       },
     ],
-  });
+  };
 }
 
 function dependencyForTargetAndAttributes(

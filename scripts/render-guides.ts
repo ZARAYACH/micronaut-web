@@ -1,4 +1,4 @@
-import asciidoctorFactory from "asciidoctor";
+import * as asciidoctor from "@asciidoctor/core";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,7 +51,6 @@ const selectedSlugs = renderAll
     ? explicitSlugs
     : DEFAULT_GUIDE_SLUGS;
 
-const asciidoctor = asciidoctorFactory();
 const allGuides = await readGuides(guidesDirectory);
 const guides = selectGuides(allGuides, selectedSlugs);
 if (strict && !allGuides.length) {

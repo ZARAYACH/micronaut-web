@@ -1,6 +1,43 @@
-import { macroAttribute, macroText } from "./listing.ts";
+import type {
+  Block,
+  Inline,
+  InlineMacroProcessor,
+  InlineMacroProcessorDslInterface,
+  Registry,
+} from "@asciidoctor/core";
 
-export function apiLink(context: any, kind: any, target: any, attrs: any): any {
+import { macroAttribute, macroText } from "../listing.ts";
+
+const API_MACROS = ["api", "ann", "mnapi", "jdk", "jee", "rs", "rx", "reactor"];
+
+export function registerApiMacros(registry: Registry, context: any): void {
+  for (const kind of API_MACROS) {
+    registry.inlineMacro(
+      kind,
+      function registerApiMacro(this: InlineMacroProcessorDslInterface): void {
+        this.process(function processApiMacro(
+          this: InlineMacroProcessor,
+          parent: unknown,
+          target: unknown,
+          attrs: unknown,
+        ): Inline {
+          const link = apiLink(
+            context,
+            kind,
+            String(target),
+            attrs as Record<string, unknown>,
+          );
+          return this.createInline(parent as Block, "anchor", link.label, {
+            type: "link",
+            target: link.href,
+          });
+        });
+      },
+    );
+  }
+}
+
+function apiLink(context: any, kind: any, target: any, attrs: any): any {
   const parsed = parseApiTarget(target);
   const library = apiLibrary(context, kind, attrs);
   let baseUri = apiBaseUri(context, library.attributeKey, library);
@@ -20,17 +57,6 @@ export function apiLink(context: any, kind: any, target: any, attrs: any): any {
       ".",
     );
   return { href, label };
-}
-
-export function packageLink(context: any, target: any, attrs: any): any {
-  let packageName = target;
-  if (!packageName.startsWith("io.micronaut.")) {
-    packageName = `io.micronaut.${packageName}`;
-  }
-  return {
-    href: `assets/${context.project.slug}/docs/api/${packageName.replaceAll(".", "/")}/package-summary.html`,
-    label: macroText(attrs) || packageName,
-  };
 }
 
 function parseApiTarget(target: any): any {

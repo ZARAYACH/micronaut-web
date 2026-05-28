@@ -1,12 +1,12 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-import { normalizeAsciiDocCallouts } from "../asciidoc/callouts.ts";
-import { micronautExtensionRegistry } from "../asciidoc/extensions.ts";
-import { processAsciiDocHtml, shikiStyle } from "../asciidoc/postprocess.ts";
+import { expandDependencyMacrosToBlocks } from "../asciidoc/dependencies.ts";
+import { micronautExtensionRegistry } from "../asciidoc/extensions/index.ts";
 import { renderAsciiDoc } from "../asciidoc/rendering.ts";
-import { expandSnippetMacrosForCallouts } from "../asciidoc/snippets.ts";
+import { expandSnippetMacrosToBlocks } from "../asciidoc/snippets.ts";
 import { normalizeAsciiDocSource } from "../asciidoc/source-normalizer.ts";
+import { shikiStyle } from "../shared/highlight.ts";
 import { optimizeImages } from "../shared/generated-html.ts";
 import { attribute, html } from "../shared/html.ts";
 import { renderAttributes, sourceDocsEditUrl } from "./project-meta.ts";
@@ -16,7 +16,7 @@ import { readGuideToc } from "./toc.ts";
 import { prefixIds, rewriteUrls } from "./urls.ts";
 
 export async function renderProject(
-  asciidoctor: any,
+  asciidoctor: typeof import("@asciidoctor/core"),
   docsDirectory: any,
   project: any,
   platformVersion: any,
@@ -58,9 +58,6 @@ export async function renderProject(
     content += await renderNode(asciidoctor, context, node);
   }
 
-  content = await processAsciiDocHtml(content, {
-    unwrapSnippetParagraphs: true,
-  });
   content = prefixIds(content, project.slug);
   content = rewriteUrls(content, project);
   content = optimizeImages(content);
@@ -68,17 +65,17 @@ export async function renderProject(
 }
 
 async function renderNode(
-  asciidoctor: any,
+  asciidoctor: typeof import("@asciidoctor/core"),
   context: any,
   node: any,
 ): Promise<any> {
   const sourceFile = path.join(context.guideSourceDirectory, node.file);
   let source = await fs.readFile(sourceFile, "utf8");
   source = normalizeAsciiDocSource(source);
-  source = expandSnippetMacrosForCallouts(source, context, docsSnippetSamples);
-  source = normalizeAsciiDocCallouts(source);
+  source = expandSnippetMacrosToBlocks(source, context, docsSnippetSamples);
+  source = expandDependencyMacrosToBlocks(source, context);
 
-  const converted = renderAsciiDoc({
+  const converted = await renderAsciiDoc({
     asciidoctor,
     source,
     diagnosticsLabel: `${context.project.slug}/${node.file}`,

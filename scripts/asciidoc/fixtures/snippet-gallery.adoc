@@ -1,3 +1,4 @@
+ifndef::guide-macro-gallery[]
 = Snippet Gallery Fixture
 
 This fixture exercises generated snippet rendering across source blocks, snippet macros, dependencies, configuration samples, and configuration property tables.
@@ -110,3 +111,67 @@ micronaut:
 |micronaut.server.port |Integer |Server port
 |micronaut.application.name |String |Application name
 |===
+endif::[]
+
+ifdef::guide-macro-gallery[]
+= Guide Macro Gallery Fixture
+
+This fixture exercises guide macro rendering through Asciidoctor extension processors.
+
+== Content Macros
+
+common:gallery-common.adoc[]
+
+common-template:gallery-template.adoc[arg0=common]
+
+external:gallery-external[]
+
+external-template:gallery-external-template[arg0=external]
+
+rocker:gallery[]
+
+guideLink:gallery-linked[Linked Guide]
+
+diffLink:[]
+
+== Snippet Macros
+
+source:GalleryController[]
+callout:gallery-source[]
+
+test:GalleryControllerTest[]
+
+rawTest:GalleryRawTest[]
+
+resource:application.yml[]
+
+testResource:application-test.yml[]
+
+zipInclude:build.gradle[]
+
+dependency:micronaut-serde-jackson[groupId=io.micronaut.serde,callout=1]
+<1> Single dependency callout.
+
+:dependencies:
+dependency:micronaut-http-client[groupId=io.micronaut,callout=1]
+dependency:micronaut-validation[groupId=io.micronaut.validation,callout=2]
+:dependencies:
+<1> Grouped HTTP client dependency.
+<2> Grouped validation dependency.
+
+== Excludes
+
+:exclude-for-languages:java
+Java excluded text should not render.
+:exclude-for-languages:
+
+:exclude-for-build:gradle
+Gradle excluded text should not render.
+:exclude-for-build:
+
+:exclude-for-jdk-lower-than:21
+JDK excluded text should not render.
+:exclude-for-jdk-lower-than:
+
+Visible after exclude directives.
+endif::[]

@@ -1,7 +1,5 @@
-import { renderConfigurationBlocksInSource } from "./configuration.ts";
-
 export function normalizeAsciiDocSource(source: any): any {
-  let normalized = renderConfigurationBlocksInSource(source);
+  let normalized = source;
   normalized = removeGeneratedConfigurationPropertyIncludes(normalized);
   normalized = normalized.replace(
     /^([ \t]*(?:include|snippet)::[^\r\n\[]+\[[^\r\n\]]*?\bindent\s*=\s*)(?:"false"|'false'|false)(?=\s*(?:,|\]))/gim,

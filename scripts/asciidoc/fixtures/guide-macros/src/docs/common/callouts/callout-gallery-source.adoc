@@ -1,0 +1,1 @@
+<.> Source callout loaded from a guide callout macro.

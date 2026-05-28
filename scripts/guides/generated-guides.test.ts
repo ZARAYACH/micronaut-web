@@ -292,6 +292,9 @@ test("latest guide replacement routes and parallel generated-content preparation
     path.join(projectDirectory, "scripts", "guides", "preprocessor.ts"),
     "utf8",
   );
+  const guidesExtensions = await readDirectoryText(
+    path.join(projectDirectory, "scripts", "guides", "extensions"),
+  );
   const generatedDocsStaticEnhancer = await fs.readFile(
     path.join(
       projectDirectory,
@@ -433,12 +436,14 @@ test("latest guide replacement routes and parallel generated-content preparation
     generatedGuidesRoutingLibrary,
     /option\.file === guide\.defaultOptionFile/,
   );
-  assert.match(guidesRenderer, /processAsciiDocHtml/);
+  assert.doesNotMatch(guidesRenderer, /processAsciiDocHtml/);
   assert.doesNotMatch(guidesRenderer, /renderStaticSnippetCards/);
   assert.doesNotMatch(guidesRenderer, /renderStaticDocsSnippets/);
   assert.doesNotMatch(guidesRenderer, /renderStaticListingBlockSnippets/);
-  assert.match(guidesPreprocessor, /snippetPassthroughBlockLines/);
-  assert.match(guidesPreprocessor, /normalizeAsciiDocCallouts/);
+  assert.doesNotMatch(guidesPreprocessor, /snippetBlockLines/);
+  assert.match(guidesExtensions, /registry\.block/);
+  assert.match(guidesExtensions, /renderSnippetBlockWithCalloutReader/);
+  assert.doesNotMatch(guidesPreprocessor, /normalizeAsciiDocCallouts/);
   assert.doesNotMatch(guidesPreprocessor, /normalizeOrphanCalloutLists/);
   assert.doesNotMatch(guidesPreprocessor, /SNIPPET_CALLOUT_VALIDATION_CLASS/);
   assertNoRuntimeGeneratedRendering(
@@ -486,8 +491,8 @@ function assertMicronautHttpClientGuideHasProperSnippets(source: string) {
   }
   assert.doesNotMatch(
     source,
-    /<micronaut-snippet|docs-snippet-callout-validation/,
-    "Micronaut HTTP Client guide snippet markers must be fully consumed during static rendering",
+    /\[(?:snippet|dependency),payload=|docs-snippet-callout-validation/,
+    "Micronaut HTTP Client guide snippet blocks must be fully consumed during static rendering",
   );
 }
 
@@ -897,6 +902,21 @@ function nonStrictEnv(): any {
 
 function lines(value: any): any {
   return value.split(/\r?\n/).filter(Boolean);
+}
+
+async function readDirectoryText(directory: string): Promise<string> {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const contents = await Promise.all(
+    entries
+      .filter(
+        (entry: any): boolean => entry.isFile() && entry.name.endsWith(".ts"),
+      )
+      .map(
+        (entry: any): Promise<string> =>
+          fs.readFile(path.join(directory, entry.name), "utf8"),
+      ),
+  );
+  return contents.join("\n");
 }
 
 function assertSnippetLanguageIcon(

@@ -1,26 +1,4 @@
-import { attribute, escapeRegExp, html } from "../shared/html.ts";
-
-export function listingBlockHtml(
-  source: any,
-  language: any,
-  title: any,
-  classes: any,
-  highlighterLanguage: any = language,
-  description: any = "",
-): any {
-  const className = `listingblock${classes ? ` ${classes}` : ""}`;
-  const titleHtml = title
-    ? `<div class="title">${inlineTitleHtml(title)}</div>\n`
-    : "";
-  const descriptionHtml = description
-    ? `<div class="description">${inlineTitleHtml(description)}</div>\n`
-    : "";
-  return `<div class="${attribute(className)}">
-${titleHtml}${descriptionHtml}<div class="content">
-<pre><code class="language-${attribute(highlighterLanguage)}" data-lang="${attribute(language)}">${html(source.trimEnd())}</code></pre>
-</div>
-</div>`;
-}
+import { escapeRegExp, html } from "../shared/html.ts";
 
 export function macroAttribute(attrs: any, name: any): any {
   if (attrs?.[name] !== undefined) {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { extractTaggedSource } from "../shared/tagged-source.ts";
+import { extractTaggedSource } from "../../shared/tagged-source.ts";
 
 test("extractTaggedSource removes nested tag directives from selected regions", (): any => {
   const source = `

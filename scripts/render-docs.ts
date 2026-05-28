@@ -1,4 +1,4 @@
-import asciidoctorFactory from "asciidoctor";
+import * as asciidoctor from "@asciidoctor/core";
 import { execFile as execFileCallback } from "node:child_process";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -67,7 +67,6 @@ const selectedSlugs = renderAll
     ? explicitSlugs
     : DEFAULT_DOC_PROJECT_SLUGS;
 
-const asciidoctor = asciidoctorFactory();
 const checkedInProjectCatalogFile = path.join(
   projectDirectory,
   "src",

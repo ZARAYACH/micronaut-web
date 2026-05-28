@@ -554,7 +554,7 @@ test("docs renderer turns code, dependency, configuration, and properties snippe
   );
   const generatedText = textOnly(generatedHtml);
 
-  assert.doesNotMatch(generatedHtml, /<micronaut-snippet/i);
+  assert.doesNotMatch(generatedHtml, /\[(?:snippet|dependency),payload=/);
   assert.match(generatedHtml, /docs-code-snippet-template/);
   assert.match(generatedHtml, /docs-dependency-template/);
   assert.match(generatedHtml, /docs-properties-template/);
