@@ -371,6 +371,87 @@ test("strict guide renderer fails when Asciidoctor reports diagnostics", async (
   );
 });
 
+test("guide renderer surfaces missing snippet sources and requested tags", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-guides-missing-tags-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
+  const guidesDirectory = path.join(temporaryDirectory, "micronaut-guides");
+  const outputDirectory = path.join(temporaryDirectory, "generated-guides");
+  const slug = "micronaut-http-client";
+  const guideDirectory = path.join(guidesDirectory, "guides", slug);
+
+  await writeGuideFixture(guidesDirectory, slug, "HTTP Client");
+  await fs.writeFile(
+    path.join(guideDirectory, `${slug}.adoc`),
+    [
+      "source::ExampleController[tags=package]",
+      "",
+      "source::ExampleController[tags=missing]",
+      "",
+      "source::EmptyController[tag=empty]",
+      "",
+      "resource::application.properties[tag=missing-config]",
+      "",
+      "source::MissingController[tag=body]",
+    ].join("\n"),
+    "utf8",
+  );
+  await fs.writeFile(
+    path.join(
+      guideDirectory,
+      "java",
+      "src",
+      "main",
+      "java",
+      "example",
+      "micronaut",
+      "EmptyController.java",
+    ),
+    [
+      "package example.micronaut;",
+      "",
+      "// tag::empty[]",
+      "// end::empty[]",
+    ].join("\n"),
+    "utf8",
+  );
+
+  await execFile(
+    process.execPath,
+    [
+      "scripts/render-guides.ts",
+      "--guides-dir",
+      guidesDirectory,
+      "--output",
+      outputDirectory,
+      "--slugs",
+      slug,
+    ],
+    {
+      cwd: projectDirectory,
+      env: nonStrictEnv(),
+    },
+  );
+
+  const generatedHtml = await fs.readFile(
+    path.join(outputDirectory, "fragments", `${slug}-gradle-java.html`),
+    "utf8",
+  );
+  const generatedText = textOnly(generatedHtml);
+
+  assert.match(generatedText, /package example\.micronaut/);
+  assert.match(generatedText, /Missing tag[\s\S]*missing/);
+  assert.match(generatedText, /ExampleController\.java/);
+  assert.match(generatedText, /Empty tag[\s\S]*empty/);
+  assert.match(generatedText, /EmptyController\.java/);
+  assert.match(generatedText, /Missing tag[\s\S]*missing-config/);
+  assert.match(generatedText, /application\.properties/);
+  assert.match(generatedText, /Missing source[\s\S]*MissingController/);
+});
+
 test("latest guide replacement routes and parallel generated-content preparation are wired", async (): Promise<void> => {
   const packageJson = JSON.parse(
     await fs.readFile(path.join(projectDirectory, "package.json"), "utf8"),
@@ -1134,6 +1215,10 @@ function nonStrictEnv(): any {
 
 function lines(value: any): any {
   return value.split(/\r?\n/).filter(Boolean);
+}
+
+function textOnly(value: string): string {
+  return value.replace(/<[^>]*>/g, "");
 }
 
 async function readDirectoryText(directory: string): Promise<string> {

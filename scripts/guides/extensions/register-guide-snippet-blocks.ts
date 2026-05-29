@@ -16,7 +16,10 @@ import {
   renderSnippetBlock,
   renderSnippetBlockWithCalloutReader,
 } from "../../asciidoc/extensions/snippet-block-renderer.ts";
-import { extractTaggedSource } from "../../shared/tagged-source.ts";
+import {
+  extractTaggedSourceWithDiagnostics,
+  type TaggedSourceDiagnostic,
+} from "../../shared/tagged-source.ts";
 import {
   languageExtension,
   languageSourceDirectory,
@@ -188,7 +191,19 @@ async function sourceSnippetPayload(
   }
 
   let source = await fs.readFile(file, "utf8");
-  source = extractTaggedSource(source, tagSelection(attributes));
+  const taggedSource = extractTaggedSourceWithDiagnostics(
+    source,
+    tagSelection(attributes),
+  );
+  if (taggedSource.diagnostics.length) {
+    return missingNotePayload(
+      taggedSourceDiagnosticMessage(
+        taggedSource.diagnostics,
+        relativeGuideFile(context, file),
+      ),
+    );
+  }
+  source = taggedSource.source;
   source = normalizeSourceCalloutMarkers(source);
   if (!attributes.tags && !attributes.tag) {
     source = stripLicenseHeader(source);
@@ -226,7 +241,19 @@ async function resourceSnippetPayload(
   }
 
   let source = await fs.readFile(file, "utf8");
-  source = extractTaggedSource(source, tagSelection(attributes));
+  const taggedSource = extractTaggedSourceWithDiagnostics(
+    source,
+    tagSelection(attributes),
+  );
+  if (taggedSource.diagnostics.length) {
+    return missingNotePayload(
+      taggedSourceDiagnosticMessage(
+        taggedSource.diagnostics,
+        relativeGuideFile(context, file),
+      ),
+    );
+  }
+  source = taggedSource.source;
   source = normalizeSourceCalloutMarkers(source);
   source = normalizeIndent(source, attributes.indent);
   const title = path
@@ -254,7 +281,19 @@ async function zipIncludeSnippetPayload(
     return missingNotePayload(`Missing zip include \`${target.trim()}\`.`);
   }
   let source = await fs.readFile(file, "utf8");
-  source = extractTaggedSource(source, tagSelection(attributes));
+  const taggedSource = extractTaggedSourceWithDiagnostics(
+    source,
+    tagSelection(attributes),
+  );
+  if (taggedSource.diagnostics.length) {
+    return missingNotePayload(
+      taggedSourceDiagnosticMessage(
+        taggedSource.diagnostics,
+        relativeGuideFile(context, file),
+      ),
+    );
+  }
+  source = taggedSource.source;
   source = normalizeSourceCalloutMarkers(source);
   source = normalizeIndent(source, attributes.indent);
   return {
@@ -280,6 +319,41 @@ function missingNotePayload(message: string): GuideSnippetPayload {
     ],
     title: "",
   };
+}
+
+function taggedSourceDiagnosticMessage(
+  diagnostics: TaggedSourceDiagnostic[],
+  file: string,
+): string {
+  const missingTags = diagnostics
+    .filter((diagnostic) => diagnostic.reason === "missing-tag")
+    .map((diagnostic) => diagnostic.tag);
+  const emptyTags = diagnostics
+    .filter((diagnostic) => diagnostic.reason === "empty-tag")
+    .map((diagnostic) => diagnostic.tag);
+  return [
+    missingTags.length
+      ? `Missing ${tagNoun(missingTags)} ${formatTags(missingTags)}`
+      : "",
+    emptyTags.length
+      ? `Empty ${tagNoun(emptyTags)} ${formatTags(emptyTags)}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("; ")
+    .concat(` in \`${file}\`.`);
+}
+
+function tagNoun(tags: string[]): string {
+  return tags.length === 1 ? "tag" : "tags";
+}
+
+function formatTags(tags: string[]): string {
+  return tags.map((tag) => `\`${tag}\``).join(", ");
+}
+
+function relativeGuideFile(context: GuideRenderContext, file: string): string {
+  return path.relative(context.guide.directory, file).replaceAll(path.sep, "/");
 }
 
 async function findSourceFile(

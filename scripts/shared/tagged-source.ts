@@ -10,24 +10,50 @@ type ParsedTagDirectiveLine = {
   directive: TagDirective;
 };
 
+export type TaggedSourceDiagnostic = {
+  reason: "empty-tag" | "missing-tag";
+  tag: string;
+};
+
+export type TaggedSourceSelection = {
+  diagnostics: TaggedSourceDiagnostic[];
+  source: string;
+};
+
 export function extractTaggedSource(
   source: string,
   tags: string | string[] | boolean | undefined,
 ): string {
+  return extractTaggedSourceWithDiagnostics(source, tags).source;
+}
+
+export function extractTaggedSourceWithDiagnostics(
+  source: string,
+  tags: string | string[] | boolean | undefined,
+): TaggedSourceSelection {
   const selectedTags = splitList(tags).map(cleanTagName).filter(Boolean);
   const lines = source.replace(/\s+$/, "").split(/\r?\n/);
   if (!selectedTags.length) {
-    return lines
-      .map((line) => lineWithoutTagDirective(line))
-      .filter((line): line is string => line !== undefined)
-      .join("\n")
-      .trim();
+    return {
+      diagnostics: [],
+      source: lines
+        .map((line) => lineWithoutTagDirective(line))
+        .filter((line): line is string => line !== undefined)
+        .join("\n")
+        .trim(),
+    };
   }
 
   const output: string[] = [];
+  const diagnostics: TaggedSourceDiagnostic[] = [];
   for (const tag of selectedTags) {
+    const hasExplicitEnd = lines.some((line) => {
+      const parsed = parseTagDirectiveLine(line);
+      return parsed?.directive.kind === "end" && parsed.directive.name === tag;
+    });
     const tagOutput: string[] = [];
     let activeDepth = 0;
+    let matchedStart = false;
     for (const line of lines) {
       const parsed = parseTagDirectiveLine(line);
       const directive = parsed?.directive;
@@ -36,7 +62,11 @@ export function extractTaggedSource(
           tagOutput.push(parsed.before);
         }
         if (directive.name === tag && directive.kind === "tag") {
-          activeDepth += 1;
+          matchedStart = true;
+          activeDepth =
+            !hasExplicitEnd && activeDepth > 0
+              ? activeDepth - 1
+              : activeDepth + 1;
         } else if (
           directive.name === tag &&
           directive.kind === "end" &&
@@ -53,9 +83,17 @@ export function extractTaggedSource(
     const selected = trimBlankLines(tagOutput).join("\n");
     if (selected.trim()) {
       output.push(selected);
+    } else {
+      diagnostics.push({
+        reason: matchedStart ? "empty-tag" : "missing-tag",
+        tag,
+      });
     }
   }
-  return output.join("\n\n").trim();
+  return {
+    diagnostics,
+    source: output.join("\n\n").trim(),
+  };
 }
 
 function trimBlankLines(lines: string[]): string[] {

@@ -671,6 +671,93 @@ test("docs renderer turns code, dependency, configuration, and properties snippe
   assert.match(generatedText, /2 properties/);
 });
 
+test("docs renderer surfaces missing snippet sources and requested tags", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-docs-missing-tags-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
+  const docsDirectory = path.join(temporaryDirectory, "docs");
+  const outputDirectory = path.join(temporaryDirectory, "generated-docs");
+  const snippetSourceDirectory = path.join(
+    docsDirectory,
+    "repos",
+    "micronaut-fixture",
+    "test-suite",
+    "src",
+    "test",
+    "java",
+    "example",
+  );
+
+  await writeDocsProjectManifest(docsDirectory);
+  await fs.mkdir(snippetSourceDirectory, { recursive: true });
+  await fs.writeFile(
+    path.join(snippetSourceDirectory, "TaggedSnippet.java"),
+    [
+      "package example;",
+      "",
+      "// tag::present[]",
+      "class TaggedSnippet {",
+      "}",
+      "// end::present[]",
+      "",
+      "// tag::empty[]",
+      "// end::empty[]",
+    ].join("\n"),
+    "utf8",
+  );
+  await writeGuide(
+    docsDirectory,
+    "micronaut-fixture",
+    "Fixture Docs",
+    [
+      "snippet::example.TaggedSnippet[tags=present,title=Present Tag]",
+      "",
+      "snippet::example.TaggedSnippet[tags=missing,title=Missing Tag]",
+      "",
+      "snippet::example.TaggedSnippet[tags=empty,title=Empty Tag]",
+      "",
+      "snippet::example.MissingSnippet[tags=present,title=Missing Source]",
+    ].join("\n"),
+  );
+
+  await execFile(
+    process.execPath,
+    [
+      "scripts/render-docs.ts",
+      "--docs-dir",
+      docsDirectory,
+      "--output",
+      outputDirectory,
+      "--slugs",
+      "fixture",
+    ],
+    {
+      cwd: projectDirectory,
+    },
+  );
+
+  const generatedHtml = await fs.readFile(
+    path.join(outputDirectory, "fixture.html"),
+    "utf8",
+  );
+  const generatedText = textOnly(generatedHtml);
+
+  assert.match(generatedText, /class TaggedSnippet/);
+  assert.match(generatedText, /Missing tag[\s\S]*missing/);
+  assert.match(
+    generatedText,
+    /test-suite\/src\/test\/java\/example\/TaggedSnippet\.java/,
+  );
+  assert.match(generatedText, /Empty tag[\s\S]*empty/);
+  assert.match(
+    generatedText,
+    /Missing snippet source[\s\S]*example\.MissingSnippet/,
+  );
+});
+
 test("strict docs renderer allows known upstream source-shape warnings", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-docs-source-warnings-"),

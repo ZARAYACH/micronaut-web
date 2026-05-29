@@ -1,7 +1,10 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
-import { extractTaggedSource } from "../shared/tagged-source.ts";
+import {
+  extractTaggedSourceWithDiagnostics,
+  type TaggedSourceDiagnostic,
+} from "../shared/tagged-source.ts";
 import type { Properties } from "./project-manifest.ts";
 
 type MacroAttributes = Record<string, unknown> & {
@@ -32,6 +35,7 @@ export function docsSnippetSamples(
   const explicit = explicitSnippetLanguage(target);
   const languages = explicit ? [explicit] : languagesToRender(context);
   const samples: SnippetSample[] = [];
+  let matchedFiles = 0;
   for (const baseDirectory of baseDirectories) {
     for (const sourceSet of sources) {
       for (const [language, extension] of languages) {
@@ -45,11 +49,24 @@ export function docsSnippetSamples(
         if (!existsSync(file) || !statSync(file).isFile()) {
           continue;
         }
+        matchedFiles += 1;
         let source = readFileSync(file, "utf8");
-        source = extractTaggedSource(
+        const taggedSource = extractTaggedSourceWithDiagnostics(
           source,
           macroAttribute(attrs, "tags") || macroAttribute(attrs, "tag") || "",
         );
+        if (taggedSource.diagnostics.length) {
+          samples.push({
+            language,
+            source: taggedSourceDiagnosticNote(
+              taggedSource.diagnostics,
+              file,
+              context,
+            ),
+          });
+          continue;
+        }
+        source = taggedSource.source;
         source = normalizeSnippetIndent(
           source,
           macroAttribute(attrs, "indent"),
@@ -60,7 +77,50 @@ export function docsSnippetSamples(
       }
     }
   }
+  if (!matchedFiles) {
+    samples.push({
+      language: "text",
+      source: `NOTE: Missing snippet source \`${target.trim()}\`.`,
+    });
+  }
   return samples;
+}
+
+function taggedSourceDiagnosticNote(
+  diagnostics: TaggedSourceDiagnostic[],
+  file: string,
+  context: SnippetContext,
+): string {
+  const missingTags = diagnostics
+    .filter((diagnostic) => diagnostic.reason === "missing-tag")
+    .map((diagnostic) => diagnostic.tag);
+  const emptyTags = diagnostics
+    .filter((diagnostic) => diagnostic.reason === "empty-tag")
+    .map((diagnostic) => diagnostic.tag);
+  return `NOTE: ${[
+    missingTags.length
+      ? `Missing ${tagNoun(missingTags)} ${formatTags(missingTags)}`
+      : "",
+    emptyTags.length
+      ? `Empty ${tagNoun(emptyTags)} ${formatTags(emptyTags)}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("; ")} in \`${relativeSnippetFile(file, context)}\`.`;
+}
+
+function tagNoun(tags: string[]): string {
+  return tags.length === 1 ? "tag" : "tags";
+}
+
+function formatTags(tags: string[]): string {
+  return tags.map((tag) => `\`${tag}\``).join(", ");
+}
+
+function relativeSnippetFile(file: string, context: SnippetContext): string {
+  return path
+    .relative(context.submoduleDirectory, file)
+    .replaceAll(path.sep, "/");
 }
 
 function languagesToRender(context: SnippetContext): SnippetLanguage[] {

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { extractTaggedSource } from "../../shared/tagged-source.ts";
+import {
+  extractTaggedSource,
+  extractTaggedSourceWithDiagnostics,
+} from "../../shared/tagged-source.ts";
 
 test("extractTaggedSource removes nested tag directives from selected regions", (): void => {
   const source = `
@@ -119,4 +122,51 @@ class Example {
     }
 }`,
   );
+});
+
+test("extractTaggedSourceWithDiagnostics reports missing and empty selected tags", (): void => {
+  const source = `
+class Example {
+    // tag::empty[]
+    // end::empty[]
+
+    // tag::present[]
+    void run() {
+    }
+    // end::present[]
+}
+`;
+
+  assert.deepEqual(
+    extractTaggedSourceWithDiagnostics(source, "missing,empty"),
+    {
+      diagnostics: [
+        { reason: "missing-tag", tag: "missing" },
+        { reason: "empty-tag", tag: "empty" },
+      ],
+      source: "",
+    },
+  );
+  assert.deepEqual(extractTaggedSourceWithDiagnostics(source, "present"), {
+    diagnostics: [],
+    source: `void run() {
+    }`,
+  });
+});
+
+test("extractTaggedSourceWithDiagnostics preserves legacy repeated tag boundaries", (): void => {
+  const source = `
+class Example {
+    // tag::legacy[]
+    void run() {
+    }
+    // tag::legacy[]
+}
+`;
+
+  assert.deepEqual(extractTaggedSourceWithDiagnostics(source, "legacy"), {
+    diagnostics: [],
+    source: `void run() {
+    }`,
+  });
 });
