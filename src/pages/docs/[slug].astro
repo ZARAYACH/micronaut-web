@@ -62,21 +62,22 @@ const contentSections = generatedDocSections.length ? generatedDocSections : pro
   depth: 1,
   parentId: undefined
 }));
-const sidebarSections = contentSections.filter((section) => section.depth === 1);
+const sidebarSections = contentSections;
+const activeProjectSections = contentSections.filter((section) => section.depth === 1);
 
 function extractGeneratedDocSections(html: string) {
   const sections: Array<{ id: string; label: string; depth: number; parentId?: string }> = [];
-  const headingPattern = /<div class="guide-section-heading">\s*<h([12]) id="([^"]+)"><a class="anchor" href="#[^"]+"[^>]*><\/a>([\s\S]*?)<\/h\1>/g;
+  const headingPattern = /<h([1-6])\b([^>]*)\bid="([^"]+)"([^>]*)>([\s\S]*?)<\/h\1>/g;
   let activeTopLevelId: string | undefined;
   for (const match of html.matchAll(headingPattern)) {
     const depth = Number(match[1]);
-    const label = generatedHtmlLabel(match[3]);
+    const label = generatedHtmlLabel(match[5]);
     if (label) {
       if (depth === 1) {
-        activeTopLevelId = match[2];
+        activeTopLevelId = match[3];
       }
       sections.push({
-        id: match[2],
+        id: match[3],
         label,
         depth,
         parentId: depth === 1 ? undefined : activeTopLevelId
@@ -94,7 +95,7 @@ function extractGeneratedDocSections(html: string) {
   <DocsShell
     projectCatalog={docsProjectCatalog}
     activeSlug={project.slug}
-    activeSections={sidebarSections}
+    activeSections={activeProjectSections}
   >
     <article class:list={[
       "grid w-full grid-cols-1 py-6",
@@ -151,7 +152,17 @@ micronaut.category=${project.primaryCategory}`}</code></pre>
             <h2 class="font-medium">In this section</h2>
             <Separator className="opacity-70" />
             {sidebarSections.map((section) => (
-              <a href={`#${section.id}`} data-docs-scroll-link class="relative rounded-md px-2 py-1.5 leading-5 text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-foreground data-[active=true]:before:absolute data-[active=true]:before:bottom-[7px] data-[active=true]:before:left-[-11px] data-[active=true]:before:top-[7px] data-[active=true]:before:w-0.5 data-[active=true]:before:rounded-full data-[active=true]:before:bg-brand data-[active=true]:before:content-['']">
+              <a
+                href={`#${section.id}`}
+                data-docs-scroll-link
+                class:list={[
+                  "relative rounded-md py-1.5 pr-2 leading-5 break-words text-muted-foreground no-underline hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-foreground data-[active=true]:before:absolute data-[active=true]:before:bottom-[7px] data-[active=true]:before:left-[-11px] data-[active=true]:before:top-[7px] data-[active=true]:before:w-0.5 data-[active=true]:before:rounded-full data-[active=true]:before:bg-brand data-[active=true]:before:content-['']",
+                  section.depth <= 1 && "pl-2",
+                  section.depth === 2 && "pl-4 text-[0.8rem]",
+                  section.depth === 3 && "pl-6 text-[0.78rem]",
+                  section.depth >= 4 && "pl-8 text-[0.76rem]"
+                ]}
+              >
                 {section.label}
               </a>
             ))}

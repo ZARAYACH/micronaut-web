@@ -83,6 +83,21 @@ test("generated docs page renders desktop content and sidebars without overlap",
   await expect(
     sectionNav.getByRole("link", { name: "2 Quick Start" }),
   ).toBeVisible();
+  const ordinarySourceBlocks = sectionNav.getByRole("link", {
+    name: "Ordinary Source Blocks",
+  });
+  await expect(ordinarySourceBlocks).toBeVisible();
+  await expect(
+    sectionNav.getByRole("link", { name: "Generated Snippet Macros" }),
+  ).toBeVisible();
+  await page.evaluate(() =>
+    document.getElementById("core-_ordinary_source_blocks")?.scrollIntoView(),
+  );
+  await expect(ordinarySourceBlocks).toHaveAttribute("data-active", "true");
+  await expect(ordinarySourceBlocks).toHaveAttribute(
+    "aria-current",
+    "location",
+  );
 
   await expectNoHorizontalOverflow(page);
   await expectElementInsideViewport(page, ".docs-code-snippet-template");

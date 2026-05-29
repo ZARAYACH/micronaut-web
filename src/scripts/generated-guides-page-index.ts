@@ -120,9 +120,6 @@ const initGeneratedGuidesPageIndex = () => {
         pageIndexTop.setAttribute("aria-label", `Back to ${rootLabel}`);
         pageIndexTop.setAttribute("title", `Back to ${rootLabel}`);
       }
-      for (const link of links) {
-        link.hidden = link.dataset.rootId !== activeRootId;
-      }
     }
 
     if (activeLink && activeLink !== nextLink) {

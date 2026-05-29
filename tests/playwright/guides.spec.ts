@@ -223,6 +223,22 @@ test("guide overview redirects to the preferred variant and exposes variant navi
     "href",
     guideHrefPattern("micronaut-http-client-maven-kotlin.html"),
   );
+
+  const guidePageIndex = page.locator('aside[aria-label="In this section"]');
+  await expect(guidePageIndex).toBeVisible();
+  await expect(
+    guidePageIndex.getByRole("link", { name: "Dependency" }),
+  ).toBeVisible();
+  await expect(
+    guidePageIndex.getByRole("link", { name: "JSON Codec Configuration" }),
+  ).toBeVisible();
+  const controllerLink = guidePageIndex.getByRole("link", {
+    name: "Controller",
+  });
+  await page.evaluate(() =>
+    document.getElementById("controller")?.scrollIntoView(),
+  );
+  await expect(controllerLink).toHaveAttribute("aria-current", "location");
   expect(failures).toEqual([]);
 });
 
