@@ -5,17 +5,7 @@ eyebrow: Legal
 description: This privacy policy explains how our organization uses the personal data we collect from you when you use our website.
 sourceUrl: https://micronaut.io/privacy-policy/
 intro: The Micronaut Foundation privacy policy explains how personal data is collected, used, stored, and controlled when people use the website.
-sections:
-  - title: Policy source
-    body: The canonical privacy policy remains the source document for privacy-related questions.
-    icon: shield
-  - title: Contact
-    body: Use the contact page for questions related to site policies or foundation communication.
-    icon: mail
-  - title: Policy navigation
-    body: Use the legal pages for privacy, conduct, trademark, and brand guidance.
-    icon: route
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Privacy Policy

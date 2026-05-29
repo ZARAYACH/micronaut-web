@@ -48,10 +48,6 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
     packageJson.scripts["test:docs:browser"],
     "node scripts/prepare-playwright-generated-content.ts docs && playwright test --config playwright.config.ts tests/playwright/docs.spec.ts",
   );
-  assert.equal(
-    packageJson.scripts["extract:inline-assets"],
-    "node scripts/extract-inline-assets.ts",
-  );
   assertScriptOrder(
     packageJson.scripts.dev,
     "npm run prepare:generated-content",
@@ -70,11 +66,6 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
   assertScriptOrder(
     packageJson.scripts.build,
     "node scripts/build-site-header-shell.ts",
-    "npm run extract:inline-assets",
-  );
-  assertScriptOrder(
-    packageJson.scripts.build,
-    "npm run extract:inline-assets",
     "node scripts/prepare-template-artifacts.ts",
   );
   assertScriptOrder(
@@ -85,7 +76,7 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
   assertScriptOrder(
     packageJson.scripts["build:site"],
     "node scripts/build-site-header-shell.ts",
-    "npm run extract:inline-assets",
+    "node scripts/prepare-template-artifacts.ts",
   );
 });
 
@@ -1210,6 +1201,15 @@ test("docs routes render generated fragments and serve generated assets", async 
     path.join(projectDirectory, "src", "pages", "docs", "[slug].astro"),
     "utf8",
   );
+  const generatedDocsHashAlignerSource = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "scripts",
+      "generated-docs-hash-aligner.ts",
+    ),
+    "utf8",
+  );
   const assetsRouteSource = await fs.readFile(
     path.join(
       projectDirectory,
@@ -1286,7 +1286,18 @@ test("docs routes render generated fragments and serve generated assets", async 
   );
   assert.match(docsPageSource, /data-generated-docs/);
   assert.match(docsPageSource, /set:html=\{generatedDocHtml\}/);
+  assert.match(docsPageSource, /generatedDocsHashAlignerUrl/);
+  assert.doesNotMatch(docsPageSource, /<script is:inline>/);
+  assert.doesNotMatch(docsPageSource, /alignHash|window\.scrollTo/);
   assertNoRuntimeGeneratedRendering("docs route", docsPageSource);
+  assert.match(generatedDocsHashAlignerSource, /alignGeneratedDocsHash/);
+  assert.match(
+    generatedDocsHashAlignerSource,
+    /scheduleGeneratedDocsHashAlignment/,
+  );
+  assert.match(generatedDocsHashAlignerSource, /window\.scrollTo/);
+  assert.match(generatedDocsHashAlignerSource, /data-generated-docs/);
+  assert.match(generatedDocsHashAlignerSource, /astro:hydrate/);
   assert.match(
     docsPageSource,
     /canonicalSurfaceUrl\("docs", `\/docs\/\$\{project\.slug\}\/`\)/,

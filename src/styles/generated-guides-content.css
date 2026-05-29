@@ -1,0 +1,101 @@
+@reference "./globals.css";
+
+.generated-guides-content {
+  @apply min-w-0 break-words text-base leading-[1.6] text-foreground;
+
+  & > style {
+    @apply hidden;
+  }
+
+  & :where(.sect1, .sect2, .sect3, .sect4, .sect5) {
+    @apply mt-[1.55rem] min-w-0;
+  }
+
+  & :where(h2, h3, h4, h5, h6) {
+    @apply mt-0 mr-0 mb-[0.9rem] ml-0 scroll-mt-20 font-bold tracking-normal;
+  }
+
+  & h2 {
+    @apply text-[clamp(1.65rem,2.2vw,2rem)] leading-[1.2];
+  }
+
+  & h3 {
+    @apply text-[1.35rem] leading-[1.3];
+  }
+
+  & h4 {
+    @apply text-[1.15rem] leading-[1.35];
+  }
+
+  & .paragraph p {
+    @apply mt-0 mr-0 mb-5 ml-0;
+  }
+
+  & :where(.ulist, .olist) {
+    @apply mt-0 mr-0 mb-5 ml-0;
+  }
+
+  & .ulist ul {
+    @apply m-0 list-disc pl-[1.45rem];
+  }
+
+  & .olist ol {
+    @apply m-0 list-decimal pl-[1.45rem];
+  }
+
+  & li + li {
+    @apply mt-3;
+  }
+
+  & a {
+    @apply text-brand no-underline;
+
+    &:hover {
+      @apply underline;
+    }
+  }
+
+  & :not(pre) > code {
+    @apply rounded bg-muted px-1 py-[0.05rem] text-[0.9em] text-foreground;
+  }
+
+  & :where(.listingblock, .literalblock, .exampleblock, .sidebarblock, .openblock, .admonitionblock, .quoteblock) {
+    @apply my-5 min-w-0;
+  }
+
+  & .admonitionblock {
+    @apply overflow-hidden rounded-[0.5rem] border border-border bg-muted;
+
+    & table {
+      @apply w-full border-collapse;
+    }
+
+    & td.icon {
+      @apply w-[4.25rem] px-3 py-4 text-center align-top text-[0.72rem] font-bold text-muted-foreground uppercase;
+    }
+
+    & td.content {
+      @apply py-4 pr-4 pl-0 align-top;
+    }
+  }
+
+  & table.tableblock {
+    @apply my-5 w-full border-collapse text-[0.92rem] leading-[1.45];
+
+    & :where(th, td) {
+      @apply border border-border px-3 py-[0.65rem] align-top;
+    }
+
+    & th {
+      @apply bg-muted font-bold;
+    }
+  }
+
+  & img {
+    @apply h-auto max-w-full;
+  }
+
+  & .colist {
+    @apply mt-[-0.4rem] mr-0 mb-5 ml-0 text-[0.9rem] text-muted-foreground;
+  }
+}

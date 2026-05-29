@@ -5,17 +5,7 @@ eyebrow: Learn
 description: User Documentation Easy access to the docs you need to get started right away Guides Instructional guides written by the Framework’s core developers Micronaut Fundamentals A video course available for free on Oracle MyLearn with an OCI Free Learning Subscription. On-Demand Webinars Pre-recorded webinars that focus on practical, real-world examples and techniques Microcasts Brief video...
 sourceUrl: https://micronaut.io/learn/
 intro: The Learn page is the main learning index from micronaut.io. It points users to reference docs, task-oriented guides, free fundamentals training, video material, and professional training.
-sections:
-  - title: Documentation
-    body: Use the platform documentation to understand core concepts, modules, APIs, and configuration references.
-    icon: book-open
-  - title: Guides
-    body: Work through task-oriented tutorials by language, build tool, cloud provider, runtime, and feature area.
-    icon: route
-  - title: Training and video
-    body: Use training, microcasts, and webinars when a guided learning path is a better fit than reference material.
-    icon: users
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Master the Micronaut Framework

@@ -5,17 +5,7 @@ eyebrow: Legal and brand
 description: This statement describes the Micronaut® trademarks owned by Object Computing, Inc. and its policy and guidelines relating to use of those trademarks.
 sourceUrl: https://micronaut.io/brand-guidelines/micronaut-trademark-policy/
 intro: The trademark policy explains how the Micronaut name, logos, trade dress, images, and designs can be used.
-sections:
-  - title: Trademark source
-    body: The original policy remains canonical for legal and trademark usage questions.
-    icon: shield
-  - title: Brand use
-    body: Use official names, logos, and marks consistently when referencing Micronaut.
-    icon: layout-template
-  - title: Questions
-    body: Contact the project for questions that require legal or foundation follow-up.
-    icon: mail
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Micronaut® Trademark Policy

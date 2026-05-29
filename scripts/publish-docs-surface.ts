@@ -3,7 +3,6 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { parseArgs, stringArg } from "./shared/cli.ts";
-import { extractInlineAssets } from "./shared/inline-assets.ts";
 import {
   mergeSharedSurfaceAssets,
   pruneUnusedHashedSurfaceAssets,
@@ -90,7 +89,6 @@ export async function publishDocsSurface({
   }
 
   await writeVersionsJson(publishedDirectory, publishVersion, latest);
-  await extractInlineAssets({ directory: publishedDirectory });
   await pruneUnusedHashedSurfaceAssets(publishedDirectory);
 }
 

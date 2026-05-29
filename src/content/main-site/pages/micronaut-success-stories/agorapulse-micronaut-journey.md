@@ -5,17 +5,7 @@ eyebrow: Success story
 description: Agorapulse moved a large Grails codebase toward Micronaut while running serverless functions and backend applications.
 sourceUrl: https://micronaut.io/micronaut-success-stories/agorapulse-micronaut-journey/
 intro: Agorapulse's public story about a production application journey with Micronaut.
-sections:
-  - title: Production journey
-    body: The story adds public adoption context for teams evaluating Micronaut.
-    icon: check-circle
-  - title: Data and services
-    body: It sits alongside the framework's data-access and microservice positioning.
-    icon: database
-  - title: Hands-on path
-    body: Follow a guide or launch a starter project after reviewing the story.
-    icon: rocket
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 storyOrder: 2
 organization: Agorapulse
 label: Grails migration

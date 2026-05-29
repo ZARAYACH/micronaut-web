@@ -260,10 +260,8 @@ test("docs pruning publishes docs at the repository root", async (t) => {
     "utf8",
   );
   assertNoDocsVersionSwitcherIsland(docsCoreHtml);
-  assertNoInlineStyles(docsCoreHtml);
-  assertNoInlineExecutableScripts(docsCoreHtml);
-  assert.doesNotMatch(docsCoreHtml, /docsSnippetStyles/);
-  assert.doesNotMatch(docsCoreHtml, /<style\b[^>]*data-docs-shiki/i);
+  assert.match(docsCoreHtml, /<style\b[^>]*data-docs-shiki/i);
+  assert.match(docsCoreHtml, /window\.docsSnippetStyles/);
   assert.match(
     docsCoreHtml,
     new RegExp(
@@ -274,18 +272,11 @@ test("docs pruning publishes docs at the repository root", async (t) => {
     path.join(dist, "latest", "guide", "index.html"),
     "utf8",
   );
-  assertNoInlineExecutableScripts(docsGuideRedirectHtml);
   assert.match(docsGuideRedirectHtml, /\/micronaut-docs\/latest\/core\//);
-  assertNoInlineExecutableScripts(
+  assert.match(
     await fs.readFile(path.join(dist, "latest.html"), "utf8"),
+    /window\.location\.replace/,
   );
-  assert.ok(
-    (await inlineAssetFiles(dist)).some((file) => file.endsWith(".js")),
-  );
-  assert.ok(
-    (await inlineAssetFiles(dist)).some((file) => file.endsWith(".css")),
-  );
-  assertNoUnusedInlineFixtureAssets(await inlineAssetFiles(dist));
 });
 
 test("guides pruning publishes only latest guides and a root redirect", async (t) => {
@@ -331,30 +322,22 @@ test("guides pruning publishes only latest guides and a root redirect", async (t
     await fs.readFile(path.join(dist, "index.html"), "utf8"),
     /\/micronaut-guides\/latest\//,
   );
-  assertNoInlineExecutableScripts(
+  assert.match(
     await fs.readFile(path.join(dist, "index.html"), "utf8"),
+    /window\.location\.replace/,
   );
   const guideHtml = await fs.readFile(
     path.join(dist, "latest", "micronaut-http-client", "index.html"),
     "utf8",
   );
-  assertNoInlineStyles(guideHtml);
-  assertNoInlineExecutableScripts(guideHtml);
-  assert.doesNotMatch(guideHtml, /docsSnippetStyles/);
-  assert.doesNotMatch(guideHtml, /<style\b[^>]*data-docs-shiki/i);
+  assert.match(guideHtml, /<style\b[^>]*data-docs-shiki/i);
+  assert.match(guideHtml, /window\.docsSnippetStyles/);
   assert.match(
     guideHtml,
     new RegExp(
       `\\.\\./\\.\\./assets/micronaut-http-client/${escapeRegExp(assetFile)}`,
     ),
   );
-  assert.ok(
-    (await inlineAssetFiles(dist)).some((file) => file.endsWith(".js")),
-  );
-  assert.ok(
-    (await inlineAssetFiles(dist)).some((file) => file.endsWith(".css")),
-  );
-  assertNoUnusedInlineFixtureAssets(await inlineAssetFiles(dist));
 });
 
 test("main pruning drops docs, guides, latest, and template artifacts", async (t) => {
@@ -750,11 +733,9 @@ test("docs publish merge preserves shared assets and updates version roots", asy
     await fs.readFile(path.join(published, "4.10.14.html"), "utf8"),
     /\/micronaut-docs\/4\.10\.14\//,
   );
-  assertNoInlineExecutableScripts(
+  assert.match(
     await fs.readFile(path.join(published, "4.10.14.html"), "utf8"),
-  );
-  assert.ok(
-    (await inlineAssetFiles(published)).some((file) => file.endsWith(".js")),
+    /window\.location\.replace/,
   );
   const versionsJson = JSON.parse(
     await fs.readFile(path.join(published, "versions.json"), "utf8"),
@@ -813,9 +794,6 @@ async function fakeDist(t: TestContext) {
   const dist = await temporaryDirectory(t);
   const files = [
     "_astro/app.js",
-    "_astro/inline/script.generated-docs-enhancer.js",
-    "_astro/inline/script.properties-fallback.js",
-    "_astro/inline/script.snippet-validation.js",
     "_astro/app.css",
     "_astro/chunk.js",
     "_astro/fonts/code.woff2",
@@ -931,55 +909,14 @@ async function singleProjectHashedAssetFile(
   return files[0];
 }
 
-async function inlineAssetFiles(directory: string) {
-  try {
-    const entries = await fs.readdir(path.join(directory, "_astro", "inline"), {
-      withFileTypes: true,
-    });
-    return entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
-  } catch {
-    return [];
-  }
-}
-
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function assertNoInlineStyles(html: string) {
-  assert.doesNotMatch(html, /<style\b/i);
-}
-
-function assertNoInlineExecutableScripts(html: string) {
-  for (const match of html.matchAll(/<script\b([^>]*)>[\s\S]*?<\/script>/gi)) {
-    const attributes = match[1];
-    if (
-      /\bsrc=/.test(attributes) ||
-      /\btype=["']?(?:application\/json|application\/ld\+json|importmap)\b/i.test(
-        attributes,
-      )
-    ) {
-      continue;
-    }
-    assert.fail(`Expected no inline executable script, found ${match[0]}`);
-  }
 }
 
 function assertNoDocsVersionSwitcherIsland(html: string) {
   assert.doesNotMatch(
     html,
     /<astro-island\b[^>]*(?:DocsVersionSwitcher|docs-version-switcher)/i,
-  );
-}
-
-function assertNoUnusedInlineFixtureAssets(files: string[]) {
-  assert.deepEqual(
-    files.filter((file) =>
-      /generated-docs-enhancer|properties-fallback|snippet-validation/.test(
-        file,
-      ),
-    ),
-    [],
   );
 }
 

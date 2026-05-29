@@ -7,17 +7,7 @@ description: >-
   conference platform built with Micronaut on AWS.
 sourceUrl: https://micronaut.io/responding-to-unexpected-disruption-with-agility-and-speed/
 intro: A public Micronaut story about responding to disruption with faster application delivery.
-sections:
-  - title: Application delivery
-    body: The story connects production agility with application delivery and links to the source page.
-    icon: rocket
-  - title: Operational agility
-    body: It supports the homepage message around fast, modular JVM services.
-    icon: gauge
-  - title: Next step
-    body: Continue with docs and guides to evaluate the same capabilities hands-on.
-    icon: route
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 storyOrder: 5
 organization: Conference Scheduling Solutions
 label: Virtual events

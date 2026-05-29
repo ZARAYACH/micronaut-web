@@ -5,17 +5,7 @@ eyebrow: Foundation
 description: Join the Micronaut Foundation Community “All Stars” and be part of our project’s success!
 sourceUrl: https://micronaut.io/foundation/community-sponsorship/
 intro: Community sponsorship gives individuals and community groups a path to support the Micronaut Foundation.
-sections:
-  - title: Community support
-    body: Community sponsorship is aimed at people and groups who want to support the project directly.
-    icon: users
-  - title: Foundation work
-    body: Support helps sustain the framework, documentation, communication, and community infrastructure.
-    icon: gem
-  - title: Participation
-    body: Sponsorship complements open source contribution, issue reporting, documentation, and community help.
-    icon: message-square
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # **Becoming a Micronaut Foundation** Community “All Star” Sponsor

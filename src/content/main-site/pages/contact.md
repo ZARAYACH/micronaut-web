@@ -5,17 +5,7 @@ eyebrow: Resources
 description: Get in touch with the core Micronaut development team.
 sourceUrl: https://micronaut.io/contact/
 intro: Contact routes cover general project, community, training, support, foundation, and sponsorship inquiries.
-sections:
-  - title: General inquiries
-    body: Use contact paths for project, foundation, sponsorship, and support questions.
-    icon: mail
-  - title: Community questions
-    body: Technical questions that benefit from public discussion are usually better suited to community channels.
-    icon: message-square
-  - title: Sponsorship
-    body: Foundation sponsorship questions can start through the project contact path.
-    icon: gem
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Contact the Micronaut Team

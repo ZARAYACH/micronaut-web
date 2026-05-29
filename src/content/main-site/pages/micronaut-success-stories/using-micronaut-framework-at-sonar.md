@@ -7,17 +7,7 @@ description: >-
   serverless services responsive.
 sourceUrl: https://micronaut.io/using-micronaut-framework-at-sonar/
 intro: Sonar's public story about using the Micronaut framework.
-sections:
-  - title: Production reference
-    body: This story is kept reachable as part of the main website content.
-    icon: check-circle
-  - title: Developer tooling
-    body: It provides another public example of Micronaut in a developer-focused organization.
-    icon: code
-  - title: Canonical story
-    body: Open the original story for full media, detail, and source copy.
-    icon: logs
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 storyOrder: 1
 organization: Sonar
 label: API performance

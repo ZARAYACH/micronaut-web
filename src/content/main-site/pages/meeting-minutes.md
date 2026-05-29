@@ -5,17 +5,7 @@ eyebrow: Foundation
 description: Public Technology Advisory Board meeting minutes for the Micronaut project.
 sourceUrl: https://micronaut.io/meeting-minutes/
 intro: Meeting minutes provide public foundation governance and project communication records.
-sections:
-  - title: Governance record
-    body: Meeting minutes help make foundation activity visible to the community.
-    icon: logs
-  - title: Project transparency
-    body: Public records are part of a sustainable open source governance model.
-    icon: check-circle
-  - title: Foundation context
-    body: Use the foundation overview and sponsorship pages for broader project-support information.
-    icon: gem
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Technology Advisory Board Meeting Minutes

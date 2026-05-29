@@ -5,17 +5,7 @@ eyebrow: Foundation
 description: Organizations that make extensive use of the Micronaut framework can support the continued evolution and growth of the technology through the Corporate Sponsor Program.
 sourceUrl: https://micronaut.io/foundation/corporate-sponsorship/
 intro: Corporate sponsorship is the organization-focused path for supporting Micronaut Foundation work.
-sections:
-  - title: Project support
-    body: Corporate sponsorship helps fund project work, community resources, and foundation operations.
-    icon: gem
-  - title: Organization visibility
-    body: Sponsors are connected with the public project and its ecosystem audience.
-    icon: users
-  - title: Contact path
-    body: Sponsorship inquiries should start through the foundation contact channel.
-    icon: mail
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # **BecomE a Micronaut Foundation** Corporate Sponsor

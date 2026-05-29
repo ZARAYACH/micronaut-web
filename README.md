@@ -32,7 +32,6 @@ All repository scripts under `scripts/` must be TypeScript files. Add new script
 | `npm run check`                     | Runs TypeScript checks, script formatting, script tests, browser-backed surface tests, and snippet style validation. |
 | `npm run snippet-styles`            | Verifies generated docs snippet styles stay shared instead of copied into runtime layout code.                       |
 | `npm run sync:docs-projects`        | Refreshes `src/data/docs-projects.fixture.json` from a local Micronaut Platform checkout.                            |
-| `npm run extract:inline-assets`     | Externalizes inline executable scripts and styles from built HTML.                                                   |
 | `npm run render:docs`               | Renders generated docs fragments and the docs project catalog.                                                       |
 | `npm run render:guides`             | Renders generated guide fragments and the guide manifest.                                                            |
 | `npm run prepare:generated-docs`    | Alias for `render:docs`, used by docs preparation flows.                                                             |
@@ -49,7 +48,7 @@ All repository scripts under `scripts/` must be TypeScript files. Add new script
 | `npm run typecheck:scripts`         | Runs the strict TypeScript check for files under `scripts/`.                                                         |
 | `npm run style:scripts`             | Checks TypeScript script formatting with Prettier.                                                                   |
 | `npm run dev`                       | Runs the full check, prepares generated content, and starts Astro dev on `127.0.0.1`.                                |
-| `npm run build:site`                | Runs checks, prepares generated content, builds Astro, externalizes inline assets, and prepares template artifacts.  |
+| `npm run build:site`                | Runs checks, prepares generated content, builds Astro, builds the shared header shell, and prepares template artifacts. |
 | `npm run build`                     | Same as `build:site`; kept as the default full-site build command.                                                   |
 | `npm run build:surface`             | Builds and prunes a selected deployment surface.                                                                     |
 | `npm run build:main`                | Builds the standalone main surface.                                                                                  |
@@ -111,7 +110,6 @@ title: Example Post Title
 description: One or two sentences used in cards, metadata, and search previews.
 date: '2026-06-01T09:00:00'
 modified: '2026-06-01T09:00:00'
-contentSource: authored
 category: release-announcements
 categories:
   - release-announcements
@@ -152,13 +150,8 @@ eyebrow: Resources
 description: One or two sentences used in cards, metadata, and search previews.
 sourceUrl: https://micronaut.io/example/
 intro: Optional short lead text for the page header.
-sections:
-  - title: Section title
-    body: Section summary used by the shared page layout.
-    icon: route
 redirectFrom:
   - /old-example/
-contentSource: authored
 ---
 
 # Example Page
@@ -166,7 +159,9 @@ contentSource: authored
 Normal Markdown page content.
 ```
 
-Required page fields are `order`, `title`, `eyebrow`, `description`, and `sourceUrl`. `intro` and `sections` feed the shared main-site page layout; body Markdown is rendered as page content for normal pages. `redirectFrom` lists old paths that should redirect to the new route. Adding a page makes the route available and searchable, but it does not automatically add the page to the header or footer; update the relevant navigation data when a new page should be linked globally.
+Required page fields are `order`, `title`, `eyebrow`, `description`, and `sourceUrl`. `intro` feeds the shared main-site page header for authored pages; body Markdown is rendered as page content for normal pages. `redirectFrom` lists old paths that should redirect to the new route. Adding a page makes the route available and searchable, but it does not automatically add the page to the header or footer; update the relevant navigation data when a new page should be linked globally.
+
+Use `layoutVariant: public-markdown` only for imported public `micronaut.io` Markdown pages whose body already carries the page heading or whose route has special archive/FAQ rendering. This layout variant uses the full main-site content width and suppresses the generated wrapper header for ordinary pages. Omit `layoutVariant` for newly authored pages so they use the default narrower article layout with the generated badge, title, and intro header.
 
 ### Blog Categories and Archives
 

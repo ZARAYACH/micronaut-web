@@ -5,17 +5,7 @@ eyebrow: Resources
 description: Get the most value from the Micronaut framework and your membership in this extraordinarily passionate and supportive community!
 sourceUrl: https://micronaut.io/resources/community-support/
 intro: The Community Support page is one of the densest source pages. It brings together getting started links, community channels, project contribution paths, troubleshooting, commercial support, and training.
-sections:
-  - title: Discussion
-    body: Community support is best for peer questions, project discussion, and learning from other users.
-    icon: message-square
-  - title: Open source
-    body: Micronaut development happens in public across the project repositories and issue trackers.
-    icon: folder-git-2
-  - title: Social channels
-    body: Use community channels to follow announcements, events, and project updates.
-    icon: users
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Community Support

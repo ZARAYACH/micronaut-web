@@ -80,14 +80,12 @@ const pageData = page?.entry.data ?? generatedPage ?? (archive ? {
   title: archive.title,
   eyebrow: archive.eyebrow,
   description: archive.description,
-  intro: archive.description,
-  contentSource: "blog-archive"
+  intro: archive.description
 } : {
   title: relatedPost.entry.data.title,
   eyebrow: relatedPost.entry.data.category === "success-story" ? "Success story" : "Blog",
   description: cleanExcerptText(relatedPost.entry.data.description),
-  intro: undefined,
-  contentSource: relatedPost.entry.data.contentSource
+  intro: undefined
 });
 const pageDescription = cleanExcerptText(pageData.description);
 const intro = pageData.intro ? cleanExcerptText(pageData.intro) : (relatedPost ? undefined : pageDescription);
@@ -97,7 +95,7 @@ const isBlogArchiveRoute = routeSlug === "blog"
   || routeSlug.startsWith("tag/")
   || routeSlug.startsWith("category/");
 const isFaqPage = routeSlug === "faq";
-const isCanonicalPageContent = String(pageData.contentSource ?? "").startsWith("micronaut-public");
+const usesPublicMarkdownLayout = "layoutVariant" in pageData && pageData.layoutVariant === "public-markdown";
 const archivePosts = await getBlogPostsForArchive(routeSlug);
 const regularBlogPostCount = routeSlug === "blog"
   ? (await getBlogPosts()).filter((candidate) => candidate.entry.data.category !== "success-story").length
@@ -312,9 +310,9 @@ const outcomeGroups = [
     <main class="bg-card">
       <article class:list={[
         "mx-auto px-5 py-12 sm:px-6 lg:py-16",
-        isCanonicalPageContent || isBlogArchiveRoute ? "max-w-[var(--page-max)]" : "max-w-[900px]"
+        usesPublicMarkdownLayout || isBlogArchiveRoute ? "max-w-[var(--page-max)]" : "max-w-[900px]"
       ]}>
-        {(!isCanonicalPageContent || isBlogArchiveRoute) && (
+        {(!usesPublicMarkdownLayout || isBlogArchiveRoute) && (
           <header class="border-b pb-8">
             <Badge variant="secondary">{pageData.eyebrow}</Badge>
             <h1 class="mt-5 text-3xl font-bold leading-tight text-foreground md:text-5xl">

@@ -5,17 +5,7 @@ eyebrow: Resources
 description: 'We use GitHub projects to organize work. We work in semantic versioning phases. Continuously, we have several projects open: A patch GitHub Project – bug fixes / build / documentation/patch dependency updates A minor GitHub Project – features / minor/major dependency updates A major GitHub Project for the next major version of the framework We...'
 sourceUrl: https://micronaut.io/micronaut-roadmap/
 intro: Review the project roadmap to understand planned direction, major themes, and areas of framework investment.
-sections:
-  - title: Direction
-    body: The roadmap communicates where the framework and ecosystem are headed.
-    icon: radar
-  - title: Planning
-    body: Teams can use roadmap context when evaluating adoption, upgrades, and platform investments.
-    icon: workflow
-  - title: Project visibility
-    body: Roadmap communication helps connect public project work with user-facing capabilities.
-    icon: check-circle
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Micronaut ROADMAP

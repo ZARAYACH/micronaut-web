@@ -5,17 +5,7 @@ eyebrow: Legal and community
 description: 'The Micronaut Foundation™ is a not-for-profit organization that serves to: We are very pleased and grateful for our partnership with the Unity Foundation. The Unity Foundation™ is a non-profit, community-based organization that is using open source technology to bridge the digital divide in disadvantaged communities. The Unity Foundation is committed to leveraging open source software...'
 sourceUrl: https://micronaut.io/community-guidelines/
 intro: Community guidelines define participation expectations for Micronaut project spaces, including GitHub Discussions and Discord.
-sections:
-  - title: Community expectations
-    body: Guidelines define the standards expected in public project and community channels.
-    icon: users
-  - title: Participation
-    body: Healthy participation supports open source collaboration, issue discussion, documentation, and user support.
-    icon: message-square
-  - title: Shared spaces
-    body: The same expectations apply across community support, events, and public collaboration spaces.
-    icon: check-circle
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Community Code of Conduct

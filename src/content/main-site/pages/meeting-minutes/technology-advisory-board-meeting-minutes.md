@@ -5,17 +5,7 @@ eyebrow: Meeting minutes
 description: Board Members In Attendance Jason Schindler – Object Computing Inc., Partner and Groovy, Grails, and Micronaut Team Manager Graeme Rocher – Micronaut Foundation, co-founder and Director; Oracle, Architect Sergio del Amo – Object Computing, Micronaut Development Lead James Kleeh – Amazon, Software Development Engineer Neal Ford – ThoughtWorks, Director, Cloud Architect Ken Sipe – Edward Jones,...
 sourceUrl: https://micronaut.io/meeting-minutes/technology-advisory-board-meeting-minutes/
 intro: Public Technology Advisory Board meeting minutes for the Micronaut project.
-sections:
-  - title: Advisory board
-    body: The route preserves public Technology Advisory Board meeting records.
-    icon: users
-  - title: Governance context
-    body: Meeting minutes sit alongside foundation pages and sponsorship information.
-    icon: gem
-  - title: Canonical source
-    body: Open the original page for the full minutes text.
-    icon: book-open
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Technology Advisory Board Meeting Minutes

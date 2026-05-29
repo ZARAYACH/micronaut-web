@@ -16,13 +16,8 @@ const mainSitePages = defineCollection({
     date: z.coerce.date().optional(),
     modified: z.coerce.date().optional(),
     wordpressId: z.number().optional(),
-    contentSource: z.string().optional(),
     intro: z.string().optional(),
-    sections: z.array(z.object({
-      title: z.string(),
-      body: z.string(),
-      icon: z.string()
-    })).default([]),
+    layoutVariant: z.enum(["public-markdown"]).optional(),
     storyOrder: z.number().optional(),
     redirectFrom: z.array(z.string()).default([]),
     organization: z.string().optional(),

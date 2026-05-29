@@ -5,17 +5,7 @@ eyebrow: Training
 description: This 12-hour workshop arms students with everything they need to immediately start building applications using the Micronaut® framework.
 sourceUrl: https://micronaut.io/professional-training/micronaut-data/
 intro: This training page is for teams that want a focused path through Micronaut Data and compile-time repository access.
-sections:
-  - title: Repository APIs
-    body: Micronaut Data training focuses on repository patterns without runtime model scanning.
-    icon: database
-  - title: Data access
-    body: The material supports teams building service data layers with compile-time query and model support.
-    icon: code
-  - title: Docs companion
-    body: Use the docs and guides for implementation details after reviewing training material.
-    icon: book-open
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Micronaut Data

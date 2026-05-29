@@ -9,17 +9,7 @@ sourceUrl: https://micronaut.io/micronaut-success-stories/seamless-microservices
 intro: >-
   A public success story about replacing an obsolete legacy tool with a Micronaut-backed microservice solution in four
   weeks.
-sections:
-  - title: Upgrade path
-    body: The story supports evaluation of Micronaut for service modernization and framework upgrades.
-    icon: route
-  - title: Microservices
-    body: It belongs with the public production stories surfaced by the main website.
-    icon: boxes
-  - title: Canonical source
-    body: Open the original page for the full story content and media.
-    icon: logs
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 storyOrder: 6
 organization: Multinational manufacturer
 label: Microservices upgrade

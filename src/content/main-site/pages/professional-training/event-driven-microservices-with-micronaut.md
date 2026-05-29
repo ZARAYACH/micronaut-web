@@ -5,17 +5,7 @@ eyebrow: Training
 description: This 12-hour workshop arms students with everything they need to immediately start building applications using the Micronaut® framework.
 sourceUrl: https://micronaut.io/professional-training/event-driven-microservices-with-micronaut/
 intro: This training page is preserved for teams looking at event-driven service architecture with Micronaut.
-sections:
-  - title: Event-driven design
-    body: The course page focuses on applying Micronaut to message-driven service architectures.
-    icon: workflow
-  - title: Microservices
-    body: Training complements the guides and docs for teams adopting distributed application patterns.
-    icon: boxes
-  - title: Hands-on path
-    body: Use Launch and guides to reinforce the same concepts in a generated application.
-    icon: rocket
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Event-Driven Microservices with the Micronaut Framework

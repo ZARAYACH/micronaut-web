@@ -5,17 +5,7 @@ eyebrow: Resources
 description: Frequently asked questions about Micronaut, its design goals, and how to use the framework.
 sourceUrl: https://micronaut.io/faq/
 intro: The FAQ page answers licensing, contribution, support, training, documentation, trademark, and community questions.
-sections:
-  - title: Framework basics
-    body: FAQ content helps answer common questions before users dive into reference documentation.
-    icon: book-open
-  - title: Adoption questions
-    body: Use FAQ material to clarify framework positioning, supported languages, and expected workflows.
-    icon: check-circle
-  - title: Next step
-    body: When a question needs implementation detail, continue into documentation, guides, or Launch.
-    icon: route
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Frequently Asked Questions

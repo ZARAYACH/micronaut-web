@@ -5,17 +5,7 @@ eyebrow: Start
 description: Download the Micronaut framework.
 sourceUrl: https://micronaut.io/download/
 intro: For a quick and effortless start on macOS, Linux, or Windows, use SDKMAN! to download and configure any Micronaut version of your choice.
-sections:
-  - title: Launch
-    body: Generate a project from the Micronaut Starter backend with language, build tool, JDK, test framework, and features selected up front.
-    icon: rocket
-  - title: CLI workflow
-    body: Use the Micronaut CLI when you want a terminal-first workflow for creating applications and adding features.
-    icon: terminal
-  - title: Build-tool ready
-    body: Generated applications are ready for Gradle or Maven and fit naturally into existing JVM build pipelines.
-    icon: code
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Micronaut Download

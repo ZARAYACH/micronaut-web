@@ -275,6 +275,15 @@ test("latest guide replacement routes and parallel generated-content preparation
     path.join(projectDirectory, "src", "pages", "guides", "[slug].astro"),
     "utf8",
   );
+  const guidesPageIndexSource = await fs.readFile(
+    path.join(
+      projectDirectory,
+      "src",
+      "scripts",
+      "generated-guides-page-index.ts",
+    ),
+    "utf8",
+  );
   const guidesLegacyRoute = await fs.readFile(
     path.join(projectDirectory, "src", "pages", "guides", "[slug].html.ts"),
     "utf8",
@@ -407,13 +416,25 @@ test("latest guide replacement routes and parallel generated-content preparation
     /Different variants[\s\S]{0,500}All variants/,
   );
   assert.match(guidesRoute, /data-guide-section-link/);
-  assert.match(guidesRoute, /guideSectionLinksById/);
+  assert.match(guidesRoute, /generatedGuidesPageIndexUrl/);
+  assert.doesNotMatch(guidesRoute, /<script is:inline>/);
+  assert.doesNotMatch(guidesRoute, /guideSectionLinksById/);
   assert.match(guidesRoute, /data-guide-page-index/);
   assert.match(guidesRoute, /data-guide-page-index-inner/);
   assert.match(guidesRoute, /data-root-id/);
   assert.match(guidesRoute, /\[&\.active\]:before:bg-brand/);
   assert.doesNotMatch(guidesRoute, /\.guide-page-index/);
-  assert.match(guidesRoute, /requestAnimationFrame\(updateActiveSection\)/);
+  assert.doesNotMatch(
+    guidesRoute,
+    /requestAnimationFrame\(updateActiveSection\)/,
+  );
+  assert.match(guidesPageIndexSource, /guideSectionLinksById/);
+  assert.match(
+    guidesPageIndexSource,
+    /requestAnimationFrame\(updateActiveSection\)/,
+  );
+  assert.match(guidesPageIndexSource, /data-guide-page-index/);
+  assert.match(guidesPageIndexSource, /data-guide-section-link/);
   assert.match(guidesRoute, /guideOptionPath\(option, guidesRoot\)/);
   assert.doesNotMatch(guidesRoute, /legacyGuidesBase/);
   assert.match(guidesRoute, /GeneratedDocsStaticEnhancer/);

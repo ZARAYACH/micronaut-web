@@ -5,17 +5,7 @@ eyebrow: Foundation
 description: 'The Micronaut Foundation The Micronaut Foundation is a not-for-profit organization that serves to: Contributing Members The bylaws of the Micronaut Foundation provide that Unity Foundation will maintain, in perpetuity, a majority interest in the Foundation to serve as a steward of the Micronaut framework and its growing global open source community. Object Computing committed an...'
 sourceUrl: https://micronaut.io/foundation/
 intro: The Foundation page explains the not-for-profit organization behind the framework, its contributing members, governance model, advisory board, sponsorship paths, and contact routes.
-sections:
-  - title: Open governance
-    body: Foundation pages explain the organization and support structure behind the Micronaut project.
-    icon: gem
-  - title: Community
-    body: The foundation supports community participation, sponsorship, and project visibility.
-    icon: users
-  - title: Sustainability
-    body: Sponsorship helps sustain framework development, infrastructure, and community activity.
-    icon: check-circle
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # The Micronaut Foundation

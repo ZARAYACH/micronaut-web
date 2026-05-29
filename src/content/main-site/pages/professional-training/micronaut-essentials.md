@@ -5,17 +5,7 @@ eyebrow: Training
 description: This 12-hour workshop arms students with everything they need to immediately start building applications using the Micronaut® framework.
 sourceUrl: https://micronaut.io/professional-training/micronaut-essentials/
 intro: Micronaut Essentials is a 12-hour introductory workshop for teams that need to start building applications with the current Micronaut framework.
-sections:
-  - title: Core concepts
-    body: Essentials content is a starting point for dependency injection, HTTP, testing, configuration, and application structure.
-    icon: book-open
-  - title: Team baseline
-    body: Training helps teams align on vocabulary and development patterns before deeper adoption.
-    icon: users
-  - title: Practice path
-    body: Generated starter applications and task-oriented guides provide a hands-on path after training.
-    icon: test-tube-2
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Micronaut Essentials

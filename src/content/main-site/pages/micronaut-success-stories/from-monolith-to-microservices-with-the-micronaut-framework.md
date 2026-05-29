@@ -5,17 +5,7 @@ eyebrow: Success story
 description: Samsung SmartThings moved from a legacy monolith toward a lightweight Micronaut microservices system.
 sourceUrl: https://micronaut.io/micronaut-success-stories/from-monolith-to-microservices-with-the-micronaut-framework/
 intro: A public success story about moving from a monolith to microservices with the Micronaut framework.
-sections:
-  - title: Modernization
-    body: The story is part of Micronaut's public production adoption material.
-    icon: workflow
-  - title: Microservices
-    body: It highlights Micronaut's fit for modular services and cloud application architectures.
-    icon: boxes
-  - title: Evaluation
-    body: Use success stories for confidence, then continue into docs, guides, and Launch.
-    icon: rocket
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 storyOrder: 4
 organization: Samsung SmartThings
 label: IoT microservices

@@ -22,7 +22,6 @@ export type MainSitePageSummary = {
 
 export type GeneratedMainSitePage = MainSitePageSummary & {
   intro: string;
-  contentSource: string;
 };
 
 export type MainSiteFooterGroup = {
@@ -77,8 +76,7 @@ export const generatedMainSitePages: GeneratedMainSitePage[] = [
     title: "Micronaut Success Stories",
     eyebrow: "Resources",
     description: "Real teams use Micronaut for serverless APIs, Grails migrations, workflow orchestration, IoT microservices, event platforms, legacy tool upgrades, and SaaS backends.",
-    intro: "The success stories index is generated from the metadata on each success-story page.",
-    contentSource: "generated-success-stories"
+    intro: "The success stories index is generated from the metadata on each success-story page."
   }
 ];
 

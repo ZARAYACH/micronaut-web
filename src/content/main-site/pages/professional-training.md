@@ -5,17 +5,7 @@ eyebrow: Learn
 description: Professional training is available through the Micronaut framework's parent company, Object Computing, Inc.
 sourceUrl: https://micronaut.io/professional-training/
 intro: Professional training pages support teams that want structured instruction from people close to the framework.
-sections:
-  - title: Fundamentals
-    body: Start with core Micronaut concepts before moving into integrations, testing, data access, and cloud deployment.
-    icon: book-open
-  - title: Team enablement
-    body: Structured training supports teams that need a common baseline before adopting a framework broadly.
-    icon: users
-  - title: Practice-driven
-    body: Pair training with guides and Launch-generated projects to reinforce the material in working applications.
-    icon: test-tube-2
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Professional Training

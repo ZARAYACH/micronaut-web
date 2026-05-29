@@ -5,17 +5,7 @@ eyebrow: Legal and brand
 description: Download Micronaut logos to use in your own materials here.
 sourceUrl: https://micronaut.io/brand-guidelines/micronaut-logos/
 intro: The logo page explains when Micronaut logos can be used and lists the official horizontal, stacked, and Sally artwork variants.
-sections:
-  - title: Official assets
-    body: Use approved Micronaut logo variants rather than altered or recolored artwork.
-    icon: layout-template
-  - title: Local rendering
-    body: This Astro site uses checked-in black and white horizontal logo assets for the web shell.
-    icon: code
-  - title: Trademark context
-    body: Logo usage should be read together with the trademark policy and brand guidelines.
-    icon: shield
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 # Micronaut Logos

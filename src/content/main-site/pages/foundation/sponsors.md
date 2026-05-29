@@ -5,17 +5,7 @@ eyebrow: Foundation
 description: These are the organizations that have contributed to support the Micronaut Foundation.
 sourceUrl: https://micronaut.io/foundation/sponsors/
 intro: The sponsors page recognizes organizations, partners, and individual supporters who contribute to Micronaut Foundation sustainability.
-sections:
-  - title: Sponsor recognition
-    body: The sponsors page recognizes organizations and supporters contributing to project sustainability.
-    icon: gem
-  - title: Ecosystem health
-    body: Sponsorship helps fund ongoing work that benefits users across the Micronaut ecosystem.
-    icon: check-circle
-  - title: Support options
-    body: Corporate and community sponsorship routes provide different ways to participate.
-    icon: route
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 ---
 
 ### Our Ambassador Sponsor

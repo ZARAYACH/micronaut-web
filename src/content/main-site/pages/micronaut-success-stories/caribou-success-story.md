@@ -5,17 +5,7 @@ eyebrow: Success story
 description: Caribou combined Micronaut, GraalVM, Kotlin, and AWS Lambda to reduce cold-start pressure for a SaaS backend.
 sourceUrl: https://micronaut.io/micronaut-success-stories/caribou-success-story/
 intro: Caribou's public story about combining Micronaut, GraalVM, Kotlin, and AWS Lambda for a SaaS backend.
-sections:
-  - title: Production story
-    body: This page keeps the story reachable from the main website route structure.
-    icon: check-circle
-  - title: Architecture context
-    body: Success stories help teams understand where Micronaut fits in real applications.
-    icon: workflow
-  - title: Evaluation path
-    body: Use stories as proof, then move into documentation, guides, and generated starters.
-    icon: rocket
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 storyOrder: 7
 organization: Caribou
 label: Serverless SaaS

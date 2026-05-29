@@ -5,17 +5,7 @@ eyebrow: Success story
 description: Kestra uses Micronaut for REST APIs, HTTP clients, OpenAPI generation, cloud readiness, and reactive workloads.
 sourceUrl: https://micronaut.io/micronaut-success-stories/micronaut-framework-at-kestra/
 intro: Kestra's public Micronaut success story for workflow orchestration services.
-sections:
-  - title: Workflow platform
-    body: The story gives a concrete public example of Micronaut used in a workflow orchestration product.
-    icon: workflow
-  - title: Production services
-    body: It reinforces the framework's fit for modular backend services.
-    icon: boxes
-  - title: Further reading
-    body: Use the success-story index for the broader set of public production references.
-    icon: book-open
-contentSource: micronaut-public-markdown
+layoutVariant: public-markdown
 storyOrder: 3
 organization: Kestra
 label: Workflow orchestration
