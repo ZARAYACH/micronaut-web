@@ -42,11 +42,19 @@ export async function renderGuideOption(
       base_dir: guide.directory,
       extension_registry: guideExtensionRegistry(asciidoctor, context),
     },
+    fatalDiagnostic: isFatalGuideDiagnostic,
   });
 
   html = rewriteGuideUrls(html, guide.slug);
   html = optimizeGeneratedGuideHtml(html);
   return `${shikiStyle()}\n${html.trim()}`;
+}
+
+export function isFatalGuideDiagnostic(diagnostic: string): boolean {
+  return ![
+    /section title out of sequence: expected level \d+, got level \d+/i,
+    /level 0 sections can only be used when doctype is book/i,
+  ].some((nonFatalGuideDiagnostic) => nonFatalGuideDiagnostic.test(diagnostic));
 }
 
 async function guideRenderContext({

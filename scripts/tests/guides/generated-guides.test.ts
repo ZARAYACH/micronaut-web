@@ -204,6 +204,126 @@ test("guide renderer can render all guides in strict pipeline mode", async (t: a
   );
 });
 
+test("strict guide renderer allows existing guide subsection heading order", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-guides-heading-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
+  const guidesDirectory = path.join(temporaryDirectory, "micronaut-guides");
+  const outputDirectory = path.join(temporaryDirectory, "generated-guides");
+
+  await writeGuideFixture(
+    guidesDirectory,
+    "creating-your-first-micronaut-app",
+    "Creating your first Micronaut application",
+  );
+  await fs.writeFile(
+    path.join(
+      guidesDirectory,
+      "guides",
+      "creating-your-first-micronaut-app",
+      "creating-your-first-micronaut-app.adoc",
+    ),
+    [
+      "=== Application",
+      "",
+      "source::ExampleController[tags=package|hello]",
+    ].join("\n"),
+    "utf8",
+  );
+
+  await execFile(
+    process.execPath,
+    [
+      "scripts/render-guides.ts",
+      "--guides-dir",
+      guidesDirectory,
+      "--output",
+      outputDirectory,
+      "--slugs",
+      "creating-your-first-micronaut-app",
+      "--strict",
+    ],
+    {
+      cwd: projectDirectory,
+    },
+  );
+
+  const html = await fs.readFile(
+    path.join(
+      outputDirectory,
+      "fragments",
+      "creating-your-first-micronaut-app-gradle-java.html",
+    ),
+    "utf8",
+  );
+  assert.match(html, /Application/);
+  assert.match(html, /docs-code-snippet-template/);
+});
+
+test("strict guide renderer allows existing guide document-title sections", async (t: any): Promise<any> => {
+  const temporaryDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "micronaut-web-guides-title-section-"),
+  );
+  t.after((): any =>
+    fs.rm(temporaryDirectory, { force: true, recursive: true }),
+  );
+  const guidesDirectory = path.join(temporaryDirectory, "micronaut-guides");
+  const outputDirectory = path.join(temporaryDirectory, "generated-guides");
+
+  await writeGuideFixture(
+    guidesDirectory,
+    "micronaut-push-to-registry-docker-hub",
+    "Push to Docker Hub",
+  );
+  await fs.writeFile(
+    path.join(
+      guidesDirectory,
+      "guides",
+      "micronaut-push-to-registry-docker-hub",
+      "micronaut-push-to-registry-docker-hub.adoc",
+    ),
+    [
+      "== Build the Application",
+      "",
+      "= Push to Docker Hub",
+      "",
+      "source::ExampleController[tags=package|hello]",
+    ].join("\n"),
+    "utf8",
+  );
+
+  await execFile(
+    process.execPath,
+    [
+      "scripts/render-guides.ts",
+      "--guides-dir",
+      guidesDirectory,
+      "--output",
+      outputDirectory,
+      "--slugs",
+      "micronaut-push-to-registry-docker-hub",
+      "--strict",
+    ],
+    {
+      cwd: projectDirectory,
+    },
+  );
+
+  const html = await fs.readFile(
+    path.join(
+      outputDirectory,
+      "fragments",
+      "micronaut-push-to-registry-docker-hub-gradle-java.html",
+    ),
+    "utf8",
+  );
+  assert.match(html, /Push to Docker Hub/);
+  assert.match(html, /docs-code-snippet-template/);
+});
+
 test("strict guide renderer fails when Asciidoctor reports diagnostics", async (t: any): Promise<any> => {
   const temporaryDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "micronaut-web-guides-strict-"),
@@ -338,7 +458,7 @@ test("latest guide replacement routes and parallel generated-content preparation
   );
   assert.equal(
     packageJson.scripts["test:guides:browser"],
-    "node scripts/prepare-playwright-generated-content.ts guides && playwright test --config playwright.config.ts tests/playwright/guides.spec.ts",
+    "node tests/playwright/generated-content-fixtures.ts guides && playwright test --config playwright.config.ts tests/playwright/guides.spec.ts",
   );
   assert.match(prepareScript, /Promise\.all/);
   assert.match(prepareScript, /render-docs\.ts/);

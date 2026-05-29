@@ -46,7 +46,28 @@ test("generated docs are prepared before Astro dev and build", async (): Promise
   );
   assert.equal(
     packageJson.scripts["test:docs:browser"],
-    "node scripts/prepare-playwright-generated-content.ts docs && playwright test --config playwright.config.ts tests/playwright/docs.spec.ts",
+    "node tests/playwright/generated-content-fixtures.ts docs && playwright test --config playwright.config.ts tests/playwright/docs.spec.ts",
+  );
+  assert.equal(
+    await fileExists(
+      path.join(
+        projectDirectory,
+        "scripts",
+        "prepare-playwright-generated-content.ts",
+      ),
+    ),
+    false,
+  );
+  assert.equal(
+    await fileExists(
+      path.join(
+        projectDirectory,
+        "tests",
+        "playwright",
+        "generated-content-fixtures.ts",
+      ),
+    ),
+    true,
   );
   assertScriptOrder(
     packageJson.scripts.dev,
@@ -651,8 +672,8 @@ test("strict docs renderer allows known upstream source-shape warnings", async (
     path.join(outputDirectory, "fixture.html"),
     "utf8",
   );
-  assert.match(stderr, /section title out of sequence/i);
-  assert.match(stderr, /unterminated listing block/i);
+  assert.doesNotMatch(stderr, /section title out of sequence/i);
+  assert.doesNotMatch(stderr, /unterminated listing block/i);
   assert.match(generatedHtml, /Out-of-sequence heading/);
 });
 
@@ -1679,6 +1700,15 @@ function escapeRegExp(value: any): any {
 
 function textOnly(value: any): any {
   return value.replace(/<[^>]*>/g, "");
+}
+
+async function fileExists(file: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(file);
+    return stats.isFile();
+  } catch {
+    return false;
+  }
 }
 
 function assertSnippetLanguageIcon(

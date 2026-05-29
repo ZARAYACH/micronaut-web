@@ -36,13 +36,26 @@ export function registerGuideContentBlock(
         "",
         {},
       );
+      const lines = await resolveLines(
+        guideMacroPayloadFromValue(attributes.payload),
+      );
       await this.parseContent(
-        holder,
-        await resolveLines(guideMacroPayloadFromValue(attributes.payload)),
+        guideContentParseTarget(parent, holder, lines),
+        lines,
       );
       return holder;
     });
   });
+}
+
+function guideContentParseTarget(
+  parent: unknown,
+  holder: Block,
+  lines: string[],
+): Block | Section {
+  return lines.some((line) => /^={1,6}\s+\S/.test(line))
+    ? (parent as Block | Section)
+    : holder;
 }
 
 function guideMacroPayloadFromValue(value: unknown): GuideMacroPayload {

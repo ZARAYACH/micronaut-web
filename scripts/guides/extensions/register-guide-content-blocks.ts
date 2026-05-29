@@ -107,14 +107,27 @@ function registerGuideContentMacro(
           "",
           {},
         );
+        const lines = await resolveLines(
+          guideMacroPayload(String(target), attrs),
+        );
         await this.parseContent(
-          holder,
-          await resolveLines(guideMacroPayload(String(target), attrs)),
+          guideContentParseTarget(parent, holder, lines),
+          lines,
         );
         return holder;
       });
     },
   );
+}
+
+function guideContentParseTarget(
+  parent: unknown,
+  holder: Block,
+  lines: string[],
+): Block | Section {
+  return lines.some((line) => /^={1,6}\s+\S/.test(line))
+    ? (parent as Block | Section)
+    : holder;
 }
 
 export async function includeGuideAdoc(

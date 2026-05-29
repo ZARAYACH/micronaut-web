@@ -1,9 +1,27 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const docsProjects = [
-  "Micronaut Core",
-  "Micronaut Data",
-  "Micronaut Serialization",
+  {
+    language: "java",
+    name: "Micronaut Core",
+    requireDependency: true,
+    requireProperties: true,
+    slug: "core",
+  },
+  {
+    language: "kotlin",
+    name: "Micronaut Data",
+    requireDependency: false,
+    requireProperties: false,
+    slug: "data",
+  },
+  {
+    language: "groovy",
+    name: "Micronaut Serialization",
+    requireDependency: false,
+    requireProperties: false,
+    slug: "serde",
+  },
 ];
 
 test("docs catalog lays out generated project cards", async ({ page }) => {
@@ -13,17 +31,17 @@ test("docs catalog lays out generated project cards", async ({ page }) => {
 
   await expect(page.locator("[data-docs-shell]")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Playwright Fixtures" }),
+    page.getByRole("heading", { name: "Playwright Copied Docs" }),
   ).toBeVisible();
 
   const cards = page.locator('main [data-slot="card"]');
   await expect(cards).toHaveCount(docsProjects.length);
-  for (const projectName of docsProjects) {
-    const card = cards.filter({ hasText: projectName });
+  for (const project of docsProjects) {
+    const card = cards.filter({ hasText: project.name });
     await expect(card).toBeVisible();
     await expect(card.getByRole("link", { name: "Docs" })).toHaveAttribute(
       "href",
-      docsProjectHrefPattern(projectSlug(projectName)),
+      docsProjectHrefPattern(project.slug),
     );
   }
 
@@ -39,7 +57,11 @@ test("generated docs page renders desktop content and sidebars without overlap",
   await page.goto(appPath("/docs/core/"));
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Micronaut Core" }),
+    page.getByRole("heading", {
+      exact: true,
+      level: 1,
+      name: "Micronaut Core",
+    }),
   ).toBeVisible();
   await expect(page.locator("[data-generated-docs]")).toBeVisible();
   await expect(
@@ -59,7 +81,7 @@ test("generated docs page renders desktop content and sidebars without overlap",
     sectionNav.getByRole("link", { name: "1 Introduction" }),
   ).toBeVisible();
   await expect(
-    sectionNav.getByRole("link", { name: "2 Configuration" }),
+    sectionNav.getByRole("link", { name: "2 Quick Start" }),
   ).toBeVisible();
 
   await expectNoHorizontalOverflow(page);
@@ -72,6 +94,32 @@ test("generated docs page renders desktop content and sidebars without overlap",
   expect(failures).toEqual([]);
 });
 
+test("generated docs pages convert snippets for selected real projects", async ({
+  page,
+}) => {
+  const failures = collectBrowserFailures(page);
+
+  for (const project of docsProjects) {
+    await page.goto(appPath(`/docs/${project.slug}/`));
+
+    await expect(
+      page.getByRole("heading", {
+        exact: true,
+        level: 1,
+        name: project.name,
+      }),
+    ).toBeVisible();
+    await expectConvertedGeneratedSnippets(page, {
+      language: project.language,
+      requireDependency: project.requireDependency,
+      requireProperties: project.requireProperties,
+    });
+    await expectNoHorizontalOverflow(page);
+  }
+
+  expect(failures).toEqual([]);
+});
+
 test("generated docs page fits the mobile viewport", async ({ page }) => {
   const failures = collectBrowserFailures(page);
   await page.setViewportSize({ width: 390, height: 860 });
@@ -80,7 +128,11 @@ test("generated docs page fits the mobile viewport", async ({ page }) => {
 
   await expect(page.locator("[data-generated-docs]")).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 1, name: "Micronaut Data" }),
+    page.getByRole("heading", {
+      exact: true,
+      level: 1,
+      name: "Micronaut Data",
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Open docs navigation" }),
@@ -122,13 +174,6 @@ function collectBrowserFailures(page: Page) {
   return failures;
 }
 
-function projectSlug(projectName: string): string {
-  return projectName
-    .replace(/^Micronaut\s+/i, "")
-    .toLowerCase()
-    .replace("serialization", "serde");
-}
-
 function docsProjectHrefPattern(slug: string): RegExp {
   if (process.env.MICRONAUT_DEPLOY_SURFACE === "docs") {
     return new RegExp(`${escapeRegExp(appPath(`/latest/${slug}/`))}$`);
@@ -138,6 +183,47 @@ function docsProjectHrefPattern(slug: string): RegExp {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function expectConvertedGeneratedSnippets(
+  page: Page,
+  {
+    language,
+    requireDependency,
+    requireProperties,
+  }: {
+    language: string;
+    requireDependency: boolean;
+    requireProperties: boolean;
+  },
+): Promise<void> {
+  const root = page.locator("[data-generated-docs]");
+  await expect(root).toBeVisible();
+
+  const codeSnippets = root.locator(".docs-code-snippet-template");
+  await expect(codeSnippets.first()).toBeVisible();
+  await expect(
+    codeSnippets.locator(`button[data-lang="${language}"]`).first(),
+  ).toBeVisible();
+  await expect(
+    root.locator("[data-copy-active-snippet]").first(),
+  ).toBeVisible();
+  await expect(root.locator(".docs-code-callouts").first()).toBeVisible();
+  await expect(root.locator(".listingblock")).toHaveCount(0);
+  await expect(
+    root.locator(".literalblock pre").filter({ hasText: /^\[source,/ }),
+  ).toHaveCount(0);
+
+  if (requireProperties) {
+    await expect(
+      root.locator(".docs-properties-template").first(),
+    ).toBeVisible();
+  }
+  if (requireDependency) {
+    await expect(
+      root.locator(".docs-dependency-template").first(),
+    ).toBeVisible();
+  }
 }
 
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {

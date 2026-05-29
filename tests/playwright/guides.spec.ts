@@ -1,6 +1,81 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const httpClientGuideTitle = "Micronaut HTTP Client";
+const generatedGuidePages = [
+  {
+    dependencyLanguage: "gradle",
+    expectedHeadings: [
+      "What you will need",
+      "Solution",
+      "Writing the Application",
+    ],
+    expectedText: "Download and unzip the source",
+    requireDependency: true,
+    requireProperties: true,
+    sourceLanguage: "java",
+    slug: "micronaut-http-client-gradle-java",
+    title: httpClientGuideTitle,
+  },
+  {
+    dependencyLanguage: "maven",
+    expectedHeadings: [
+      "What you will need",
+      "Solution",
+      "Writing the Application",
+    ],
+    expectedText: "Download and unzip the source",
+    requireDependency: true,
+    requireProperties: true,
+    sourceLanguage: "kotlin",
+    slug: "micronaut-http-client-maven-kotlin",
+    title: httpClientGuideTitle,
+  },
+  {
+    dependencyLanguage: "gradle",
+    expectedHeadings: [
+      "What you will need",
+      "Solution",
+      "Writing the Application",
+    ],
+    expectedText: "Download and unzip the source",
+    requireDependency: false,
+    requireProperties: false,
+    sourceLanguage: "java",
+    slug: "creating-your-first-micronaut-app-gradle-java",
+    title: "Creating your first Micronaut application",
+  },
+  {
+    dependencyLanguage: "gradle",
+    expectedHeadings: [
+      "What you will need",
+      "Solution",
+      "Writing the Application",
+    ],
+    expectedText: "Download and unzip the source",
+    requireDependency: true,
+    requireProperties: true,
+    sourceLanguage: "java",
+    slug: "micronaut-data-jdbc-repository-gradle-java",
+    title: "Access a database with Micronaut Data JDBC",
+  },
+  {
+    dependencyLanguage: "gradle",
+    expectedHeadings: ["Content Macros", "Snippet Macros"],
+    expectedRenderedText: [
+      "Common template value: COMMON.",
+      "External guide include content.",
+      "Rocker template include content.",
+      "Source callout loaded from a guide callout macro.",
+      "Grouped HTTP client dependency.",
+    ],
+    expectedText: "Common guide snippet content.",
+    requireDependency: true,
+    requireProperties: false,
+    sourceLanguage: "java",
+    slug: "snippet-gallery-gradle-java",
+    title: "Snippet Gallery",
+  },
+];
 
 test("guide catalog hydrates guide card islands and variant menus", async ({
   page,
@@ -108,6 +183,38 @@ test("guide overview redirects to the preferred variant and exposes variant navi
   expect(failures).toEqual([]);
 });
 
+test("generated guide pages are rendered from real sources with converted snippets", async ({
+  page,
+}) => {
+  const failures = collectBrowserFailures(page);
+
+  for (const guide of generatedGuidePages) {
+    await page.goto(appPath(`/guides/${guide.slug}/`));
+
+    await expect(page).toHaveURL(guideUrlPattern(guide.slug));
+    await expect(
+      page.getByRole("heading", { level: 1, name: guide.title }),
+    ).toBeVisible();
+    await expect(page.getByText("Guide content unavailable")).toHaveCount(0);
+    const content = page.locator(".generated-guides-content");
+    for (const heading of guide.expectedHeadings) {
+      await expect(
+        content.getByRole("heading", {
+          exact: true,
+          name: heading,
+        }),
+      ).toBeVisible();
+    }
+    await expect(content.getByText(guide.expectedText).first()).toBeVisible();
+    for (const text of guide.expectedRenderedText || []) {
+      await expect(content.getByText(text).first()).toBeVisible();
+    }
+    await expectConvertedGuideSnippets(page, guide);
+  }
+
+  expect(failures).toEqual([]);
+});
+
 function collectBrowserFailures(page: Page) {
   const failures: string[] = [];
   page.on("pageerror", (error) => {
@@ -131,6 +238,58 @@ function collectBrowserFailures(page: Page) {
     }
   });
   return failures;
+}
+
+async function expectConvertedGuideSnippets(
+  page: Page,
+  {
+    dependencyLanguage,
+    requireDependency,
+    requireProperties,
+    sourceLanguage,
+  }: {
+    dependencyLanguage: string;
+    requireDependency: boolean;
+    requireProperties: boolean;
+    sourceLanguage: string;
+  },
+): Promise<void> {
+  const root = page.locator(".generated-guides-content");
+  await expect(root).toBeVisible();
+
+  const codeSnippets = root.locator(".docs-code-snippet-template");
+  await expect.poll(async () => codeSnippets.count()).toBeGreaterThanOrEqual(4);
+  await expect(
+    codeSnippets.locator(`button[data-lang="${sourceLanguage}"]`).first(),
+  ).toBeVisible();
+  await expect(
+    root.locator("[data-copy-active-snippet]").first(),
+  ).toBeVisible();
+  await expect(root.locator(".listingblock")).toHaveCount(0);
+  await expect(
+    root.locator(".literalblock pre").filter({ hasText: /^\[source,/ }),
+  ).toHaveCount(0);
+
+  if (requireDependency) {
+    await expect(
+      root.locator(".docs-dependency-template").first(),
+    ).toBeVisible();
+    await expect(
+      root
+        .locator(".docs-dependency-template")
+        .locator(`button[data-lang="${dependencyLanguage}"]`)
+        .first(),
+    ).toBeVisible();
+  }
+  if (requireProperties) {
+    await expect(
+      root.locator(".docs-properties-template").first(),
+    ).toBeVisible();
+  }
+
+  expect(await root.innerHTML()).not.toMatch(
+    /\b(?:common|source|dependency|zipInclude|diffLink):{1,2}[^<\[]*\[[^\]]*]/,
+  );
 }
 
 function appPath(path: string): string {

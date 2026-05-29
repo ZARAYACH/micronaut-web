@@ -134,6 +134,7 @@ export async function renderAsciiDoc({
     .map(formatAsciidoctorDiagnostic)
     .filter((diagnostic) => !isHandledCalloutDiagnostic(diagnostic));
   if (diagnostics.length) {
+    let diagnosticsToWarn = diagnostics;
     if (strict) {
       const fatalDiagnostics = fatalDiagnostic
         ? diagnostics.filter(fatalDiagnostic)
@@ -143,8 +144,9 @@ export async function renderAsciiDoc({
           `Asciidoctor diagnostics for ${diagnosticsLabel}: ${fatalDiagnostics.join("; ")}`,
         );
       }
+      diagnosticsToWarn = fatalDiagnostic ? fatalDiagnostics : diagnostics;
     }
-    for (const diagnostic of diagnostics) {
+    for (const diagnostic of diagnosticsToWarn) {
       console.warn(diagnostic);
     }
   }

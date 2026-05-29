@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import type {
@@ -21,6 +21,24 @@ const EXCLUDE_DIRECTIVE_LINE =
   /^:(exclude-for-languages|exclude-for-build|exclude-for-jdk-lower-than):(.*)$/;
 const DEFAULT_MIN_JDK = 21;
 const LICENSE_INCLUDE = "common::license.adoc[]";
+const EXPANDED_CONTENT_MACRO_LINE =
+  /^(common|common-template|external|external-template):{1,2}([^\[]+)\[([^\]]*)]\s*$/;
+const LEGACY_LINE_BLOCK_MACROS = new Set([
+  "callout",
+  "common",
+  "common-template",
+  "dependency",
+  "diffLink",
+  "external",
+  "external-template",
+  "rawTest",
+  "resource",
+  "rocker",
+  "source",
+  "test",
+  "testResource",
+  "zipInclude",
+]);
 
 type ExcludeMacroName =
   | "exclude-for-languages"
@@ -100,6 +118,16 @@ function rewriteGuideLines(
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
+    const expandedContent = expandedGuideContentLines(line, context);
+    if (expandedContent) {
+      output.push(...expandedContent);
+      continue;
+    }
+    const legacyBlockMacro = legacyLineBlockMacro(line);
+    if (legacyBlockMacro) {
+      output.push(legacyBlockMacro);
+      continue;
+    }
     const excludeBlock = legacyExcludeBlockLines(lines, index, context);
     if (excludeBlock) {
       output.push(...excludeBlock.lines);
@@ -132,6 +160,50 @@ function rewriteGuideLines(
     output.push(...dependencyGroupBlockLines(groupedDependencies));
   }
   return output;
+}
+
+function expandedGuideContentLines(
+  line: string,
+  context: GuideRenderContext,
+): string[] | undefined {
+  const match = EXPANDED_CONTENT_MACRO_LINE.exec(line);
+  if (!match) {
+    return undefined;
+  }
+
+  const [, macroName, target, rawAttributes] = match;
+  if (macroName === "common" && target.trim() === "header-top.adoc") {
+    return [];
+  }
+
+  const file =
+    macroName === "common" || macroName === "common-template"
+      ? commonSnippetPath(context.guidesDirectory, target)
+      : externalPath(context.guidesDirectory, target);
+  try {
+    let source = readFileSync(file, "utf8");
+    if (macroName.endsWith("-template")) {
+      const attributes = parseAttributes(rawAttributes);
+      source = source
+        .split(/\r?\n/)
+        .map((sourceLine) =>
+          replaceGuideTemplateArguments(sourceLine, attributes),
+        )
+        .join("\n");
+    }
+    return prepareGuideSourceForExtensions(source, context, {
+      appendLicense: false,
+    }).split(/\r?\n/);
+  } catch {
+    return [`NOTE: Missing include \`${path.basename(file)}\`.`];
+  }
+}
+
+function legacyLineBlockMacro(line: string): string | undefined {
+  const match = /^([A-Za-z][\w-]*):([^:]*\[[^\]]*])\s*$/.exec(line);
+  return match && LEGACY_LINE_BLOCK_MACROS.has(match[1])
+    ? `${match[1]}::${match[2]}`
+    : undefined;
 }
 
 function legacyExcludeBlockLines(
@@ -387,6 +459,48 @@ function stripQuotes(value: string): string {
     return value.slice(1, -1);
   }
   return value;
+}
+
+function replaceGuideTemplateArguments(
+  line: string,
+  attributes: Record<string, string>,
+): string {
+  return line.replace(/\{(\d+)(?:_([UL]))?}/g, (match, index, transform) => {
+    const value = attributes[`arg${index}`];
+    if (value === undefined) {
+      return match;
+    }
+    if (transform === "U") {
+      return value.toUpperCase();
+    }
+    if (transform === "L") {
+      return value.toLowerCase();
+    }
+    return value;
+  });
+}
+
+function commonSnippetPath(guidesDirectory: string, target: string): string {
+  return path.join(
+    guidesDirectory,
+    "src",
+    "docs",
+    "common",
+    "snippets",
+    `common-${ensureSuffix(target.trim(), ".adoc")}`,
+  );
+}
+
+function externalPath(guidesDirectory: string, target: string): string {
+  return path.join(
+    guidesDirectory,
+    "guides",
+    ensureSuffix(target.trim(), ".adoc"),
+  );
+}
+
+function ensureSuffix(value: string, suffix: string): string {
+  return value.endsWith(suffix) ? value : `${value}${suffix}`;
 }
 
 function replacePlaceholders(

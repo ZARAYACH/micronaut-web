@@ -1,7 +1,7 @@
 @reference "./globals.css";
 
 .generated-docs-content {
-  @apply min-w-0 break-words text-base leading-[1.6] text-foreground;
+  @apply min-w-0 overflow-x-hidden break-words text-base leading-[1.6] text-foreground [contain:paint];
 
   & > style {
     @apply hidden;
@@ -113,7 +113,15 @@
     @apply rounded bg-muted px-1 py-[0.05rem] text-[0.9em] text-foreground;
   }
 
-  & :where(.listingblock, .literalblock, .exampleblock, .sidebarblock, .openblock, .admonitionblock) {
+  &
+    :where(
+      .listingblock,
+      .literalblock,
+      .exampleblock,
+      .sidebarblock,
+      .openblock,
+      .admonitionblock
+    ) {
     @apply my-5 min-w-0;
   }
 

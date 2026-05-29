@@ -45,6 +45,10 @@ function rewriteDocsSource(source: string): string {
     /(snippet::[^\[]+\[[^\]]*?\bindent\s*=\s*-?\d+)\s+(title\s*=)/gi,
     "$1, $2",
   );
+  normalized = normalized.replace(
+    /^[ \t]{4,}(\[source,[^\]\r\n]+])\s*\r?\n(?=----\s*$)/gim,
+    "$1\n",
+  );
   return normalized.replace(
     /^\s{4,}`([^`\r\n]+)`\s*$/gm,
     (match: string, code: string): string => {
