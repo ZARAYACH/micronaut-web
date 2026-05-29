@@ -8,7 +8,7 @@ function ButtonGroup({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="button-group"
       role="group"
       className={cn(
-        "inline-flex items-center rounded-md shadow-xs [&>[data-slot=button]:not(:first-child)]:rounded-l-none [&>[data-slot=button]:not(:first-child)]:border-l-0 [&>[data-slot=button]:not(:last-child)]:rounded-r-none",
+        "inline-flex items-center rounded-md shadow-xs [&>[data-slot=button]:not(:first-child)]:rounded-l-none [&>[data-slot=button]:not(:first-child)]:border-l-0 [&>[data-slot=button]:not(:last-child)]:rounded-r-none [&>[data-slot=dropdown-menu-trigger]:not(:first-child)]:rounded-l-none [&>[data-slot=dropdown-menu-trigger]:not(:first-child)]:border-l-0 [&>[data-slot=dropdown-menu-trigger]:not(:last-child)]:rounded-r-none",
         className,
       )}
       {...props}

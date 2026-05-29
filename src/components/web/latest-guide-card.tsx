@@ -2,10 +2,7 @@ import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupSeparator,
-} from "@/components/ui/button-group";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Card,
   CardContent,
@@ -77,17 +74,20 @@ export function LatestGuideCard({
         <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
           <span>{guide.estimatedMinutes} min</span>
           {hasVariantMenu ? (
-            <ButtonGroup aria-label={`Read ${guide.title} variants`}>
-              <Button asChild size="sm">
+            <ButtonGroup
+              aria-label={`Read ${guide.title} variants`}
+              className="shrink-0"
+            >
+              <Button asChild size="sm" variant="outline">
                 <a href={href} aria-label={`Read ${guide.title}`}>
                   Read
                 </a>
               </Button>
-              <ButtonGroupSeparator className="bg-primary-foreground/20" />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="icon-sm"
+                    variant="outline"
                     aria-label={`Choose variant for ${guide.title}`}
                   >
                     <ChevronDownIcon className="size-4" />
@@ -119,7 +119,7 @@ export function LatestGuideCard({
               </DropdownMenu>
             </ButtonGroup>
           ) : (
-            <Button asChild size="sm">
+            <Button asChild size="sm" variant="outline">
               <a href={href} aria-label={`Read ${guide.title}`}>
                 Read
               </a>
