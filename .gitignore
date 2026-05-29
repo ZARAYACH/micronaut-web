@@ -11,6 +11,8 @@
 node_modules/
 .astro/
 dist/
+published-docs/
+published-guides/
 playwright-report/
 test-results/
 

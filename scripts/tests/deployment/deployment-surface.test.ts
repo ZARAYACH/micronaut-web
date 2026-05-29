@@ -468,6 +468,24 @@ test("docs and guides workflows branch-deploy to configured target repositories"
   assert.match(guidesWorkflow, /TARGET_REPOSITORY_TOKEN/);
 });
 
+test("published surface artifacts stay out of local typecheck inputs", async () => {
+  const tsconfig = JSON.parse(
+    await fs.readFile(path.join(projectDirectory, "tsconfig.json"), "utf8"),
+  ) as { exclude?: string[] };
+  const gitignore = await fs.readFile(
+    path.join(projectDirectory, ".gitignore"),
+    "utf8",
+  );
+
+  for (const directory of ["published-docs", "published-guides"]) {
+    assert.ok(
+      tsconfig.exclude?.includes(directory),
+      `tsconfig.json should exclude ${directory}`,
+    );
+    assert.match(gitignore, new RegExp(`^${directory}/$`, "m"));
+  }
+});
+
 test("PostCSS disables Tailwind production optimization reparsing", async () => {
   const configModule = await import(
     `${pathToFileURL(path.join(projectDirectory, "postcss.config.mjs")).href}?test=postcss`
