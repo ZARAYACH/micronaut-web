@@ -16,8 +16,10 @@ Use the current repository structure as the source of truth. Do not apply Gradle
 - Guides tests: `npm run test:guides`
 - Deployment tests: `npm run test:deployment`
 - Full check: `npm run check`
+- Build main surface: `npm run build:main`
 - Build all surfaces: `npm run build`
 - Build docs surface: `npm run build:docs`
+- Build guides surface: `npm run build:guides`
 
 ## UI Implementation Rules
 
@@ -55,6 +57,18 @@ Use the current repository structure as the source of truth. Do not apply Gradle
 After UI or layout changes, run the narrowest relevant checks first, then broader checks as needed:
 
 1. `npm run typecheck`
-2. Relevant tests such as `npm run test:docs` or `npm run test:main-site`
-3. `npm run build:docs` for docs-surface changes
+2. `npm run typecheck:scripts` when scripts, tests, or build tooling changed
+3. Relevant tests such as `npm run test:docs`, `npm run test:guides`, or `npm run test:main-site`
 4. Browser verification for changed interactive UI
+
+Before pushing to `main`, do not stop at typecheck. Run the affected surface build:
+
+- Main-site, shared runtime, layout, header, routing, or deployment changes: `npm run build:main`
+- Docs-surface changes: `npm run build:docs`
+- Guides-surface changes: `npm run build:guides`
+
+If a change touches shared browser/runtime scripts, generated content rendering, snippets, search, navigation, or surface routing, run the browser test under the deploy surface that will be pushed. For a fast main-surface guard, run:
+
+```sh
+MICRONAUT_DEPLOY_SURFACE=main ASTRO_BASE=/micronaut-web/ npm run test:main-site:browser
+```
