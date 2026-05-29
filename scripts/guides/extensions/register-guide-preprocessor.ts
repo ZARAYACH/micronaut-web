@@ -312,14 +312,12 @@ function shouldExcludeDirective(
 ): boolean {
   if (name === "exclude-for-languages") {
     return values.some(
-      (value) =>
-        value.toLowerCase() === context.option.language.toLowerCase(),
+      (value) => value.toLowerCase() === context.option.language.toLowerCase(),
     );
   }
   if (name === "exclude-for-build") {
     return values.some(
-      (value) =>
-        value.toLowerCase() === context.option.buildTool.toLowerCase(),
+      (value) => value.toLowerCase() === context.option.buildTool.toLowerCase(),
     );
   }
   const threshold = Number.parseInt(values[0] || "", 10);

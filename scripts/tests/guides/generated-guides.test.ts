@@ -112,10 +112,7 @@ test("guide renderer defaults to the small guide subset and expands guide macros
   assert.match(html, /Adds HTTP client dependency/);
   assert.match(html, /Kotlin-only guide text remains for Java/);
   assert.match(html, /Gradle-only guide text remains for Gradle/);
-  assert.match(
-    html,
-    /<h([1-6])\b[^>]*>Gradle-only fixture heading<\/h\1>/,
-  );
+  assert.match(html, /<h([1-6])\b[^>]*>Gradle-only fixture heading<\/h\1>/);
   assert.doesNotMatch(html, /<p>== Gradle-only fixture heading<\/p>/);
   assert.doesNotMatch(html, /Java and Groovy guide text should not render/);
   assert.doesNotMatch(html, /Maven-only guide text remains for Maven/);
