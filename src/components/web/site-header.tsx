@@ -261,7 +261,7 @@ export function SiteHeader({
   );
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl">
+    <header className="border-b bg-card/95 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[var(--page-max)] items-center gap-2 px-4 sm:px-6 lg:gap-4 xl:px-0">
         {!hideBrand ? (
           <a

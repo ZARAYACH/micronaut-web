@@ -50,6 +50,7 @@ const remoteHeaderLinks = [
   { label: "Blog", href: externalSurfacePath("main", "/blog/") },
   { label: "Launch", href: externalSurfacePath("main", "/launch/") }
 ];
+const siteHeaderFrameClass = "sticky top-0 z-40";
 ---
 
 <!doctype html>
@@ -117,9 +118,10 @@ const remoteHeaderLinks = [
             data-docs-url={externalSurfaceUrls.docs}
             data-guides-url={externalSurfaceUrls.guides}
             data-docs-search-index-url={docsSearchIndexUrl}
+            class={siteHeaderFrameClass}
           >
             <nav
-              class="border-b bg-card/95 px-4 py-3 text-sm"
+              class="border-b bg-card/95 px-4 py-3 text-sm backdrop-blur-xl"
               aria-label="Micronaut navigation"
             >
               <div class="mx-auto flex max-w-[var(--page-max)] flex-wrap items-center gap-3">
@@ -146,7 +148,9 @@ const remoteHeaderLinks = [
         </>
       )}
       {!hideHeader && !shouldUseRemoteHeader && (
-        <SiteHeader surface={surface} mainSitePages={mainSitePages} client:load />
+        <div class={siteHeaderFrameClass}>
+          <SiteHeader surface={surface} mainSitePages={mainSitePages} client:load />
+        </div>
       )}
       <slot />
     </div>

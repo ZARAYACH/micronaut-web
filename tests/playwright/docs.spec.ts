@@ -104,6 +104,7 @@ test("generated docs page renders desktop content and sidebars without overlap",
     "aria-current",
     "location",
   );
+  await expectTopHeaderPinned(page);
 
   await expectNoHorizontalOverflow(page);
   await expectElementInsideViewport(page, ".docs-code-snippet-template");
@@ -315,6 +316,14 @@ async function expectElementsDoNotOverlap(
   assertBox(left, leftSelector);
   assertBox(right, rightSelector);
   expect(left.x + left.width).toBeLessThanOrEqual(right.x + 8);
+}
+
+async function expectTopHeaderPinned(page: Page): Promise<void> {
+  const banner = page.getByRole("banner");
+  await expect(banner).toBeVisible();
+  await expect
+    .poll(async () => Math.round((await banner.boundingBox())?.y ?? -1))
+    .toBe(0);
 }
 
 function assertBox(
