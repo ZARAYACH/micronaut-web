@@ -49,7 +49,8 @@ export function collectRuntimeScriptAssertions(
 function isInspectableRuntimeScriptResponse(response: Response): boolean {
   if (
     response.request().resourceType() !== "script" ||
-    response.status() >= 400
+    response.status() < 200 ||
+    response.status() >= 300
   ) {
     return false;
   }
