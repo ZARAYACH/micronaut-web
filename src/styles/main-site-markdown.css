@@ -1,0 +1,146 @@
+@reference "./globals.css";
+
+.main-site-markdown {
+  @apply mt-9 text-base leading-[1.8] text-foreground;
+
+  & > :first-child {
+    @apply !mt-0;
+  }
+
+  & > :last-child {
+    @apply !mb-0;
+  }
+
+  & :where(h1, h2, h3, h4, h5, h6) {
+    @apply scroll-mt-24 font-bold leading-[1.22] text-foreground;
+  }
+
+  & h1 {
+    @apply mt-10 text-[2rem] md:text-5xl;
+  }
+
+  & h2 {
+    @apply mt-11 border-t border-border pt-9 text-[1.65rem] md:text-[2.15rem];
+  }
+
+  & h3 {
+    @apply mt-9 text-[1.3rem] md:text-[1.55rem];
+  }
+
+  & h4 {
+    @apply mt-7 text-[1.1rem];
+  }
+
+  & h5,
+  & h6 {
+    @apply mt-6 text-base text-muted-foreground uppercase;
+  }
+
+  & p {
+    @apply mt-4 text-base leading-[1.85rem] text-muted-foreground;
+  }
+
+  & p:has(> strong:only-child) {
+    @apply mt-[1.65rem] text-[1.08rem] leading-[1.45] text-foreground;
+  }
+
+  & strong {
+    @apply font-bold text-foreground;
+  }
+
+  & em {
+    @apply text-foreground;
+  }
+
+  & ul,
+  & ol {
+    @apply mt-5 pl-[1.6rem] text-base leading-[1.8rem] text-muted-foreground;
+  }
+
+  & ul {
+    @apply list-disc;
+  }
+
+  & ol {
+    @apply list-decimal;
+  }
+
+  & li {
+    @apply mt-2 pl-1 marker:font-bold marker:text-brand;
+  }
+
+  & li > ul,
+  & li > ol {
+    @apply !mt-2;
+  }
+
+  & a {
+    @apply font-semibold text-brand underline decoration-[0.08em] underline-offset-4 [overflow-wrap:anywhere];
+
+    &:hover {
+      @apply text-brand-hover;
+    }
+  }
+
+  & :not(pre) > code {
+    @apply rounded-[0.35rem] border border-border bg-muted px-[0.32rem] py-[0.1rem] text-[0.9em] leading-[1.4] text-foreground;
+  }
+
+  & pre {
+    @apply relative mt-[1.4rem] mb-[1.6rem] overflow-x-auto rounded-lg border border-border p-[1.1rem] text-sm leading-[1.6rem];
+  }
+
+  & pre code {
+    @apply grid min-w-max bg-transparent font-mono text-inherit leading-[inherit];
+  }
+
+  & blockquote {
+    @apply mt-6 border-l-4 border-brand py-[0.15rem] pl-[1.2rem] text-foreground;
+  }
+
+  & blockquote p {
+    @apply text-foreground;
+  }
+
+  & hr {
+    @apply my-9 border-0 border-t border-border;
+  }
+
+  & img {
+    @apply mt-6 h-auto max-w-full rounded-lg border border-border;
+  }
+
+  & table {
+    @apply mt-6 block w-full overflow-x-auto border-collapse text-[0.94rem];
+  }
+
+  & :where(th, td) {
+    @apply border border-border px-[0.8rem] py-[0.65rem] text-left align-top;
+  }
+
+  & th {
+    @apply bg-muted font-bold text-foreground;
+  }
+
+  & td {
+    @apply text-muted-foreground;
+  }
+}
+
+.dark .main-site-markdown {
+  & .shiki span[style] {
+    color: var(--shiki-dark, var(--shiki-light, currentColor)) !important;
+    font-style: var(
+      --shiki-dark-font-style,
+      var(--shiki-light-font-style, inherit)
+    ) !important;
+    font-weight: var(
+      --shiki-dark-font-weight,
+      var(--shiki-light-font-weight, inherit)
+    ) !important;
+    text-decoration: var(
+      --shiki-dark-text-decoration,
+      var(--shiki-light-text-decoration, inherit)
+    ) !important;
+  }
+}

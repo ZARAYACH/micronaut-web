@@ -77,10 +77,21 @@
   --radius-card: var(--mn-radius-card);
   --shadow-glow: var(--mn-shadow-glow);
   --shadow-console: var(--mn-shadow-console);
+  --animate-customer-logo-scroll: customer-logo-scroll 38s linear infinite;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+@keyframes customer-logo-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 :root {

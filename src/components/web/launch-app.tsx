@@ -217,11 +217,31 @@ type LaunchPreviewResponse = {
   contents?: Record<string, string | null>;
 };
 
+const previewTreeIndentClasses = [
+  "pl-[0.35rem]",
+  "pl-[1.4rem]",
+  "pl-[2.45rem]",
+  "pl-[3.5rem]",
+  "pl-[4.55rem]",
+  "pl-[5.6rem]",
+  "pl-[6.65rem]",
+  "pl-[7.7rem]",
+  "pl-[8.75rem]"
+] as const;
+
 const projectConfig = launchProjectConfig as LaunchProjectConfig;
 const featureCategories = projectConfig.featureCategories;
 const popularFeatureNames = new Set(projectConfig.popularFeatures);
 const recommendedFeatureNames = new Set(projectConfig.recommendedFeatures);
 const capabilityGroupRank = new Map(projectConfig.popularCapabilityGroups.map((id, index) => [id, index]));
+
+function previewTreeIndentClass(level: number) {
+  const safeLevel = Math.min(
+    Math.max(Math.floor(level), 0),
+    previewTreeIndentClasses.length - 1
+  );
+  return previewTreeIndentClasses[safeLevel];
+}
 
 type CapabilityGroup = {
   id: string;
@@ -1716,9 +1736,8 @@ function PreviewTree({
           type="button"
           size="sm"
           isActive={selectedPath === node.path}
-          className="h-7 rounded-sm px-1.5 font-normal data-[active=true]:bg-muted"
+          className={cn("h-7 rounded-sm pr-1.5 font-normal data-[active=true]:bg-muted", previewTreeIndentClass(level))}
           onClick={() => onSelect(node.path!)}
-          style={{ paddingLeft: `${Math.max(level, 0) * 1.05 + 0.35}rem` }}
         >
           <Icon className="size-4 shrink-0" />
           <span className="truncate">{node.name}</span>
@@ -1739,8 +1758,7 @@ function PreviewTree({
           <SidebarMenuButton
             type="button"
             size="sm"
-            className="h-7 rounded-sm px-1.5 font-semibold"
-            style={{ paddingLeft: `${Math.max(level, 0) * 1.05 + 0.35}rem` }}
+            className={cn("h-7 rounded-sm pr-1.5 font-semibold", previewTreeIndentClass(level))}
           >
             <ChevronRight className="size-3.5 shrink-0 transition-transform" />
             <Icon className="size-4 shrink-0 fill-current" />

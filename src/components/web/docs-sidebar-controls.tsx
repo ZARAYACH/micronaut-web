@@ -124,12 +124,7 @@ export function DocsSidebarMobileSheet({
       <SheetContent
         side="left"
         showCloseButton={false}
-        className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-        style={
-          {
-            "--sidebar-width": "18rem",
-          } as React.CSSProperties
-        }
+        className="w-72 bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
       >
         <SheetHeader className="sr-only">
           <SheetTitle>Docs navigation</SheetTitle>

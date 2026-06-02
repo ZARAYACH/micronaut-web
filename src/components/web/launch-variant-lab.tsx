@@ -107,6 +107,14 @@ type NamedFeatureOption = {
   Icon: LucideIcon;
 };
 
+const wizardProgressWidthClasses = [
+  "w-1/5",
+  "w-2/5",
+  "w-3/5",
+  "w-4/5",
+  "w-full"
+] as const;
+
 type FlowContext = {
   draft: LaunchDraft;
   initialData: LaunchInitialData;
@@ -1009,7 +1017,7 @@ function GoalWizardFlow({ context }: { context: FlowContext }) {
               <span className="text-sm font-semibold">{step}</span>
             </div>
             <div className="mt-3 h-1 rounded-full bg-muted">
-              <div className="h-full rounded-full bg-brand" style={{ width: `${Math.min(100, (index + 1) * 20)}%` }} />
+              <div className={cn("h-full rounded-full bg-brand", wizardProgressWidthClasses[index] ?? "w-full")} />
             </div>
           </div>
         ))}

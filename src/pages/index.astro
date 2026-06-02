@@ -355,10 +355,10 @@ const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(await
           </a>
         ))}
       </div>
-      <div class="customer-logo-marquee relative -mx-5 overflow-hidden border-y bg-background py-6 shadow-inner shadow-black/[0.02] dark:bg-card sm:-mx-6 xl:mx-0 xl:rounded-lg xl:border">
+      <div class="customer-logo-marquee group/customer-logo-marquee relative -mx-5 overflow-hidden border-y bg-background py-6 shadow-inner shadow-black/[0.02] dark:bg-card sm:-mx-6 xl:mx-0 xl:rounded-lg xl:border">
         <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r from-background to-transparent dark:from-card sm:w-24"></div>
         <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l from-background to-transparent dark:from-card sm:w-24"></div>
-        <div class="customer-logo-track flex w-max gap-3 px-3">
+        <div class="customer-logo-track flex w-max animate-customer-logo-scroll gap-3 px-3 group-hover/customer-logo-marquee:[animation-play-state:paused] motion-reduce:w-auto motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:animate-none motion-reduce:transform-none">
           {rotatingLogoItems.map((customer, index) => (
             <a
               href={customer.href}
@@ -537,33 +537,3 @@ const highlightedCodeShowcaseExamples = await highlightCodeSnippetExamples(await
   </main>
   <SiteFooter />
 </WebLayout>
-
-<style>
-  .customer-logo-track {
-    animation: customer-logo-scroll 38s linear infinite;
-  }
-
-  .customer-logo-marquee:hover .customer-logo-track {
-    animation-play-state: paused;
-  }
-
-  @keyframes customer-logo-scroll {
-    from {
-      transform: translateX(0);
-    }
-
-    to {
-      transform: translateX(-50%);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .customer-logo-track {
-      width: auto;
-      flex-wrap: wrap;
-      justify-content: center;
-      animation: none;
-      transform: none;
-    }
-  }
-</style>
