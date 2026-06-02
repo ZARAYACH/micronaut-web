@@ -1,10 +1,21 @@
 @reference "./globals.css";
 
-.generated-docs-content {
+.generated-docs-content,
+.generated-guides-content {
   @apply min-w-0 overflow-x-hidden break-words text-base leading-[1.6] text-foreground [contain:paint];
 
   & > style {
     @apply hidden;
+  }
+
+  & .shiki {
+    @apply overflow-auto rounded-[0.5rem] border border-border p-4;
+    background-color: var(--shiki-light-bg);
+    color: var(--shiki-light);
+  }
+
+  & .shiki code {
+    @apply grid min-w-max font-mono text-sm leading-[1.45];
   }
 
   & .project h1 {
@@ -60,12 +71,16 @@
     @apply mt-0 mr-0 mb-5 ml-0;
   }
 
-  & :where(.sect2, .sect3, .sect4, .sect5) {
+  & :where(.sect1, .sect2, .sect3, .sect4, .sect5) {
     @apply mt-[1.55rem] min-w-0;
 
-    & > :where(h3, h4, h5, h6) {
+    & > :where(h2, h3, h4, h5, h6) {
       @apply mt-0 mr-0 mb-[0.8rem] ml-0 scroll-mt-20 font-bold tracking-normal;
     }
+  }
+
+  & .sect1 > h2 {
+    @apply text-[clamp(2rem,3.1vw,2rem)] leading-[1.18];
   }
 
   & .sect2 > h3 {
@@ -120,7 +135,8 @@
       .exampleblock,
       .sidebarblock,
       .openblock,
-      .admonitionblock
+      .admonitionblock,
+      .quoteblock
     ) {
     @apply my-5 min-w-0;
   }
@@ -172,5 +188,20 @@
 
   & .colist {
     @apply mt-[-0.4rem] mr-0 mb-5 ml-0 text-[0.9rem] text-muted-foreground;
+  }
+}
+
+.dark .generated-docs-content,
+.dark .generated-guides-content {
+  & .shiki {
+    background-color: var(--shiki-dark-bg);
+    color: var(--shiki-dark);
+  }
+
+  & .shiki span {
+    color: var(--shiki-dark);
+    font-style: var(--shiki-dark-font-style);
+    font-weight: var(--shiki-dark-font-weight);
+    text-decoration: var(--shiki-dark-text-decoration);
   }
 }
