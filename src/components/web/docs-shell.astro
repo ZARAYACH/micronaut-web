@@ -179,11 +179,14 @@ const sectionMenuHidden =
           variant: "outline",
           size: "icon",
           className:
-            "group fixed right-4 bottom-6 z-40 border bg-background/95 shadow-md backdrop-blur transition-[transform,box-shadow,background-color,color] duration-200 hover:bg-accent hover:text-accent-foreground active:scale-95 active:translate-y-0.5 active:shadow-sm md:right-8",
+            "group fixed right-4 bottom-6 z-40 translate-y-2 border bg-background/95 opacity-0 shadow-md backdrop-blur transition-[transform,box-shadow,background-color,color,opacity] duration-200 pointer-events-none hover:bg-accent hover:text-accent-foreground data-[state=visible]:pointer-events-auto data-[state=visible]:translate-y-0 data-[state=visible]:opacity-100 active:scale-95 active:translate-y-0.5 active:shadow-sm md:right-8",
         })}
         aria-label="Back to top"
+        aria-hidden="true"
         title="Back to top"
         data-docs-page-top
+        data-state="hidden"
+        tabIndex={-1}
       >
         <ArrowUp
           className="size-4 transition-transform duration-200 group-active:-translate-y-0.5"

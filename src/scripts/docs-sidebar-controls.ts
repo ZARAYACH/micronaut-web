@@ -58,6 +58,18 @@ pageTopLink?.addEventListener("click", (event) => {
   });
   window.history.replaceState(null, "", "#docs-top");
 });
+const updatePageTopVisibility = () => {
+  if (!pageTopLink) return;
+  const visible = window.scrollY > 160;
+  pageTopLink.dataset.state = visible ? "visible" : "hidden";
+  pageTopLink.setAttribute("aria-hidden", String(!visible));
+  pageTopLink.tabIndex = visible ? 0 : -1;
+  if (!visible && document.activeElement === pageTopLink) {
+    pageTopLink.blur();
+  }
+};
+updatePageTopVisibility();
+window.addEventListener("scroll", updatePageTopVisibility, { passive: true });
 mobileNavigation?.addEventListener("click", (event) => {
   if (event.target === mobileNavigation) mobileNavigation.close();
   if (!(event.target instanceof Element)) return;

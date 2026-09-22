@@ -208,6 +208,7 @@ test("generated docs page renders desktop content and sidebars without overlap",
   await expect(pageTopLink).toBeVisible();
   await expect(pageTopLink).toHaveAttribute("href", "#docs-top");
   await expect(pageTopLink).toHaveAttribute("aria-label", "Back to top");
+  await expect(pageTopLink).toHaveAttribute("data-state", "visible");
   await expectTopHeaderPinned(page);
 
   await expectNoHorizontalOverflow(page);
@@ -220,6 +221,8 @@ test("generated docs page renders desktop content and sidebars without overlap",
   await pageTopLink.click();
   await expect(page).toHaveURL(/#docs-top$/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(10);
+  await expect(pageTopLink).toHaveAttribute("data-state", "hidden");
+  await expect(pageTopLink).toHaveAttribute("aria-hidden", "true");
   expect(failures).toEqual([]);
 });
 
