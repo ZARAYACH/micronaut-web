@@ -11,6 +11,9 @@ const mobileNavigationTrigger = document.querySelector<HTMLButtonElement>(
 const mobileNavigationClose = document.querySelector<HTMLButtonElement>(
   "[data-docs-mobile-nav-close]",
 );
+const pageTopLink = document.querySelector<HTMLAnchorElement>(
+  "[data-docs-page-top]",
+);
 const sidebarCookieName = "sidebar_state";
 const sidebarCookieMaxAge = 60 * 60 * 24 * 7;
 
@@ -45,6 +48,16 @@ mobileNavigationTrigger?.addEventListener("click", () =>
 mobileNavigationClose?.addEventListener("click", () =>
   mobileNavigation?.close(),
 );
+pageTopLink?.addEventListener("click", (event) => {
+  event.preventDefault();
+  window.scrollTo({
+    top: 0,
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth",
+  });
+  window.history.replaceState(null, "", "#docs-top");
+});
 mobileNavigation?.addEventListener("click", (event) => {
   if (event.target === mobileNavigation) mobileNavigation.close();
   if (!(event.target instanceof Element)) return;
